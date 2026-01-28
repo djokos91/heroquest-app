@@ -1,5 +1,5 @@
 {
   "vela_derretida": { "n": "Vela Derretida", "f": "vela_derretida.jpg", "Rareza": "Común", "Tipo": "Basura" },
-  "vela_derretida": { "n": "Vela Derretida", "f": "vela_derretida.jpg", "Rareza": "Basura", "Tipo": "Basura" },
-  "vela_derretida": { "n": "Vela Derretida", "f": "vela_derretida.jpg", "Rareza": "Raro", "Tipo": "Basura" }
+  "vela_derretida1": { "n": "Vela Derretida1", "f": "vela_derretida.jpg", "Rareza": "Basura", "Tipo": "Basura" },
+  "vela_derretida2": { "n": "Vela Derretida2", "f": "vela_derretida.jpg", "Rareza": "Raro", "Tipo": "Basura" }
 }
