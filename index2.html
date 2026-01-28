@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>HeroQuest Pro Edition</title>
+    <style>
+        body { background: #0f172a; color: white; font-family: sans-serif; margin: 0; padding-bottom: 80px; }
+        .tab-content { display: none; padding: 15px; text-align: center; }
+        .active-view { display: block; }
+        nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: #1e293b; display: flex; justify-content: space-around; align-items: center; border-top: 2px solid #334155; z-index: 100; }
+        .nav-btn { background: none; border: none; color: #94a3b8; font-size: 10px; font-weight: bold; }
+        .nav-btn.active { color: #3b82f6; }
+        .nav-btn span { display: block; font-size: 22px; margin-bottom: 2px; }
+        .card { background: #1e293b; border-radius: 15px; overflow: hidden; border: 1px solid #475569; margin-top: 10px; }
+        .card img { width: 100%; height: auto; max-height: 50vh; object-fit: contain; display: block; }
+        .btn-action { background: #ef4444; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 90%; margin: 10px; font-size: 16px; }
+        .btn-win { background: #22c55e; }
+        
+/* FICHA DE HÉROE */
+.hero-container { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; max-width: 400px; margin: auto; padding: 10px; }
+.slot-column { display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+
+.slot { 
+    width: 50px; 
+    height: 50px; 
+    background: rgba(30, 41, 59, 0.8); 
+    border: 2px solid #475569; 
+    border-radius: 8px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    position: relative; 
+    overflow: hidden; 
+    /* --- NUEVAS LÍNEAS PARA INTERACCIÓN --- */
+    cursor: pointer; 
+    transition: all 0.2s ease; 
+}
+
+/* Efecto al pasar el ratón o pulsar */
+.slot:hover { 
+    background: rgba(59, 130, 246, 0.2); 
+    border-color: #3b82f6; 
+}
+
+/* Escala un poco el slot cuando se hace clic */
+.slot:active { transform: scale(0.9); }
+
+.slot img { width: 80%; height: 80%; object-fit: contain; }
+.slot::after { content: attr(data-label); position: absolute; bottom: 2px; font-size: 7px; color: #94a3b8; text-transform: uppercase; width: 100%; text-align: center; background: rgba(0,0,0,0.4); }
+.silhouette { display: flex; align-items: center; justify-content: center; font-size: 120px; opacity: 0.1; }
+.bottom-slots { grid-column: span 3; display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+
+        /* MOCHILA */
+        .item-row { background: #1e293b; padding: 10px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #3b82f6; }
+        .item-info { display: flex; align-items: center; gap: 10px; }
+        .item-img { width: 35px; height: 35px; object-fit: contain; background: rgba(0,0,0,0.2); border-radius: 4px; }
+        .btn-eq { background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 5px; font-size: 10px; font-weight: bold; }
+        .btn-reset { margin-top: 30px; color: #94a3b8; background: rgba(255,255,255,0.05); border: 1px solid #334155; padding: 10px 20px; border-radius: 8px; font-size: 12px; }
+        /* Contenedor de la cuadrícula */
+#lista-inv {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 10px;
+    padding: 10px;
+    justify-items: center;
+    /* Cada casilla de la mochila */
+.item-slot {
+    width: 60px;
+    height: 60px;
+    background: #1e293b;
+    border: 2px solid #475569;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    /* --- AÑADIMOS TRANSICIÓN PARA SUAVIDAD --- */
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+/* --- EFECTO HOVER (RESALTADO) --- */
+.item-slot:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
+    transform: translateY(-2px); /* Pequeño salto hacia arriba */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Efecto al pulsar */
+.item-slot:active { 
+    transform: scale(0.9); 
+}
+
+/* Cada casilla de la mochila */
+.item-slot {
+    width: 60px;
+    height: 60px;
+    background: #1e293b;
+    border: 2px solid #475569;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.1s;
+    position: relative;
+}
+
+.item-slot:active { transform: scale(0.95); }
+
+.item-slot img {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+}
+
+/* Color según rareza en el borde */
+.raro { border-color: #3b82f6; box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.2); }
+.comun { border-color: #94a3b8; }
+.basura { border-color: #475569; }
+.epico { border-color: #a855f7; }
+    </style>
+    <script src="https://wow.zamimg.com/js/tooltips.js"></script>
+<script>
+    // Configuración para que se vea en español y con iconos
+    const whTooltips = { colorLinks: true, iconizeLinks: false, renameLinks: false };
+</script>
+</head>
+<body>
+
+    <section id="vista-mundo" class="tab-content active-view">
+        <h2 style="color: #ef4444; font-style: italic;">MAZMORRA</h2>
+        <button class="btn-action" onclick="generarEncuentro()">🎲 EXPLORAR</button>
+        <div id="pantalla-enemigo" style="display: none;">
+            <div class="card">
+                <img id="foto-enemigo" src="">
+                <h3 id="nombre-enemigo" style="margin: 15px 0 5px 0;"></h3>
+                <button id="btn-derrota" class="btn-action btn-win" onclick="derrotar()">⚔️ DERROTADO</button>
+                <div id="botin-texto" style="padding: 15px; color: gold; font-weight: bold;"></div>
+            </div>
+        </div>
+    </section>
+
+<section id="vista-heroe" class="tab-content">
+    <h2 style="color: #3b82f6;">FICHA DEL HÉROE</h2>
+    <div class="hero-container">
+        <div class="slot-column">
+            <div id="slot-casco" class="slot" data-label="Casco" onclick="gestionarEquipado(this)"></div>
+            <div id="slot-hombros" class="slot" data-label="Hombros" onclick="gestionarEquipado(this)"></div>
+            <div id="slot-pecho" class="slot" data-label="Pecho" onclick="gestionarEquipado(this)"></div>
+            <div id="slot-guantes" class="slot" data-label="Guantes" onclick="gestionarEquipado(this)"></div>
+        </div>
+        <div class="silhouette">👤</div>
+        <div class="slot-column">
+            <div id="slot-cuello" class="slot" data-label="Cuello" onclick="gestionarEquipado(this)"></div>
+            <div id="slot-brazos" class="slot" data-label="Brazos" onclick="gestionarEquipado(this)"></div>
+            <div id="slot-piernas" class="slot" data-label="Piernas" onclick="gestionarEquipado(this)"></div>
+            <div id="slot-botas" class="slot" data-label="Botas" onclick="gestionarEquipado(this)"></div>
+        </div>
+        <div class="bottom-slots">
+            <div id="slot-anillo-1" class="slot" data-label="Anillo" onclick="gestionarEquipado(this)"></div>
+            <div id="slot-anillo-2" class="slot" data-label="Anillo" onclick="gestionarEquipado(this)"></div>
+            <div id="slot-abalorio-1" class="slot" data-label="Abalorio" onclick="gestionarEquipado(this)"></div>
+            <div id="slot-abalorio-2" class="slot" data-label="Abalorio" onclick="gestionarEquipado(this)"></div>
+        </div>
+    </div>
+</section>
+
+    <section id="vista-mochila" class="tab-content">
+        <h2 style="color: #eab308;">MOCHILA</h2>
+        <div id="lista-inv"></div>
+        <button class="btn-reset" onclick="borrarTodo()">🗑️ Vaciar Mochila</button>
+    </section>
+
+    <nav>
+        <button class="nav-btn active" id="btn-nav-mundo" onclick="cambiarVista('mundo')"><span>⚔️</span>MAZMORRA</button>
+        <button class="nav-btn" id="btn-nav-heroe" onclick="cambiarVista('heroe')"><span>🛡️</span>HÉROE</button>
+        <button class="nav-btn" id="btn-nav-mochila" onclick="cambiarVista('mochila')"><span>🎒</span>MOCHILA</button>
+    </nav>
+
+    <script>
+        let enemigos = [];
+        let itemsDB = {};
+        let inventario = JSON.parse(localStorage.getItem('hq_inv')) || [];
+        let actual = null;
+
+        async function cargarDatos() {
+            try {
+                const [resEnemigos, resObjetos] = await Promise.all([
+                    fetch('enemigos.json'),
+                    fetch('objetos.json')
+                ]);
+                enemigos = await resEnemigos.json();
+                itemsDB = await resObjetos.json();
+                console.log("Sistema: Datos cargados.");
+            } catch (err) {
+                console.error("Error cargando JSON:", err);
+            }
+        }
+        cargarDatos();
+
+        function cambiarVista(donde) {
+            document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active-view'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('vista-' + donde).classList.add('active-view');
+            document.getElementById('btn-nav-' + donde).classList.add('active');
+            if(donde === 'mochila') renderInv();
+        }
+
+        function generarEncuentro() {
+            if (enemigos.length === 0) return alert("Cargando...");
+            actual = enemigos[Math.floor(Math.random() * enemigos.length)];
+            document.getElementById('pantalla-enemigo').style.display = 'block';
+            document.getElementById('nombre-enemigo').innerText = actual.n;
+            const rutaFoto = actual.f.startsWith('http') ? actual.f : 'img/' + actual.f;
+            document.getElementById('foto-enemigo').src = rutaFoto;
+            document.getElementById('btn-derrota').style.display = 'inline-block';
+            document.getElementById('botin-texto').innerText = "";
+        }
+
+function derrotar() {
+    // 1. Obtener las llaves de los objetos que coinciden con la tabla de botín del enemigo
+    const posiblesPremios = Object.keys(itemsDB).filter(key => {
+        return itemsDB[key].Rareza === actual.LootTable;
+    });
+
+    console.log("Posibles premios encontrados:", posiblesPremios); // Mira esto en la consola F12
+
+    if (posiblesPremios.length > 0) {
+        // Elegir uno al azar
+        const itemKey = posiblesPremios[Math.floor(Math.random() * posiblesPremios.length)];
+        const itemObtenido = itemsDB[itemKey];
+
+        // 2. Guardar en inventario
+        inventario.push({ ...itemObtenido }); 
+        localStorage.setItem('hq_inv', JSON.stringify(inventario));
+
+        // 3. Mostrar botín
+        document.getElementById('botin-texto').innerHTML = `
+            <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-top:10px;">
+                <img src="img/${itemObtenido.f}" style="width:40px; height:40px; border:1px solid gold;">
+                <span>¡Ganaste ${itemObtenido.n}!</span>
+            </div>`;
+    } else {
+        // Si entra aquí, es que no hay objetos con esa Rareza en objetos.json
+        document.getElementById('botin-texto').innerHTML = "El enemigo no llevaba nada encima...";
+        console.warn("No se encontraron objetos con Rareza: " + actual.LootTable);
+    }
+    
+    document.getElementById('btn-derrota').style.display = 'none';
+}
+
+function renderInv() {
+    const div = document.getElementById('lista-inv');
+    if (inventario.length === 0) {
+        div.innerHTML = "<p style='color: #64748b; margin-top: 20px;'>Mochila vacía</p>";
+        return;
+    }
+
+    div.innerHTML = inventario.map((item, index) => {
+        const rarezaClass = item.Rareza.toLowerCase();
+        return `
+            <div class="item-slot ${rarezaClass}" onclick="gestionarItem(${index})">
+                <img src="img/${item.f}" title="${item.n}">
+            </div>
+        `;
+    }).join('');
+}
+        function gestionarItem(index) {
+    const item = inventario[index];
+    
+    if (item.Tipo === "Equipable") {
+        if (confirm(`¿Quieres equipar ${item.n}?`)) {
+            equipar(index);
+        }
+    } 
+    else if (item.Tipo === "Consumible") {
+        if (confirm(`¿Quieres usar ${item.n}?`)) {
+            usar(index);
+        }
+    } 
+    else if (item.Tipo === "Basura") {
+        const precio = 5; // Podrías añadir "Valor" en tu JSON
+        if (confirm(`Este objeto es chatarra. ¿Vender por ${precio} de oro?`)) {
+            alert(`Has vendido ${item.n} por ${precio} monedas.`);
+            inventario.splice(index, 1);
+            localStorage.setItem('hq_inv', JSON.stringify(inventario));
+            renderInv();
+        }
+    }
+}
+
+function equipar(index) {
+    const item = inventario[index];
+    let slotId = "";
+
+    // Tu lógica de anillos y abalorios está perfecta
+    if (item.Slot === "anillo") {
+        const a1 = document.getElementById("slot-anillo-1");
+        slotId = (a1.innerHTML === "") ? "slot-anillo-1" : "slot-anillo-2";
+    } else if (item.Slot === "abalorio") {
+        const ab1 = document.getElementById("slot-abalorio-1");
+        slotId = (ab1.innerHTML === "") ? "slot-abalorio-1" : "slot-abalorio-2";
+    } else {
+        slotId = "slot-" + item.Slot;
+    }
+
+    const target = document.getElementById(slotId);
+    if (target) {
+        // Colocamos la imagen en el slot
+        target.innerHTML = `<img src="img/${item.f}">`;
+        target.style.borderColor = "#3b82f6";
+        
+        // --- NOVEDAD: Lo quitamos de la mochila ---
+        inventario.splice(index, 1);
+        localStorage.setItem('hq_inv', JSON.stringify(inventario));
+        renderInv(); // Refrescamos la mochila para que ya no salga ahí
+        
+        alert(item.n + " equipado.");
+    }
+}
+
+function gestionarEquipado(elemento) {
+    const img = elemento.querySelector('img');
+    if (!img) return; 
+
+    // 1. Extraer el nombre del archivo correctamente
+    // Usamos decodeURI por si el nombre tiene espacios o caracteres raros
+    const rutaCompleta = decodeURI(img.src);
+    const nombreArchivo = rutaCompleta.substring(rutaCompleta.lastIndexOf('/') + 1);
+    
+    console.log("Intentando desequipar archivo:", nombreArchivo);
+
+    // 2. Buscar el objeto en la base de datos
+    const keyEncontrada = Object.keys(itemsDB).find(key => itemsDB[key].f === nombreArchivo);
+    const item = itemsDB[keyEncontrada];
+
+    if (item) {
+        if (confirm(`¿Quieres desequipar ${item.n}?`)) {
+            // 3. Devolver al inventario
+            inventario.push({ ...item });
+            localStorage.setItem('hq_inv', JSON.stringify(inventario));
+
+            // 4. Limpiar el slot
+            elemento.innerHTML = ""; 
+            elemento.style.borderColor = "#475569";
+            elemento.style.background = "rgba(30, 41, 59, 0.8)";
+
+            // 5. Actualizar mochila
+            renderInv();
+            alert(`${item.n} guardado en la mochila.`);
+        }
+    } else {
+        console.error("No se encontró el objeto en itemsDB para el archivo:", nombreArchivo);
+        alert("Error: No se reconoce este objeto.");
+    }
+}
+
+        function usar(index) {
+            alert("Usaste " + inventario[index].n);
+            inventario.splice(index, 1);
+            localStorage.setItem('hq_inv', JSON.stringify(inventario));
+            renderInv();
+        }
+
+        function borrarTodo() {
+            if (confirm("¿Vaciar mochila?")) {
+                inventario = [];
+                localStorage.removeItem('hq_inv');
+                renderInv();
+            }
+        }
+    </script>
+</body>
+</html>
