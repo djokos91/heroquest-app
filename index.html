@@ -292,31 +292,37 @@ function equipar(index) {
 
 function gestionarEquipado(elemento) {
     const img = elemento.querySelector('img');
-    if (!img) return; // Si el slot está vacío, no hace nada
+    if (!img) return; 
 
-    // 1. Identificamos el objeto por el nombre de su imagen
-    const nombreArchivo = img.src.split('/').pop();
+    // 1. Extraer el nombre del archivo correctamente
+    // Usamos decodeURI por si el nombre tiene espacios o caracteres raros
+    const rutaCompleta = decodeURI(img.src);
+    const nombreArchivo = rutaCompleta.substring(rutaCompleta.lastIndexOf('/') + 1);
+    
+    console.log("Intentando desequipar archivo:", nombreArchivo);
+
+    // 2. Buscar el objeto en la base de datos
     const keyEncontrada = Object.keys(itemsDB).find(key => itemsDB[key].f === nombreArchivo);
     const item = itemsDB[keyEncontrada];
 
     if (item) {
-        // 2. Pedimos confirmación (Igual que en la mochila)
         if (confirm(`¿Quieres desequipar ${item.n}?`)) {
-            
-            // 3. Lo devolvemos al array de inventario
+            // 3. Devolver al inventario
             inventario.push({ ...item });
             localStorage.setItem('hq_inv', JSON.stringify(inventario));
 
-            // 4. Limpiamos el slot visualmente
+            // 4. Limpiar el slot
             elemento.innerHTML = ""; 
-            elemento.style.borderColor = "#475569"; // Gris original
-            elemento.style.background = "rgba(30, 41, 59, 0.8)"; // Fondo original
+            elemento.style.borderColor = "#475569";
+            elemento.style.background = "rgba(30, 41, 59, 0.8)";
 
-            // 5. Actualizamos la mochila para que aparezca allí
+            // 5. Actualizar mochila
             renderInv();
-            
             alert(`${item.n} guardado en la mochila.`);
         }
+    } else {
+        console.error("No se encontró el objeto en itemsDB para el archivo:", nombreArchivo);
+        alert("Error: No se reconoce este objeto.");
     }
 }
 
