@@ -126,6 +126,13 @@
 <script>
     // Configuración para que se vea en español y con iconos
     const whTooltips = { colorLinks: true, iconizeLinks: false, renameLinks: false };
+    const coloresRareza = {
+    "Basura": "#94a3b8",
+    "Comun": "#ffffff",
+    "Raro": "#3b82f6",
+    "Epico": "#a855f7",
+    "Legendario": "#ff8000"
+};
 </script>
 </head>
 <body>
@@ -323,7 +330,7 @@ function equipar(index) {
     const item = inventario[index];
     let slotId = "";
 
-    // (Tu lógica de selección de slot: casco, pecho, etc.)
+    // Tu lógica de slots actual
     if (item.Slot === "anillo") {
         const a1 = document.getElementById("slot-anillo-1");
         slotId = (a1.innerHTML === "") ? "slot-anillo-1" : "slot-anillo-2";
@@ -336,20 +343,33 @@ function equipar(index) {
 
     const target = document.getElementById(slotId);
     if (target) {
-        // --- LA LÓGICA INTELIGENTE AQUÍ ---
+        // 1. Determinar imagen y color
         const imgSrc = item.wid 
             ? `https://wow.zamimg.com/images/wow/icons/large/${item.f}.jpg` 
             : `img/${item.f}`;
+        const colorItem = coloresRareza[item.Rareza] || "#3b82f6";
 
-        // Insertamos la imagen
-        target.innerHTML = `<img src="${imgSrc}">`;
-        target.style.borderColor = "#3b82f6";
+        // 2. Crear el enlace de Wowhead para el Tooltip
+        const linkInicio = item.wid ? `<a href="https://www.wowhead.com/item=${item.wid}" data-wowhead="item=${item.wid}&domain=es" onclick="return false;">` : '';
+        const linkFin = item.wid ? `</a>` : '';
+
+        // 3. Inyectar en el slot
+        target.innerHTML = `${linkInicio}<img src="${imgSrc}">${linkFin}`;
         
-        // Eliminamos de la mochila
+        // 4. Cambiar el color del borde y añadir un pequeño resplandor (Glow)
+        target.style.borderColor = colorItem;
+        target.style.boxShadow = `0 0 8px ${colorItem}66`; // Brillo suave del color de la rareza
+
+        // 5. Gestión de inventario
         inventario.splice(index, 1);
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         renderInv(); 
         
+        // 6. ¡IMPORTANTE! Refrescar Wowhead para que el tooltip funcione en el héroe
+        if(typeof $WowheadPower !== 'undefined') {
+            setTimeout(() => { $WowheadPower.refreshLinks(); }, 100);
+        }
+
         alert(item.n + " equipado.");
     }
 }
