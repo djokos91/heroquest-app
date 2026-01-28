@@ -127,15 +127,32 @@
         }
 
         function derrotar() {
-            const pool = actual.b;
-            const itemKey = pool[Math.floor(Math.random() * pool.length)];
-            const itemObtenido = itemsDB[itemKey] || { n: itemKey, f: "", Rareza: "Común", Tipo: "Basura" };
-            
-            inventario.push(itemObtenido);
-            localStorage.setItem('hq_inv', JSON.stringify(inventario));
-            document.getElementById('botin-texto').innerHTML = `¡Has ganado ${itemObtenido.n}!`;
-            document.getElementById('btn-derrota').style.display = 'none';
-        }
+    // 1. Creamos una lista de posibles objetos filtrando la base de datos
+    // Buscamos todos los objetos cuya "Rareza" coincida con la "LootTable" del enemigo
+    const posiblesPremios = Object.keys(itemsDB).filter(key => {
+        return itemsDB[key].Rareza === actual.LootTable;
+    });
+
+    // 2. Si no encuentra nada de esa rareza, le damos "oro" por defecto
+    const itemKey = posiblesPremios.length > 0 
+        ? posiblesPremios[Math.floor(Math.random() * posiblesPremios.length)] 
+        : "oro";
+
+    const itemObtenido = itemsDB[itemKey];
+
+    // 3. Guardar en inventario
+    inventario.push({ ...itemObtenido, idUnico: Date.now() }); 
+    localStorage.setItem('hq_inv', JSON.stringify(inventario));
+
+    // 4. Feedback visual
+    document.getElementById('botin-texto').innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
+            <img src="img/${itemObtenido.f}" style="width:30px; height:30px;">
+            <span>¡Has encontrado ${itemObtenido.n}!</span>
+        </div>`;
+    
+    document.getElementById('btn-derrota').style.display = 'none';
+}
 
         function renderInv() {
             const div = document.getElementById('lista-inv');
