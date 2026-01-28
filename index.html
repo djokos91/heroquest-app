@@ -149,19 +149,20 @@ const coloresRareza = {
 <body>
 
     <section id="vista-mundo" class="tab-content active-view">
-        <h2 style="color: #ef4444; font-style: italic;">MAZMORRA</h2>
-        <button id="btn-explorar" class="btn-action" onclick="generarEncuentro()" disabled>🎲 EXPLORAR</button>
-        <div id="pantalla-enemigo" style="display: none;">
-    <div class="card">
-        <img id="enemigo-img" src=""> 
-        <h3 id="enemigo-nombre" style="margin: 15px 0 5px 0;"></h3>
-        <p>Vida: <span id="enemigo-hp"></span></p> <button id="btn-atacar" class="btn-action" onclick="atacar()">⚔️ ATACAR</button>
-        <button id="btn-derrota" class="btn-action btn-win" onclick="derrotar()" style="display:none;">🏆 RECLAMAR BOTÍN</button>
-        
-        <div id="botin-texto" style="padding: 15px; color: gold; font-weight: bold;"></div>
+    <h2 style="color: #ef4444; font-style: italic;">MAZMORRA</h2>
+    <button id="btn-explorar" class="btn-action" onclick="generarEncuentro()" disabled>🎲 EXPLORAR</button>
+    
+    <div id="pantalla-enemigo" style="display: none;">
+        <div class="card">
+            <img id="enemigo-img" src="">
+            <h3 id="enemigo-nombre" style="margin: 15px 0 5px 0;"></h3>
+            <p>Vida: <span id="enemigo-hp"></span></p>
+            
+            <button id="btn-derrota" class="btn-action btn-win" onclick="derrotar()">⚔️ DERROTADO</button>
+            <div id="botin-texto" style="padding: 15px; color: gold; font-weight: bold;"></div>
+        </div>
     </div>
-</div>
-    </section>
+</section>
 
 <section id="vista-heroe" class="tab-content">
     <h2 style="color: #3b82f6;">FICHA DEL HÉROE</h2>
@@ -231,28 +232,26 @@ async function cargarDatos() {
         }
 
 function generarEncuentro() {
-    // 1. Verificación de seguridad: ¿Se cargó el objeto enemigos?
     if (!enemigos || Object.keys(enemigos).length === 0) {
         console.error("Los enemigos no están listos.");
         return; 
     }
 
-    // 2. Selección usando las CLAVES (los nombres que pusiste en el JSON)
     const claves = Object.keys(enemigos);
     const claveAleatoria = claves[Math.floor(Math.random() * claves.length)];
-    
-    // 3. Asignación a la variable global 'actual'
     actual = enemigos[claveAleatoria];
 
-    // 4. Pintar en el HTML SOLO si 'actual' tiene datos
     if (actual && actual.n) {
+        // 1. Mostramos el contenedor del enemigo
+        document.getElementById('pantalla-enemigo').style.display = 'block';
+
+        // 2. Escribimos los datos en los IDs corregidos
         document.getElementById('enemigo-nombre').innerText = actual.n;
         document.getElementById('enemigo-hp').innerText = actual.hp;
         document.getElementById('enemigo-img').src = `img/${actual.f}`;
 
-        // Control de visibilidad
-        document.getElementById('btn-atacar').style.display = 'inline-block';
-        document.getElementById('btn-derrota').style.display = 'none';
+        // 3. Nos aseguramos de que el botón DERROTADO sea visible y el texto de botín esté limpio
+        document.getElementById('btn-derrota').style.display = 'inline-block';
         document.getElementById('botin-texto').innerHTML = "";
     }
 }
