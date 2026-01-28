@@ -318,23 +318,28 @@ function derrotar() {
 
     console.log("Objetos candidatos encontrados:", posibles.length);
 
-    if (posibles.length > 0) {
+if (posibles.length > 0) {
         const itemKey = posibles[Math.floor(Math.random() * posibles.length)];
         const itemObtenido = itemsDB[itemKey];
 
-        // Guardar
+        // Guardar en inventario
         inventario.push({ ...itemObtenido });
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
 
-        // Mostrar
-        const color = coloresRareza[itemObtenido.Rareza] || "#fff";
-        document.getElementById('botin-texto').innerHTML = `¡Ganaste <span style="color:${color}">[${itemObtenido.n}]</span>!`;
-    } else {
-        document.getElementById('botin-texto').innerHTML = "No había nada de valor.";
-    }
+        // --- LÓGICA DE IMAGEN DEL BOTÍN ---
+        const imgSrc = itemObtenido.wid 
+            ? `https://wow.zamimg.com/images/wow/icons/large/${itemObtenido.f}.jpg` 
+            : `img/${itemObtenido.f}`;
 
-    // Ocultar botón
-    document.getElementById('btn-derrota').style.display = 'none';
+        const color = coloresRareza[itemObtenido.Rareza] || "#fff";
+
+        // Mostramos el nombre Y la imagen en el cuadro de botín
+        document.getElementById('botin-texto').innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                ¡Has encontrado un objeto!
+                <img src="${imgSrc}" style="width: 50px; height: 50px; border: 2px solid ${color}; border-radius: 8px; box-shadow: 0 0 10px ${color}66;">
+                <span style="color:${color}">[${itemObtenido.n}]</span>
+            </div>`;
 }
 
 function renderInv() {
