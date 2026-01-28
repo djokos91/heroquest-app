@@ -1,5 +1,5 @@
-{
+[
   { "n": "Esqueleto", "f": "esqueleto.png", "LootTable": "Poor", "hp": 4 },
   { "n": "Guerrero Orco", "f": "orco.jpg", "LootTable": "Uncommon", "hp": 8 },
   { "n": "Momia", "f": "momia.jpg", "LootTable": "Epic", "hp": 12 }
-}
+]
