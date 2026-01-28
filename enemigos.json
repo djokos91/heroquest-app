@@ -1,4 +1,4 @@
 [
-  { "n": "Esqueleto", "f": "esqueleto.png", "LootTable": "Común", "hp": 4 },
-  { "n": "Momia", "f": "momia.jpg", "LootTable": "Raro", "hp": 6 }
+  { "n": "Esqueleto", "f": "esqueleto.png", "LootTable": "Epico", "hp": 4 },
+  { "n": "Momia", "f": "momia.jpg", "LootTable": "Epico", "hp": 6 }
 ]
