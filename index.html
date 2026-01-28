@@ -195,16 +195,27 @@
 
 async function cargarDatos() {
     try {
-        // Añadimos ?v= + la hora actual para que el navegador crea que es un archivo nuevo
-        const [resEnemigos, resObjetos] = await Promise.all([
-            fetch('enemigos.json?v=' + Date.now()),
-            fetch('objetos.json?v=' + Date.now())
+        const v = Date.now(); // Para evitar la caché
+        const [resEnemigos, resEquipos, resConsumibles, resBasura] = await Promise.all([
+            fetch(`enemigos.json?v=${v}`),
+            fetch(`equipacion.json?v=${v}`),
+            fetch(`consumibles.json?v=${v}`),
+            fetch(`basura.json?v=${v}`)
         ]);
+
         enemigos = await resEnemigos.json();
-        itemsDB = await resObjetos.json();
-        console.log("Sistema: Datos frescos cargados.");
+        
+        // Cargamos los tres y los unimos en un solo objeto
+        const equipos = await resEquipos.json();
+        const consumibles = await resConsumibles.json();
+        const basura = await resBasura.json();
+
+        // Esta línea junta los 3 JSONs en itemsDB
+        itemsDB = { ...equipos, ...consumibles, ...basura };
+
+        console.log("Sistema: Base de datos unificada cargada.");
     } catch (err) {
-        console.error("Error cargando JSON:", err);
+        console.error("Error cargando los archivos JSON:", err);
     }
 }
         cargarDatos();
