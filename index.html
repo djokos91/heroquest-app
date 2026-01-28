@@ -240,31 +240,35 @@ async function cargarDatos() {
         }
 
 function generarEncuentro() {
-    // 1. Extraemos los nombres (claves) del objeto enemigos
-    const nombresEnemigos = Object.keys(enemigos); 
+    // 1. Convertimos las claves (nombres) de tu JSON en una lista
+    // Si tu JSON es {"orco": {...}, "momia": {...}}, esto crea ["orco", "momia"]
+    const clavesDisponibles = Object.keys(enemigos);
 
-    if (nombresEnemigos.length === 0) {
-        console.error("La base de datos de enemigos está vacía.");
+    if (clavesDisponibles.length === 0) {
+        console.error("La base de datos de enemigos está vacía o no se cargó.");
         return;
     }
 
-    // 2. Elegimos un nombre al azar
-    const nombreAleatorio = nombresEnemigos[Math.floor(Math.random() * nombresEnemigos.length)];
+    // 2. Elegimos una clave al azar
+    const claveElegida = clavesDisponibles[Math.floor(Math.random() * clavesDisponibles.length)];
 
-    // 3. Asignamos el enemigo a la variable global 'actual'
-    actual = { ...enemigos[nombreAleatorio] };
+    // 3. Asignamos el objeto correspondiente a 'actual'
+    // Ahora 'actual' ya NO es undefined, es el objeto del enemigo
+    actual = enemigos[claveElegida];
 
-    // 4. Ahora sí, podemos leer '.n' sin que dé error
-    document.getElementById('enemigo-nombre').innerText = actual.n;
-    document.getElementById('enemigo-img').src = `img/${actual.f}`;
-    document.getElementById('enemigo-hp').innerText = actual.hp;
+    // 4. Ahora esta línea ya no dará error porque 'actual' existe
+    if (actual && actual.n) {
+        document.getElementById('enemigo-nombre').innerText = actual.n;
+        document.getElementById('enemigo-hp').innerText = actual.hp;
+        document.getElementById('enemigo-img').src = `img/${actual.f}`;
 
-    // Reset de botones
-    document.getElementById('btn-atacar').style.display = 'inline-block';
-    document.getElementById('btn-derrota').style.display = 'none';
-    document.getElementById('botin-texto').innerHTML = "";
-    
-    console.log("Encuentro generado con:", actual.n);
+        // Gestión de botones
+        document.getElementById('btn-atacar').style.display = 'inline-block';
+        document.getElementById('btn-derrota').style.display = 'none';
+        document.getElementById('botin-texto').innerHTML = "";
+    } else {
+        console.error("El enemigo seleccionado no tiene la propiedad 'n':", actual);
+    }
 }
 
 function derrotar() {
