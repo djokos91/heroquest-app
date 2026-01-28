@@ -209,30 +209,30 @@ const coloresRareza = {
 
 async function cargarDatos() {
     try {
-        const v = Date.now(); // Para evitar la caché
-        const [resEnemigos, resEquipos, resConsumibles, resBasura] = await Promise.all([
+        const v = Date.now();
+        const [resEnemigos, resEquipacion, resConsumibles, resBasura] = await Promise.all([
             fetch(`enemigos.json?v=${v}`),
             fetch(`equipacion.json?v=${v}`),
             fetch(`consumibles.json?v=${v}`),
             fetch(`basura.json?v=${v}`)
         ]);
 
-        // Aquí es donde estaba el fallo: hay que declarar las variables con 'const'
+        // Guardamos los datos en variables con nombres claros
         enemigos = await resEnemigos.json();
-        const equipos = await resEquipos.json();
+        const equipacion = await resEquipacion.json(); // Cambiado de 'equipos' a 'equipacion'
         const consumibles = await resConsumibles.json();
         const basura = await resBasura.json();
 
-        // Ahora que 'equipos', 'consumibles' y 'basura' existen, podemos unirlas
-        itemsDB = { ...equipos, ...consumibles, ...basura };
+        // Unimos todo en la base de datos global
+        // Usamos 'equipacion' que es como la definimos arriba
+        itemsDB = { ...equipacion, ...consumibles, ...basura };
 
-        // Activamos el botón de explorar
+        // Activamos el botón de exploración
         const btnExplorar = document.getElementById('btn-explorar');
-        if (btnExplorar) {
-            btnExplorar.disabled = false;
-        }
+        if (btnExplorar) btnExplorar.disabled = false;
 
-        console.log("Sistema: Base de datos unificada cargada correctamente.");
+        console.log("Sistema: Base de datos cargada. Objetos totales:", Object.keys(itemsDB).length);
+
     } catch (err) {
         console.error("Error cargando los archivos JSON:", err);
     }
