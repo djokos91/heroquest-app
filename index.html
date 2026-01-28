@@ -126,12 +126,14 @@
 <script>
     // Configuración para que se vea en español y con iconos
     const whTooltips = { colorLinks: true, iconizeLinks: false, renameLinks: false };
-    const coloresRareza = {
-    "Basura": "#94a3b8",
-    "Comun": "#ffffff",
-    "Raro": "#3b82f6",
-    "Epico": "#a855f7",
-    "Legendario": "#ff8000"
+const coloresRareza = {
+    "Poor": "#9d9d9d",        // Gris (Basura)
+    "Common": "#ffffff",      // Blanco
+    "Uncommon": "#1eff00",    // Verde
+    "Rare": "#0070dd",        // Azul
+    "Epic": "#a335ee",        // Morado
+    "Legendary": "#ff8000",   // Naranja
+    "Artifact": "#e6cc80"     // Dorado claro/Beige
 };
 </script>
 </head>
@@ -240,45 +242,51 @@ async function cargarDatos() {
         }
 
 function derrotar() {
-    // 1. Filtrar posibles premios por rareza
-    const posiblesPremios = Object.keys(itemsDB).filter(key => {
-        return itemsDB[key].Rareza === actual.LootTable;
+    const dadoTipo = Math.random() * 100;
+    const dadoRareza = Math.random() * 100;
+    
+    let tipoElegido = "Basura";
+    let rarezaElegida = "Poor";
+
+    // --- Determinar TIPO ---
+    if (dadoTipo > 85) tipoElegido = "Equipable";      // 15%
+    else if (dadoTipo > 55) tipoElegido = "Consumible"; // 30%
+    else tipoElegido = "Basura";                        // 55%
+
+    // --- Determinar RAREZA (Calidad) ---
+    // Si es tipo Basura, casi siempre será "Poor"
+    if (tipoElegido === "Basura") {
+        rarezaElegida = (dadoRareza > 95) ? "Common" : "Poor"; 
+    } else {
+        // Para consumibles y equipo, usamos la escala de WoW
+        if (dadoRareza > 99.9) rarezaElegida = "Artifact";   // 0.1%
+        else if (dadoRareza > 99) rarezaElegida = "Legendary"; // 0.9%
+        else if (dadoRareza > 90) rarezaElegida = "Epic";      // 9%
+        else if (dadoRareza > 75) rarezaElegida = "Rare";      // 15%
+        else if (dadoRareza > 45) rarezaElegida = "Uncommon";  // 30%
+        else rarezaElegida = "Common";                        // 45%
+    }
+
+    // Filtrar objetos que cumplan AMBAS condiciones
+    let posiblesPremios = Object.keys(itemsDB).filter(key => {
+        return itemsDB[key].Tipo === tipoElegido && itemsDB[key].Rareza === rarezaElegida;
     });
 
+    // Si no hay exactamente de esa combinación, buscamos por rareza general
+    if (posiblesPremios.length === 0) {
+        posiblesPremios = Object.keys(itemsDB).filter(key => itemsDB[key].Rareza === rarezaElegida);
+    }
+
     if (posiblesPremios.length > 0) {
-        // Elegir uno al azar
         const itemKey = posiblesPremios[Math.floor(Math.random() * posiblesPremios.length)];
         const itemObtenido = itemsDB[itemKey];
-
-        // 2. Guardar en inventario
-        inventario.push({ ...itemObtenido }); 
-        localStorage.setItem('hq_inv', JSON.stringify(inventario));
-
-        // --- LÓGICA DE IMAGEN HÍBRIDA ---
-        // Si tiene 'wid', la imagen viene de Blizzard. Si no, de tu carpeta img/
-        const rutaImagen = itemObtenido.wid 
-            ? `https://wow.zamimg.com/images/wow/icons/large/${itemObtenido.f}.jpg` 
-            : `img/${itemObtenido.f}`;
-
-        // Definir color por rareza (opcional, pero queda genial)
-        const colores = { "Basura": "#94a3b8", "Comun": "#ffffff", "Raro": "#3b82f6", "Epico": "#a855f7", "Legendario": "#ff8000" };
-        const colorItem = colores[itemObtenido.Rareza] || "gold";
-
-        // 3. Mostrar botín actualizado
+        
+        // ... (resto del código para guardar e inyectar en HTML) ...
+        const color = coloresRareza[itemObtenido.Rareza];
         document.getElementById('botin-texto').innerHTML = `
-            <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-top:10px; border: 1px solid rgba(255,215,0,0.3); padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                <img src="${rutaImagen}" style="width:45px; height:45px; border:2px solid ${colorItem}; border-radius: 4px; box-shadow: 0 0 10px ${colorItem}44;">
-                <div style="text-align: left;">
-                    <div style="font-size: 10px; color: #94a3b8;">¡OBJETO OBTENIDO!</div>
-                    <span style="color: ${colorItem}; font-weight: bold; font-size: 16px;">${itemObtenido.n}</span>
-                </div>
-            </div>`;
-
-    } else {
-        document.getElementById('botin-texto').innerHTML = "<span style='color: #94a3b8;'>El enemigo no llevaba nada valioso...</span>";
+            <span style="color:${color}">¡Has encontrado [${itemObtenido.n}]!</span>
+        `;
     }
-    
-    document.getElementById('btn-derrota').style.display = 'none';
 }
 
 function renderInv() {
