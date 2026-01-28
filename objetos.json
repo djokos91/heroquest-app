@@ -1,10 +1,10 @@
 {
-  "vela_derretida": { "n": "Vela Derretida", "f": "vela_derretida.jpg", "Rareza": "Común", "Tipo": "Basura" },
-  "vela_derretida1": { "n": "Vela Derretida1", "f": "vela_derretida.jpg", "Rareza": "Basura", "Tipo": "Basura" },
-  "vela_derretida2": { "n": "Vela Derretida2", "f": "vela_derretida.jpg", "Rareza": "Raro", "Tipo": "Basura" },
-    "pechera_hierro": { "n": "Pechera de Hierro", "f": "pechera_hierro.jpg", "Rareza": "Raro", "Tipo": "Equipable", "Slot": "pecho" },
-  "anillo_plata": { "n": "Anillo de Plata", "f": "anillo_plata.jpg", "Rareza": "Raro", "Tipo": "Equipable", "Slot": "anillo" },
-  "pocion_roja": { "n": "Poción de Vida", "f": "pocion_roja.jpg", "Rareza": "Común", "Tipo": "Consumible" },
-  "hueso": { "n": "Hueso", "f": "hueso.jpg", "Rareza": "Común", "Tipo": "Basura" },
-  "oro": { "n": "Bolsa de Oro", "f": "oro.jpg", "Rareza": "Común", "Tipo": "Basura" }
+  "agonía_escarcha": {
+    "n": "Agonía de Escarcha",
+    "f": "inv_sword_04",
+    "wid": "36942",
+    "Slot": "brazos",
+    "Rareza": "Epico",
+    "Tipo": "Equipable"
+  }
 }
