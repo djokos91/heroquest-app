@@ -135,6 +135,15 @@ const coloresRareza = {
     "Legendary": "#ff8000",   // Naranja
     "Artifact": "#e6cc80"     // Dorado claro/Beige
 };
+    const jerarquiaRareza = {
+    "Poor": 0,
+    "Common": 1,
+    "Uncommon": 2,
+    "Rare": 3,
+    "Epic": 4,
+    "Legendary": 5,
+    "Artifact": 6
+};
 </script>
 </head>
 <body>
@@ -242,50 +251,48 @@ async function cargarDatos() {
         }
 
 function derrotar() {
+    // 1. Tirada de Tipo (Igual que antes)
     const dadoTipo = Math.random() * 100;
-    const dadoRareza = Math.random() * 100;
-    
     let tipoElegido = "Basura";
-    let rarezaElegida = "Poor";
+    if (dadoTipo > 85) tipoElegido = "Equipable";
+    else if (dadoTipo > 55) tipoElegido = "Consumible";
 
-    // --- Determinar TIPO ---
-    if (dadoTipo > 85) tipoElegido = "Equipable";      // 15%
-    else if (dadoTipo > 55) tipoElegido = "Consumible"; // 30%
-    else tipoElegido = "Basura";                        // 55%
+    // 2. Obtener el nivel máximo permitido por el enemigo
+    // Si el enemigo es "Epic", su nivel es 4.
+    const nivelMaximo = jerarquiaRareza[actual.LootTable] || 0;
 
-    // --- Determinar RAREZA (Calidad) ---
-    // Si es tipo Basura, casi siempre será "Poor"
-    if (tipoElegido === "Basura") {
-        rarezaElegida = (dadoRareza > 95) ? "Common" : "Poor"; 
-    } else {
-        // Para consumibles y equipo, usamos la escala de WoW
-        if (dadoRareza > 99.9) rarezaElegida = "Artifact";   // 0.1%
-        else if (dadoRareza > 99) rarezaElegida = "Legendary"; // 0.9%
-        else if (dadoRareza > 90) rarezaElegida = "Epic";      // 9%
-        else if (dadoRareza > 75) rarezaElegida = "Rare";      // 15%
-        else if (dadoRareza > 45) rarezaElegida = "Uncommon";  // 30%
-        else rarezaElegida = "Common";                        // 45%
-    }
-
-    // Filtrar objetos que cumplan AMBAS condiciones
+    // 3. Filtrar TODOS los objetos que sean del tipo elegido 
+    // Y que su rareza sea MENOR o IGUAL a la del enemigo
     let posiblesPremios = Object.keys(itemsDB).filter(key => {
-        return itemsDB[key].Tipo === tipoElegido && itemsDB[key].Rareza === rarezaElegida;
+        const item = itemsDB[key];
+        const nivelItem = jerarquiaRareza[item.Rareza];
+        return item.Tipo === tipoElegido && nivelItem <= nivelMaximo;
     });
 
-    // Si no hay exactamente de esa combinación, buscamos por rareza general
+    // 4. Si no hay nada con ese tipo (ej. no hay consumibles de nivel bajo), 
+    // buscamos cualquier cosa que el enemigo pueda soltar
     if (posiblesPremios.length === 0) {
-        posiblesPremios = Object.keys(itemsDB).filter(key => itemsDB[key].Rareza === rarezaElegida);
+        posiblesPremios = Object.keys(itemsDB).filter(key => {
+            return jerarquiaRareza[itemsDB[key].Rareza] <= nivelMaximo;
+        });
     }
 
+    // 5. De los que quedan, elegir uno al azar
+    // (Opcional: podrías hacer que los items de nivel alto dentro de este filtro 
+    // salgan menos veces, pero por ahora esto ya respeta tu regla)
     if (posiblesPremios.length > 0) {
         const itemKey = posiblesPremios[Math.floor(Math.random() * posiblesPremios.length)];
         const itemObtenido = itemsDB[itemKey];
+
+        // Lógica de guardado y renderizado (la que ya tienes)
+        inventario.push({ ...itemObtenido });
+        localStorage.setItem('hq_inv', JSON.stringify(inventario));
         
-        // ... (resto del código para guardar e inyectar en HTML) ...
         const color = coloresRareza[itemObtenido.Rareza];
         document.getElementById('botin-texto').innerHTML = `
-            <span style="color:${color}">¡Has encontrado [${itemObtenido.n}]!</span>
-        `;
+            <div style="color:${color}; font-weight:bold;">
+                ¡${actual.n} soltó [${itemObtenido.n}]!
+            </div>`;
     }
 }
 
