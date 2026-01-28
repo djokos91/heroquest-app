@@ -297,7 +297,7 @@ function equipar(index) {
     const item = inventario[index];
     let slotId = "";
 
-    // Tu lógica de anillos y abalorios está perfecta
+    // Lógica de selección de slot (mantenemos la tuya)
     if (item.Slot === "anillo") {
         const a1 = document.getElementById("slot-anillo-1");
         slotId = (a1.innerHTML === "") ? "slot-anillo-1" : "slot-anillo-2";
@@ -310,18 +310,28 @@ function equipar(index) {
 
     const target = document.getElementById(slotId);
     if (target) {
-        // Colocamos la imagen en el slot
-       target.innerHTML = item.wid 
-    ? `<img src="https://wow.zamimg.com/images/wow/icons/large/${item.f}.jpg">`
-    : `<img src="img/${item.f}">`;
+        // --- AQUÍ ESTÁ EL CAMBIO ---
+        // Decidimos si la imagen es de Wowhead o local
+        const imgSrc = item.wid 
+            ? `https://wow.zamimg.com/images/wow/icons/large/${item.f}.jpg` 
+            : `img/${item.f}`;
+
+        // Insertamos la imagen (y el enlace de Wowhead para que el tooltip también funcione en el héroe)
+        const linkInicio = item.wid ? `<a href="https://www.wowhead.com/item=${item.wid}" data-wowhead="item=${item.wid}&domain=es" onclick="return false;">` : '';
+        const linkFin = item.wid ? `</a>` : '';
+
+        target.innerHTML = `${linkInicio}<img src="${imgSrc}">${linkFin}`;
         target.style.borderColor = "#3b82f6";
         
-        // --- NOVEDAD: Lo quitamos de la mochila ---
+        // Quitar de mochila y guardar
         inventario.splice(index, 1);
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
-        renderInv(); // Refrescamos la mochila para que ya no salga ahí
+        renderInv(); 
         
         alert(item.n + " equipado.");
+        
+        // Refrescar tooltips de Wowhead para que el nuevo enlace funcione
+        if(typeof $WowheadPower !== 'undefined') $WowheadPower.refreshLinks();
     }
 }
 
