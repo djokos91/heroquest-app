@@ -186,19 +186,20 @@
         let inventario = JSON.parse(localStorage.getItem('hq_inv')) || [];
         let actual = null;
 
-        async function cargarDatos() {
-            try {
-                const [resEnemigos, resObjetos] = await Promise.all([
-                    fetch('enemigos.json'),
-                    fetch('objetos.json')
-                ]);
-                enemigos = await resEnemigos.json();
-                itemsDB = await resObjetos.json();
-                console.log("Sistema: Datos cargados.");
-            } catch (err) {
-                console.error("Error cargando JSON:", err);
-            }
-        }
+async function cargarDatos() {
+    try {
+        // Añadimos ?v= + la hora actual para que el navegador crea que es un archivo nuevo
+        const [resEnemigos, resObjetos] = await Promise.all([
+            fetch('enemigos.json?v=' + Date.now()),
+            fetch('objetos.json?v=' + Date.now())
+        ]);
+        enemigos = await resEnemigos.json();
+        itemsDB = await resObjetos.json();
+        console.log("Sistema: Datos frescos cargados.");
+    } catch (err) {
+        console.error("Error cargando JSON:", err);
+    }
+}
         cargarDatos();
 
         function cambiarVista(donde) {
