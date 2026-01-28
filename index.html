@@ -251,48 +251,65 @@ async function cargarDatos() {
         }
 
 function derrotar() {
-    // 1. Tirada de Tipo (Igual que antes)
-    const dadoTipo = Math.random() * 100;
-    let tipoElegido = "Basura";
-    if (dadoTipo > 85) tipoElegido = "Equipable";
-    else if (dadoTipo > 55) tipoElegido = "Consumible";
+    try {
+        // --- TIRADA DE TIPO ---
+        const dadoTipo = Math.random() * 100;
+        let tipoElegido = "Basura";
+        if (dadoTipo > 85) tipoElegido = "Equipable";
+        else if (dadoTipo > 55) tipoElegido = "Consumible";
 
-    // 2. Obtener el nivel máximo permitido por el enemigo
-    // Si el enemigo es "Epic", su nivel es 4.
-    const nivelMaximo = jerarquiaRareza[actual.LootTable] || 0;
+        // --- NIVEL DEL ENEMIGO ---
+        // Usamos el LootTable del enemigo actual (ej: "Epic")
+        const nivelMaximo = jerarquiaRareza[actual.LootTable] !== undefined ? jerarquiaRareza[actual.LootTable] : 0;
 
-    // 3. Filtrar TODOS los objetos que sean del tipo elegido 
-    // Y que su rareza sea MENOR o IGUAL a la del enemigo
-    let posiblesPremios = Object.keys(itemsDB).filter(key => {
-        const item = itemsDB[key];
-        const nivelItem = jerarquiaRareza[item.Rareza];
-        return item.Tipo === tipoElegido && nivelItem <= nivelMaximo;
-    });
-
-    // 4. Si no hay nada con ese tipo (ej. no hay consumibles de nivel bajo), 
-    // buscamos cualquier cosa que el enemigo pueda soltar
-    if (posiblesPremios.length === 0) {
-        posiblesPremios = Object.keys(itemsDB).filter(key => {
-            return jerarquiaRareza[itemsDB[key].Rareza] <= nivelMaximo;
+        // --- FILTRADO ---
+        let posiblesPremios = Object.keys(itemsDB).filter(key => {
+            const item = itemsDB[key];
+            const nivelItem = jerarquiaRareza[item.Rareza] !== undefined ? jerarquiaRareza[item.Rareza] : 0;
+            return item.Tipo === tipoElegido && nivelItem <= nivelMaximo;
         });
-    }
 
-    // 5. De los que quedan, elegir uno al azar
-    // (Opcional: podrías hacer que los items de nivel alto dentro de este filtro 
-    // salgan menos veces, pero por ahora esto ya respeta tu regla)
-    if (posiblesPremios.length > 0) {
-        const itemKey = posiblesPremios[Math.floor(Math.random() * posiblesPremios.length)];
-        const itemObtenido = itemsDB[itemKey];
+        // Si el filtro específico está vacío, buscamos cualquier cosa que el enemigo pueda soltar
+        if (posiblesPremios.length === 0) {
+            posiblesPremios = Object.keys(itemsDB).filter(key => {
+                return jerarquiaRareza[itemsDB[key].Rareza] <= nivelMaximo;
+            });
+        }
 
-        // Lógica de guardado y renderizado (la que ya tienes)
-        inventario.push({ ...itemObtenido });
-        localStorage.setItem('hq_inv', JSON.stringify(inventario));
-        
-        const color = coloresRareza[itemObtenido.Rareza];
-        document.getElementById('botin-texto').innerHTML = `
-            <div style="color:${color}; font-weight:bold;">
-                ¡${actual.n} soltó [${itemObtenido.n}]!
-            </div>`;
+        // --- ENTREGA DE PREMIO ---
+        if (posiblesPremios.length > 0) {
+            const itemKey = posiblesPremios[Math.floor(Math.random() * posiblesPremios.length)];
+            const itemObtenido = itemsDB[itemKey];
+
+            // Guardar en inventario
+            inventario.push({ ...itemObtenido });
+            localStorage.setItem('hq_inv', JSON.stringify(inventario));
+
+            // Mostrar en pantalla
+            const rutaImagen = itemObtenido.wid 
+                ? `https://wow.zamimg.com/images/wow/icons/large/${itemObtenido.f}.jpg` 
+                : `img/${itemObtenido.f}`;
+            
+            const color = coloresRareza[itemObtenido.Rareza] || "#fff";
+
+            document.getElementById('botin-texto').innerHTML = `
+                <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-top:10px;">
+                    <img src="${rutaImagen}" style="width:40px; height:40px; border:2px solid ${color};">
+                    <span style="color:${color}; font-weight:bold;">¡${itemObtenido.n}!</span>
+                </div>`;
+        } else {
+            document.getElementById('botin-texto').innerHTML = "El enemigo no tenía nada.";
+        }
+
+        // --- OCULTAR BOTÓN ---
+        // Esto siempre debe ejecutarse al final para que el botón desaparezca
+        document.getElementById('btn-derrota').style.display = 'none';
+
+    } catch (error) {
+        console.error("Error crítico en derrotar():", error);
+        // Si algo falla, al menos ocultamos el botón para no bloquear al usuario
+        document.getElementById('btn-derrota').style.display = 'none';
+        document.getElementById('botin-texto').innerHTML = "Error al saquear el cuerpo.";
     }
 }
 
