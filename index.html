@@ -150,7 +150,7 @@ const coloresRareza = {
 
     <section id="vista-mundo" class="tab-content active-view">
         <h2 style="color: #ef4444; font-style: italic;">MAZMORRA</h2>
-        <button class="btn-action" onclick="generarEncuentro()">🎲 EXPLORAR</button>
+        <button id="btn-explorar" class="btn-action" onclick="generarEncuentro()" disabled>🎲 EXPLORAR</button>
         <div id="pantalla-enemigo" style="display: none;">
             <div class="card">
                 <img id="foto-enemigo" src="">
@@ -206,25 +206,14 @@ const coloresRareza = {
 
 async function cargarDatos() {
     try {
-        const v = Date.now(); // Para evitar la caché
-        const [resEnemigos, resEquipos, resConsumibles, resBasura] = await Promise.all([
-            fetch(`enemigos.json?v=${v}`),
-            fetch(`equipacion.json?v=${v}`),
-            fetch(`consumibles.json?v=${v}`),
-            fetch(`basura.json?v=${v}`)
-        ]);
+        // ... (todo tu código de fetch y Promise.all) ...
 
-        enemigos = await resEnemigos.json();
-        
-        // Cargamos los tres y los unimos en un solo objeto
-        const equipos = await resEquipos.json();
-        const consumibles = await resConsumibles.json();
-        const basura = await resBasura.json();
-
-        // Esta línea junta los 3 JSONs en itemsDB
         itemsDB = { ...equipos, ...consumibles, ...basura };
+        
+        // ¡ESTO ES CLAVE! Activamos el botón solo cuando todo está listo
+        document.getElementById('btn-explorar').disabled = false;
+        console.log("Sistema: Datos listos. Botón Explorar activado.");
 
-        console.log("Sistema: Base de datos unificada cargada.");
     } catch (err) {
         console.error("Error cargando los archivos JSON:", err);
     }
@@ -240,34 +229,29 @@ async function cargarDatos() {
         }
 
 function generarEncuentro() {
-    // 1. Convertimos las claves (nombres) de tu JSON en una lista
-    // Si tu JSON es {"orco": {...}, "momia": {...}}, esto crea ["orco", "momia"]
-    const clavesDisponibles = Object.keys(enemigos);
-
-    if (clavesDisponibles.length === 0) {
-        console.error("La base de datos de enemigos está vacía o no se cargó.");
-        return;
+    // 1. Verificación de seguridad: ¿Se cargó el objeto enemigos?
+    if (!enemigos || Object.keys(enemigos).length === 0) {
+        console.error("Los enemigos no están listos.");
+        return; 
     }
 
-    // 2. Elegimos una clave al azar
-    const claveElegida = clavesDisponibles[Math.floor(Math.random() * clavesDisponibles.length)];
+    // 2. Selección usando las CLAVES (los nombres que pusiste en el JSON)
+    const claves = Object.keys(enemigos);
+    const claveAleatoria = claves[Math.floor(Math.random() * claves.length)];
+    
+    // 3. Asignación a la variable global 'actual'
+    actual = enemigos[claveAleatoria];
 
-    // 3. Asignamos el objeto correspondiente a 'actual'
-    // Ahora 'actual' ya NO es undefined, es el objeto del enemigo
-    actual = enemigos[claveElegida];
-
-    // 4. Ahora esta línea ya no dará error porque 'actual' existe
+    // 4. Pintar en el HTML SOLO si 'actual' tiene datos
     if (actual && actual.n) {
         document.getElementById('enemigo-nombre').innerText = actual.n;
         document.getElementById('enemigo-hp').innerText = actual.hp;
         document.getElementById('enemigo-img').src = `img/${actual.f}`;
 
-        // Gestión de botones
+        // Control de visibilidad
         document.getElementById('btn-atacar').style.display = 'inline-block';
         document.getElementById('btn-derrota').style.display = 'none';
         document.getElementById('botin-texto').innerHTML = "";
-    } else {
-        console.error("El enemigo seleccionado no tiene la propiedad 'n':", actual);
     }
 }
 
