@@ -235,27 +235,55 @@ function renderInv() {
     }
 }
 
-        function equipar(index) {
-            const item = inventario[index];
-            let slotId = "";
+function equipar(index) {
+    const item = inventario[index];
+    let slotId = "";
 
-            if (item.Slot === "anillo") {
-                const a1 = document.getElementById("slot-anillo-1");
-                slotId = (a1.innerHTML === "") ? "slot-anillo-1" : "slot-anillo-2";
-            } else if (item.Slot === "abalorio") {
-                const ab1 = document.getElementById("slot-abalorio-1");
-                slotId = (ab1.innerHTML === "") ? "slot-abalorio-1" : "slot-abalorio-2";
-            } else {
-                slotId = "slot-" + item.Slot;
-            }
+    // Tu lógica de anillos y abalorios está perfecta
+    if (item.Slot === "anillo") {
+        const a1 = document.getElementById("slot-anillo-1");
+        slotId = (a1.innerHTML === "") ? "slot-anillo-1" : "slot-anillo-2";
+    } else if (item.Slot === "abalorio") {
+        const ab1 = document.getElementById("slot-abalorio-1");
+        slotId = (ab1.innerHTML === "") ? "slot-abalorio-1" : "slot-abalorio-2";
+    } else {
+        slotId = "slot-" + item.Slot;
+    }
 
-            const target = document.getElementById(slotId);
-            if (target) {
-                target.innerHTML = `<img src="img/${item.f}">`;
-                target.style.borderColor = "#3b82f6";
-                alert(item.n + " equipado.");
-            }
-        }
+    const target = document.getElementById(slotId);
+    if (target) {
+        // Colocamos la imagen en el slot
+        target.innerHTML = `<img src="img/${item.f}">`;
+        target.style.borderColor = "#3b82f6";
+        
+        // --- NOVEDAD: Lo quitamos de la mochila ---
+        inventario.splice(index, 1);
+        localStorage.setItem('hq_inv', JSON.stringify(inventario));
+        renderInv(); // Refrescamos la mochila para que ya no salga ahí
+        
+        alert(item.n + " equipado.");
+    }
+}
+
+        // Añade esto a tu script y añade onclick="desequipar(this)" a tus .slot en el HTML
+function desequipar(elemento) {
+    if (elemento.innerHTML === "") return; // Si está vacío, no hace nada
+
+    // Sacamos la info básica (podríamos mejorar esto guardando el objeto entero en el slot)
+    const imgPath = elemento.querySelector('img').src;
+    const nombreArchivo = imgPath.split('/').pop();
+
+    // Buscamos en itemsDB cuál era ese objeto para devolverlo a la mochila
+    const itemKey = Object.keys(itemsDB).find(key => itemsDB[key].f === nombreArchivo);
+    
+    if (itemKey) {
+        inventario.push({ ...itemsDB[itemKey] });
+        localStorage.setItem('hq_inv', JSON.stringify(inventario));
+        elemento.innerHTML = ""; // Vaciamos el slot
+        elemento.style.borderColor = "#475569"; // Color original
+        alert("Objeto guardado en la mochila.");
+    }
+}
 
         function usar(index) {
             alert("Usaste " + inventario[index].n);
