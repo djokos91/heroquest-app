@@ -17,14 +17,39 @@
         .btn-action { background: #ef4444; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 90%; margin: 10px; font-size: 16px; }
         .btn-win { background: #22c55e; }
         
-        /* FICHA DE HÉROE */
-        .hero-container { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; max-width: 400px; margin: auto; padding: 10px; }
-        .slot-column { display: flex; flex-direction: column; gap: 10px; justify-content: center; }
-        .slot { width: 50px; height: 50px; background: rgba(30, 41, 59, 0.8); border: 2px solid #475569; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-        .slot img { width: 80%; height: 80%; object-fit: contain; }
-        .slot::after { content: attr(data-label); position: absolute; bottom: 2px; font-size: 7px; color: #94a3b8; text-transform: uppercase; width: 100%; text-align: center; background: rgba(0,0,0,0.4); }
-        .silhouette { display: flex; align-items: center; justify-content: center; font-size: 120px; opacity: 0.1; }
-        .bottom-slots { grid-column: span 3; display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+/* FICHA DE HÉROE */
+.hero-container { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; max-width: 400px; margin: auto; padding: 10px; }
+.slot-column { display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+
+.slot { 
+    width: 50px; 
+    height: 50px; 
+    background: rgba(30, 41, 59, 0.8); 
+    border: 2px solid #475569; 
+    border-radius: 8px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    position: relative; 
+    overflow: hidden; 
+    /* --- NUEVAS LÍNEAS PARA INTERACCIÓN --- */
+    cursor: pointer; 
+    transition: all 0.2s ease; 
+}
+
+/* Efecto al pasar el ratón o pulsar */
+.slot:hover { 
+    background: rgba(59, 130, 246, 0.2); 
+    border-color: #3b82f6; 
+}
+
+/* Escala un poco el slot cuando se hace clic */
+.slot:active { transform: scale(0.9); }
+
+.slot img { width: 80%; height: 80%; object-fit: contain; }
+.slot::after { content: attr(data-label); position: absolute; bottom: 2px; font-size: 7px; color: #94a3b8; text-transform: uppercase; width: 100%; text-align: center; background: rgba(0,0,0,0.4); }
+.silhouette { display: flex; align-items: center; justify-content: center; font-size: 120px; opacity: 0.1; }
+.bottom-slots { grid-column: span 3; display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
 
         /* MOCHILA */
         .item-row { background: #1e293b; padding: 10px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #3b82f6; }
@@ -265,23 +290,33 @@ function equipar(index) {
     }
 }
 
-        // Añade esto a tu script y añade onclick="desequipar(this)" a tus .slot en el HTML
-function desequipar(elemento) {
-    if (elemento.innerHTML === "") return; // Si está vacío, no hace nada
+function gestionarEquipado(elemento) {
+    const img = elemento.querySelector('img');
+    if (!img) return; // Si el slot está vacío, no hace nada
 
-    // Sacamos la info básica (podríamos mejorar esto guardando el objeto entero en el slot)
-    const imgPath = elemento.querySelector('img').src;
-    const nombreArchivo = imgPath.split('/').pop();
+    // 1. Identificamos el objeto por el nombre de su imagen
+    const nombreArchivo = img.src.split('/').pop();
+    const keyEncontrada = Object.keys(itemsDB).find(key => itemsDB[key].f === nombreArchivo);
+    const item = itemsDB[keyEncontrada];
 
-    // Buscamos en itemsDB cuál era ese objeto para devolverlo a la mochila
-    const itemKey = Object.keys(itemsDB).find(key => itemsDB[key].f === nombreArchivo);
-    
-    if (itemKey) {
-        inventario.push({ ...itemsDB[itemKey] });
-        localStorage.setItem('hq_inv', JSON.stringify(inventario));
-        elemento.innerHTML = ""; // Vaciamos el slot
-        elemento.style.borderColor = "#475569"; // Color original
-        alert("Objeto guardado en la mochila.");
+    if (item) {
+        // 2. Pedimos confirmación (Igual que en la mochila)
+        if (confirm(`¿Quieres desequipar ${item.n}?`)) {
+            
+            // 3. Lo devolvemos al array de inventario
+            inventario.push({ ...item });
+            localStorage.setItem('hq_inv', JSON.stringify(inventario));
+
+            // 4. Limpiamos el slot visualmente
+            elemento.innerHTML = ""; 
+            elemento.style.borderColor = "#475569"; // Gris original
+            elemento.style.background = "rgba(30, 41, 59, 0.8)"; // Fondo original
+
+            // 5. Actualizamos la mochila para que aparezca allí
+            renderInv();
+            
+            alert(`${item.n} guardado en la mochila.`);
+        }
     }
 }
 
