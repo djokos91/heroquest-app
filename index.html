@@ -64,6 +64,33 @@
     gap: 10px;
     padding: 10px;
     justify-items: center;
+    /* Cada casilla de la mochila */
+.item-slot {
+    width: 60px;
+    height: 60px;
+    background: #1e293b;
+    border: 2px solid #475569;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    /* --- AÑADIMOS TRANSICIÓN PARA SUAVIDAD --- */
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+/* --- EFECTO HOVER (RESALTADO) --- */
+.item-slot:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
+    transform: translateY(-2px); /* Pequeño salto hacia arriba */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Efecto al pulsar */
+.item-slot:active { 
+    transform: scale(0.9); 
 }
 
 /* Cada casilla de la mochila */
