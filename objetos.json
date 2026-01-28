@@ -3,6 +3,6 @@
   "pechera_hierro": { "n": "Pechera de Hierro", "f": "pechera_hierro.jpg", "Rareza": "Raro", "Tipo": "Equipable", "Slot": "pecho" },
   "anillo_plata": { "n": "Anillo de Plata", "f": "anillo_plata.jpg", "Rareza": "Raro", "Tipo": "Equipable", "Slot": "anillo" },
   "pocion_roja": { "n": "Poción de Vida", "f": "pocion_roja.jpg", "Rareza": "Común", "Tipo": "Consumible" },
-  "hueso": { "n": "Hueso viejo", "f": "hueso.jpg", "Rareza": "Basura", "Tipo": "Basura" },
+  "hueso": { "n": "Hueso", "f": "hueso.jpg", "Rareza": "Basura", "Tipo": "Basura" },
   "oro": { "n": "Bolsa de Oro", "f": "oro.jpg", "Rareza": "Común", "Tipo": "Basura" }
 }
