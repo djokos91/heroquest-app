@@ -271,13 +271,29 @@ function renderInv() {
     }
 
     div.innerHTML = inventario.map((item, index) => {
-        const rarezaClass = item.Rareza.toLowerCase();
+        const rarezaClass = item.Rareza ? item.Rareza.toLowerCase() : 'comun';
+        
+        // --- LÓGICA HÍBRIDA DE IMAGEN ---
+        // Si tiene 'wid' (Wowhead ID), usamos la URL de Blizzard. Si no, tu carpeta img/
+        const imgSrc = item.wid 
+            ? `https://wow.zamimg.com/images/wow/icons/large/${item.f}.jpg` 
+            : `img/${item.f}`;
+
+        // El enlace para que funcione el Tooltip de Wowhead
+        const linkInicio = item.wid ? `<a href="https://www.wowhead.com/item=${item.wid}" data-wowhead="item=${item.wid}&domain=es" onclick="return false;">` : '';
+        const linkFin = item.wid ? `</a>` : '';
+
         return `
             <div class="item-slot ${rarezaClass}" onclick="gestionarItem(${index})">
-                <img src="img/${item.f}" title="${item.n}">
+                ${linkInicio}
+                    <img src="${imgSrc}" alt="${item.n}">
+                ${linkFin}
             </div>
         `;
     }).join('');
+
+    // Esto refresca los tooltips para que Wowhead detecte los nuevos iconos
+    if (typeof $WowheadPower !== 'undefined') $WowheadPower.refreshLinks();
 }
         function gestionarItem(index) {
     const item = inventario[index];
