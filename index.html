@@ -251,60 +251,61 @@ async function cargarDatos() {
         }
 
 function derrotar() {
-    console.log("Botón derrotar pulsado"); // Esto nos dirá si al menos entra en la función
+    console.log("--- INICIANDO SAQUEO ---");
 
-    if (!actual || !itemsDB) {
-        console.error("Error: No hay enemigo actual o base de datos de items");
+    // Comprobamos el enemigo
+    if (typeof actual === 'undefined' || actual === null) {
+        console.error("El enemigo (actual) es undefined. ¿Has empezado el combate?");
+        alert("Error: El sistema no sabe a qué enemigo has derrotado.");
+        return;
+    }
+    console.log("Enemigo detectado:", actual.n);
+
+    // Comprobamos la base de datos
+    if (typeof itemsDB === 'undefined' || Object.keys(itemsDB).length === 0) {
+        console.error("La base de datos (itemsDB) es undefined o está vacía.");
+        alert("Error: No se han cargado los objetos de los JSON.");
+        return;
+    }
+    console.log("Objetos en DB:", Object.keys(itemsDB).length);
+
+    // Comprobamos la jerarquía
+    if (typeof jerarquiaRareza === 'undefined') {
+        console.error("La variable jerarquiaRareza no existe.");
+        alert("Error: Falta la lista de orden de rarezas.");
         return;
     }
 
-    // 1. Decidir Tipo
-    const dadoTipo = Math.random() * 100;
-    let tipoElegido = "Basura";
-    if (dadoTipo > 85) tipoElegido = "Equipable";
-    else if (dadoTipo > 55) tipoElegido = "Consumible";
+    // 1. Obtener nivel del enemigo (si no existe, por defecto es Poor/0)
+    const nivelMax = jerarquiaRareza[actual.LootTable] !== undefined ? jerarquiaRareza[actual.LootTable] : 0;
+    console.log("Nivel máximo de botín:", actual.LootTable, "(", nivelMax, ")");
 
-    // 2. Nivel del Enemigo (LootTable debe ser: Poor, Common, Uncommon, Rare, Epic, Legendary o Artifact)
-    const nivelMaximo = jerarquiaRareza[actual.LootTable] !== undefined ? jerarquiaRareza[actual.LootTable] : 0;
-
-    // 3. Filtrar
-    let posiblesPremios = Object.keys(itemsDB).filter(key => {
+    // 2. Filtrar todos los objetos que tengan un nivel <= al del enemigo
+    // Usamos un filtro simple para asegurar que algo caiga
+    const posibles = Object.keys(itemsDB).filter(key => {
         const item = itemsDB[key];
-        const nivelItem = jerarquiaRareza[item.Rareza] !== undefined ? jerarquiaRareza[item.Rareza] : 0;
-        return item.Tipo === tipoElegido && nivelItem <= nivelMaximo;
+        const nivelItem = jerarquiaRareza[item.Rareza] || 0;
+        return nivelItem <= nivelMax;
     });
 
-    // 4. Si el filtro falla, damos cualquier cosa de nivel igual o inferior
-    if (posiblesPremios.length === 0) {
-        posiblesPremios = Object.keys(itemsDB).filter(key => {
-            return jerarquiaRareza[itemsDB[key].Rareza] <= nivelMaximo;
-        });
-    }
+    console.log("Objetos candidatos encontrados:", posibles.length);
 
-    // 5. Entregar Premio
-    if (posiblesPremios.length > 0) {
-        const itemKey = posiblesPremios[Math.floor(Math.random() * posiblesPremios.length)];
+    if (posibles.length > 0) {
+        const itemKey = posibles[Math.floor(Math.random() * posibles.length)];
         const itemObtenido = itemsDB[itemKey];
 
+        // Guardar
         inventario.push({ ...itemObtenido });
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
 
-        const imgSrc = itemObtenido.wid 
-            ? `https://wow.zamimg.com/images/wow/icons/large/${itemObtenido.f}.jpg` 
-            : `img/${itemObtenido.f}`;
-        
+        // Mostrar
         const color = coloresRareza[itemObtenido.Rareza] || "#fff";
-
-        document.getElementById('botin-texto').innerHTML = `
-            <div style="display:flex; align-items:center; gap:10px; justify-content:center;">
-                <img src="${imgSrc}" style="width:40px; border:2px solid ${color}">
-                <span style="color:${color}">¡${itemObtenido.n}!</span>
-            </div>`;
+        document.getElementById('botin-texto').innerHTML = `¡Ganaste <span style="color:${color}">[${itemObtenido.n}]</span>!`;
     } else {
-        document.getElementById('botin-texto').innerHTML = "No has encontrado nada.";
+        document.getElementById('botin-texto').innerHTML = "No había nada de valor.";
     }
 
-    // 6. Ocultar el botón
+    // Ocultar botón
     document.getElementById('btn-derrota').style.display = 'none';
 }
 
