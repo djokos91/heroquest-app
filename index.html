@@ -222,12 +222,10 @@ async function cargarDatos() {
         }
 
 function derrotar() {
-    // 1. Obtener las llaves de los objetos que coinciden con la tabla de botín del enemigo
+    // 1. Filtrar posibles premios por rareza
     const posiblesPremios = Object.keys(itemsDB).filter(key => {
         return itemsDB[key].Rareza === actual.LootTable;
     });
-
-    console.log("Posibles premios encontrados:", posiblesPremios); // Mira esto en la consola F12
 
     if (posiblesPremios.length > 0) {
         // Elegir uno al azar
@@ -238,16 +236,28 @@ function derrotar() {
         inventario.push({ ...itemObtenido }); 
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
 
-        // 3. Mostrar botín
+        // --- LÓGICA DE IMAGEN HÍBRIDA ---
+        // Si tiene 'wid', la imagen viene de Blizzard. Si no, de tu carpeta img/
+        const rutaImagen = itemObtenido.wid 
+            ? `https://wow.zamimg.com/images/wow/icons/large/${itemObtenido.f}.jpg` 
+            : `img/${itemObtenido.f}`;
+
+        // Definir color por rareza (opcional, pero queda genial)
+        const colores = { "Basura": "#94a3b8", "Comun": "#ffffff", "Raro": "#3b82f6", "Epico": "#a855f7", "Legendario": "#ff8000" };
+        const colorItem = colores[itemObtenido.Rareza] || "gold";
+
+        // 3. Mostrar botín actualizado
         document.getElementById('botin-texto').innerHTML = `
-            <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-top:10px;">
-                <img src="img/${itemObtenido.f}" style="width:40px; height:40px; border:1px solid gold;">
-                <span>¡Ganaste ${itemObtenido.n}!</span>
+            <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-top:10px; border: 1px solid rgba(255,215,0,0.3); padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                <img src="${rutaImagen}" style="width:45px; height:45px; border:2px solid ${colorItem}; border-radius: 4px; box-shadow: 0 0 10px ${colorItem}44;">
+                <div style="text-align: left;">
+                    <div style="font-size: 10px; color: #94a3b8;">¡OBJETO OBTENIDO!</div>
+                    <span style="color: ${colorItem}; font-weight: bold; font-size: 16px;">${itemObtenido.n}</span>
+                </div>
             </div>`;
+
     } else {
-        // Si entra aquí, es que no hay objetos con esa Rareza en objetos.json
-        document.getElementById('botin-texto').innerHTML = "El enemigo no llevaba nada encima...";
-        console.warn("No se encontraron objetos con Rareza: " + actual.LootTable);
+        document.getElementById('botin-texto').innerHTML = "<span style='color: #94a3b8;'>El enemigo no llevaba nada valioso...</span>";
     }
     
     document.getElementById('btn-derrota').style.display = 'none';
@@ -297,7 +307,7 @@ function equipar(index) {
     const item = inventario[index];
     let slotId = "";
 
-    // Lógica de selección de slot (mantenemos la tuya)
+    // (Tu lógica de selección de slot: casco, pecho, etc.)
     if (item.Slot === "anillo") {
         const a1 = document.getElementById("slot-anillo-1");
         slotId = (a1.innerHTML === "") ? "slot-anillo-1" : "slot-anillo-2";
@@ -310,28 +320,21 @@ function equipar(index) {
 
     const target = document.getElementById(slotId);
     if (target) {
-        // --- AQUÍ ESTÁ EL CAMBIO ---
-        // Decidimos si la imagen es de Wowhead o local
+        // --- LA LÓGICA INTELIGENTE AQUÍ ---
         const imgSrc = item.wid 
             ? `https://wow.zamimg.com/images/wow/icons/large/${item.f}.jpg` 
             : `img/${item.f}`;
 
-        // Insertamos la imagen (y el enlace de Wowhead para que el tooltip también funcione en el héroe)
-        const linkInicio = item.wid ? `<a href="https://www.wowhead.com/item=${item.wid}" data-wowhead="item=${item.wid}&domain=es" onclick="return false;">` : '';
-        const linkFin = item.wid ? `</a>` : '';
-
-        target.innerHTML = `${linkInicio}<img src="${imgSrc}">${linkFin}`;
+        // Insertamos la imagen
+        target.innerHTML = `<img src="${imgSrc}">`;
         target.style.borderColor = "#3b82f6";
         
-        // Quitar de mochila y guardar
+        // Eliminamos de la mochila
         inventario.splice(index, 1);
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         renderInv(); 
         
         alert(item.n + " equipado.");
-        
-        // Refrescar tooltips de Wowhead para que el nuevo enlace funcione
-        if(typeof $WowheadPower !== 'undefined') $WowheadPower.refreshLinks();
     }
 }
 
