@@ -389,7 +389,8 @@ function gestionarEquipado(elemento) {
         inventario.push({ ...item });
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         elemento.innerHTML = ""; 
-        elemento.style.borderColor = "#475569";
+        elemento.style.borderColor = "#475569"; // Color gris original
+        elemento.style.boxShadow = "none";      // Quitar brillo
         renderInv();
     }
 }
