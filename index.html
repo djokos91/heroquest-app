@@ -239,16 +239,33 @@ async function cargarDatos() {
             if(donde === 'mochila') renderInv();
         }
 
-        function generarEncuentro() {
-            if (enemigos.length === 0) return alert("Cargando...");
-            actual = enemigos[Math.floor(Math.random() * enemigos.length)];
-            document.getElementById('pantalla-enemigo').style.display = 'block';
-            document.getElementById('nombre-enemigo').innerText = actual.n;
-            const rutaFoto = actual.f.startsWith('http') ? actual.f : 'img/' + actual.f;
-            document.getElementById('foto-enemigo').src = rutaFoto;
-            document.getElementById('btn-derrota').style.display = 'inline-block';
-            document.getElementById('botin-texto').innerText = "";
-        }
+function generarEncuentro() {
+    // 1. Extraemos los nombres (claves) del objeto enemigos
+    const nombresEnemigos = Object.keys(enemigos); 
+
+    if (nombresEnemigos.length === 0) {
+        console.error("La base de datos de enemigos está vacía.");
+        return;
+    }
+
+    // 2. Elegimos un nombre al azar
+    const nombreAleatorio = nombresEnemigos[Math.floor(Math.random() * nombresEnemigos.length)];
+
+    // 3. Asignamos el enemigo a la variable global 'actual'
+    actual = { ...enemigos[nombreAleatorio] };
+
+    // 4. Ahora sí, podemos leer '.n' sin que dé error
+    document.getElementById('enemigo-nombre').innerText = actual.n;
+    document.getElementById('enemigo-img').src = `img/${actual.f}`;
+    document.getElementById('enemigo-hp').innerText = actual.hp;
+
+    // Reset de botones
+    document.getElementById('btn-atacar').style.display = 'inline-block';
+    document.getElementById('btn-derrota').style.display = 'none';
+    document.getElementById('botin-texto').innerHTML = "";
+    
+    console.log("Encuentro generado con:", actual.n);
+}
 
 function derrotar() {
     console.log("--- INICIANDO SAQUEO ---");
