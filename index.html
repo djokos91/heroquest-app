@@ -152,13 +152,15 @@ const coloresRareza = {
         <h2 style="color: #ef4444; font-style: italic;">MAZMORRA</h2>
         <button id="btn-explorar" class="btn-action" onclick="generarEncuentro()" disabled>🎲 EXPLORAR</button>
         <div id="pantalla-enemigo" style="display: none;">
-            <div class="card">
-                <img id="foto-enemigo" src="">
-                <h3 id="nombre-enemigo" style="margin: 15px 0 5px 0;"></h3>
-                <button id="btn-derrota" class="btn-action btn-win" onclick="derrotar()">⚔️ DERROTADO</button>
-                <div id="botin-texto" style="padding: 15px; color: gold; font-weight: bold;"></div>
-            </div>
-        </div>
+    <div class="card">
+        <img id="enemigo-img" src=""> 
+        <h3 id="enemigo-nombre" style="margin: 15px 0 5px 0;"></h3>
+        <p>Vida: <span id="enemigo-hp"></span></p> <button id="btn-atacar" class="btn-action" onclick="atacar()">⚔️ ATACAR</button>
+        <button id="btn-derrota" class="btn-action btn-win" onclick="derrotar()" style="display:none;">🏆 RECLAMAR BOTÍN</button>
+        
+        <div id="botin-texto" style="padding: 15px; color: gold; font-weight: bold;"></div>
+    </div>
+</div>
     </section>
 
 <section id="vista-heroe" class="tab-content">
