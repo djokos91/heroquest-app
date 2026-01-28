@@ -1,4 +1,4 @@
 [
-  { "n": "Esqueleto", "f": "orco.png", "b": ["oro", "hueso"], "hp": 4 },
+  { "n": "Esqueleto", "f": "img/orco.png", "b": ["oro", "hueso"], "hp": 4 },
   { "n": "Momia", "f": "slime.jpg", "b": ["gema", "venda"], "hp": 6 }
 ]
