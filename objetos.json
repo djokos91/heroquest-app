@@ -1,5 +1,5 @@
 {
-  "casco_hierro": { "n": "Casco de Hierro", "f": "casco.jpg", "Rareza": "Raro", "Tipo": "Equipable", "Slot": "casco" },
+  "vela_derretida": { "n": "Vela Derretida", "f": "vela_derretida.jpg", "Rareza": "Común", "Tipo": "Basura" },
   "pechera_hierro": { "n": "Pechera de Hierro", "f": "pechera_hierro.jpg", "Rareza": "Raro", "Tipo": "Equipable", "Slot": "pecho" },
   "anillo_plata": { "n": "Anillo de Plata", "f": "anillo_plata.jpg", "Rareza": "Raro", "Tipo": "Equipable", "Slot": "anillo" },
   "pocion_roja": { "n": "Poción de Vida", "f": "pocion_roja.jpg", "Rareza": "Común", "Tipo": "Consumible" },
