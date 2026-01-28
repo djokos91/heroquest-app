@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>HeroQuest Pro Edition</title>
     <style>
-        /* (Tus estilos se mantienen exactamente igual, no los cambio para ahorrar espacio) */
         body { background: #0f172a; color: white; font-family: sans-serif; margin: 0; padding-bottom: 80px; }
         .tab-content { display: none; padding: 15px; text-align: center; }
         .active-view { display: block; }
@@ -17,13 +16,21 @@
         .card img { width: 100%; height: auto; max-height: 50vh; object-fit: contain; display: block; }
         .btn-action { background: #ef4444; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 90%; margin: 10px; font-size: 16px; }
         .btn-win { background: #22c55e; }
+        
+        /* FICHA DE HÉROE */
         .hero-container { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; max-width: 400px; margin: auto; padding: 10px; }
         .slot-column { display: flex; flex-direction: column; gap: 10px; justify-content: center; }
-        .slot { width: 50px; height: 50px; background: rgba(30, 41, 59, 0.8); border: 2px solid #475569; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; position: relative; }
-        .slot::after { content: attr(data-label); position: absolute; bottom: -12px; font-size: 8px; color: #94a3b8; text-transform: uppercase; }
+        .slot { width: 50px; height: 50px; background: rgba(30, 41, 59, 0.8); border: 2px solid #475569; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        .slot img { width: 80%; height: 80%; object-fit: contain; }
+        .slot::after { content: attr(data-label); position: absolute; bottom: 2px; font-size: 7px; color: #94a3b8; text-transform: uppercase; width: 100%; text-align: center; background: rgba(0,0,0,0.4); }
         .silhouette { display: flex; align-items: center; justify-content: center; font-size: 120px; opacity: 0.1; }
-        .bottom-slots { grid-column: span 3; display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
-        .item-row { background: #1e293b; padding: 12px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #3b82f6; }
+        .bottom-slots { grid-column: span 3; display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+
+        /* MOCHILA */
+        .item-row { background: #1e293b; padding: 10px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #3b82f6; }
+        .item-info { display: flex; align-items: center; gap: 10px; }
+        .item-img { width: 35px; height: 35px; object-fit: contain; background: rgba(0,0,0,0.2); border-radius: 4px; }
+        .btn-eq { background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 5px; font-size: 10px; font-weight: bold; }
         .btn-reset { margin-top: 30px; color: #94a3b8; background: rgba(255,255,255,0.05); border: 1px solid #334155; padding: 10px 20px; border-radius: 8px; font-size: 12px; }
     </style>
 </head>
@@ -46,23 +53,23 @@
         <h2 style="color: #3b82f6;">FICHA DEL HÉROE</h2>
         <div class="hero-container">
             <div class="slot-column">
-                <div id="slot-casco" class="slot" data-label="Casco">🪖</div>
-                <div class="slot" data-label="Hombros">🛡️</div>
-                <div class="slot" data-label="Pecho">👕</div>
-                <div class="slot" data-label="Guantes">🥊</div>
+                <div id="slot-casco" class="slot" data-label="Casco"></div>
+                <div id="slot-hombros" class="slot" data-label="Hombros"></div>
+                <div id="slot-pecho" class="slot" data-label="Pecho"></div>
+                <div id="slot-guantes" class="slot" data-label="Guantes"></div>
             </div>
             <div class="silhouette">👤</div>
             <div class="slot-column">
-                <div class="slot" data-label="Cuello">📿</div>
-                <div class="slot" data-label="Brazos">⚔️</div>
-                <div class="slot" data-label="Piernas">👖</div>
-                <div class="slot" data-label="Botas">🥾</div>
+                <div id="slot-cuello" class="slot" data-label="Cuello"></div>
+                <div id="slot-brazos" class="slot" data-label="Brazos"></div>
+                <div id="slot-piernas" class="slot" data-label="Piernas"></div>
+                <div id="slot-botas" class="slot" data-label="Botas"></div>
             </div>
             <div class="bottom-slots">
-                <div class="slot" data-label="Anillo">💍</div>
-                <div class="slot" data-label="Anillo">💍</div>
-                <div class="slot" data-label="Abalorio">🔮</div>
-                <div class="slot" data-label="Abalorio">🔮</div>
+                <div id="slot-anillo-1" class="slot" data-label="Anillo"></div>
+                <div id="slot-anillo-2" class="slot" data-label="Anillo"></div>
+                <div id="slot-abalorio-1" class="slot" data-label="Abalorio"></div>
+                <div id="slot-abalorio-2" class="slot" data-label="Abalorio"></div>
             </div>
         </div>
     </section>
@@ -80,35 +87,25 @@
     </nav>
 
     <script>
-        // 1. BASE DE DATOS DE OBJETOS (Se mantiene local por ahora para estabilidad)
-        const itemsDB = {
-            "oro": { n: "Bolsa de Oro", i: "💰", r: "Común" },
-            "pocion": { n: "Poción de Vida", i: "🧪", r: "Raro" },
-            "gema": { n: "Gema Roja", i: "💎", r: "Épico" },
-            "escama": { n: "Escama de Dragón", i: "🛡️", r: "Legendario" }
-        };
-
-        let enemigos = []; // Se llenará desde el JSON
+        let enemigos = [];
+        let itemsDB = {};
         let inventario = JSON.parse(localStorage.getItem('hq_inv')) || [];
         let actual = null;
 
-        // --- CARGA DE DATOS EXTERNOS ---
-        async function cargarEnemigos() {
+        async function cargarDatos() {
             try {
-                // Buscamos el archivo en la raíz del repositorio
-                const response = await fetch('enemigos.json');
-                if (!response.ok) throw new Error("No se pudo cargar el archivo JSON");
-                enemigos = await response.json();
-                console.log("Sistema: " + enemigos.length + " enemigos cargados.");
+                const [resEnemigos, resObjetos] = await Promise.all([
+                    fetch('enemigos.json'),
+                    fetch('objetos.json')
+                ]);
+                enemigos = await resEnemigos.json();
+                itemsDB = await resObjetos.json();
+                console.log("Sistema: Datos cargados.");
             } catch (err) {
-                console.error("Error crítico:", err);
-                // Enemigos de emergencia por si el JSON falla
-                enemigos = [{ n: "Error de Carga", f: "", b: ["oro"] }];
+                console.error("Error cargando JSON:", err);
             }
         }
-
-        // Ejecutar carga al abrir la app
-        cargarEnemigos();
+        cargarDatos();
 
         function cambiarVista(donde) {
             document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active-view'));
@@ -119,17 +116,12 @@
         }
 
         function generarEncuentro() {
-            if (enemigos.length === 0) return alert("Cargando base de datos...");
-            
+            if (enemigos.length === 0) return alert("Cargando...");
             actual = enemigos[Math.floor(Math.random() * enemigos.length)];
             document.getElementById('pantalla-enemigo').style.display = 'block';
             document.getElementById('nombre-enemigo').innerText = actual.n;
-            
-            // Lógica de imagen: Si la URL empieza por http la usa directa, 
-            // si no, busca en tu carpeta local 'img/' de GitHub
             const rutaFoto = actual.f.startsWith('http') ? actual.f : 'img/' + actual.f;
             document.getElementById('foto-enemigo').src = rutaFoto;
-            
             document.getElementById('btn-derrota').style.display = 'inline-block';
             document.getElementById('botin-texto').innerText = "";
         }
@@ -137,12 +129,11 @@
         function derrotar() {
             const pool = actual.b;
             const itemKey = pool[Math.floor(Math.random() * pool.length)];
-            const itemObtenido = itemsDB[itemKey] || { n: itemKey, i: "📦", r: "Común" };
+            const itemObtenido = itemsDB[itemKey] || { n: itemKey, f: "", Rareza: "Común", Tipo: "Basura" };
             
             inventario.push(itemObtenido);
             localStorage.setItem('hq_inv', JSON.stringify(inventario));
-
-            document.getElementById('botin-texto').innerHTML = `${itemObtenido.i} ¡Has ganado ${itemObtenido.n}!`;
+            document.getElementById('botin-texto').innerHTML = `¡Has ganado ${itemObtenido.n}!`;
             document.getElementById('btn-derrota').style.display = 'none';
         }
 
@@ -152,16 +143,50 @@
                 div.innerHTML = "<p style='color: #64748b; margin-top: 20px;'>Mochila vacía</p>";
                 return;
             }
-
             div.innerHTML = inventario.map((item, index) => {
-                const color = { "Común": "#94a3b8", "Raro": "#3b82f6", "Épico": "#a855f7", "Legendario": "#eab308" }[item.r] || "#334155";
+                const color = { "Común": "#94a3b8", "Raro": "#3b82f6", "Épico": "#a855f7", "Legendario": "#eab308" }[item.Rareza] || "#334155";
+                let btnAccion = "";
+                if (item.Tipo === "Equipable") btnAccion = `<button class="btn-eq" onclick="equipar(${index})">EQUIPAR</button>`;
+                if (item.Tipo === "Consumible") btnAccion = `<button class="btn-eq" style="background:#22c55e" onclick="usar(${index})">USAR</button>`;
+
                 return `
                     <div class="item-row" style="border-left-color: ${color}">
-                        <span>${item.i || '📦'} ${item.n || 'Objeto'}</span>
-                        <small style="color: #475569">#${index + 1}</small>
-                    </div>
-                `;
+                        <div class="item-info">
+                            <img src="img/${item.f}" class="item-img" onerror="this.src='https://via.placeholder.com/35?text=?'">
+                            <span>${item.n}</span>
+                        </div>
+                        ${btnAccion}
+                    </div>`;
             }).join('');
+        }
+
+        function equipar(index) {
+            const item = inventario[index];
+            let slotId = "";
+
+            if (item.Slot === "anillo") {
+                const a1 = document.getElementById("slot-anillo-1");
+                slotId = (a1.innerHTML === "") ? "slot-anillo-1" : "slot-anillo-2";
+            } else if (item.Slot === "abalorio") {
+                const ab1 = document.getElementById("slot-abalorio-1");
+                slotId = (ab1.innerHTML === "") ? "slot-abalorio-1" : "slot-abalorio-2";
+            } else {
+                slotId = "slot-" + item.Slot;
+            }
+
+            const target = document.getElementById(slotId);
+            if (target) {
+                target.innerHTML = `<img src="img/${item.f}">`;
+                target.style.borderColor = "#3b82f6";
+                alert(item.n + " equipado.");
+            }
+        }
+
+        function usar(index) {
+            alert("Usaste " + inventario[index].n);
+            inventario.splice(index, 1);
+            localStorage.setItem('hq_inv', JSON.stringify(inventario));
+            renderInv();
         }
 
         function borrarTodo() {
