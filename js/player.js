@@ -1,42 +1,53 @@
 let inventario = JSON.parse(localStorage.getItem('hq_inv')) || [];
 let equipado = JSON.parse(localStorage.getItem('hq_equipo')) || {};
 
-function calcularCapacidadMax() {
-    let total = 16;
-    for (let i = 2; i <= 5; i++) {
-        const itemB = equipado[`slot-bolsa-${i}`];
-        if (itemB && itemB.espacios) total += itemB.espacios;
-    }
-    return total;
-}
-
 function equipar(index) {
-    const item = inventario[index];
+    const itemANuevo = inventario[index];
     let slotId = "";
 
-    if (item.Slot === "bolsa") {
+    // 1. DETERMINAR EL SLOT DESTINO
+    if (itemANuevo.Slot === "bolsa") {
+        // Buscar primer hueco libre en bolsas 2 a 5
         for (let i = 2; i <= 5; i++) {
-            if (!equipado[`slot-bolsa-${i}`]) { slotId = `slot-bolsa-${i}`; break; }
+            if (!equipado[`slot-bolsa-${i}`]) { 
+                slotId = `slot-bolsa-${i}`; 
+                break; 
+            }
         }
-    } else if (item.Slot === "anillo") {
+        // Si todas están llenas, elegimos la primera para reemplazar (bolsa-2)
+        if (!slotId) slotId = "slot-bolsa-2";
+
+    } else if (itemANuevo.Slot === "anillo") {
+        // Si el anillo 1 está libre, va ahí. Si no, al 2.
         slotId = !equipado["slot-anillo-1"] ? "slot-anillo-1" : "slot-anillo-2";
     } else {
-        slotId = "slot-" + item.Slot;
+        slotId = "slot-" + itemANuevo.Slot;
     }
 
-    if (slotId && !equipado[slotId]) {
-        equipado[slotId] = item;
-        localStorage.setItem('hq_equipo', JSON.stringify(equipado));
-        inventario.splice(index, 1);
-        localStorage.setItem('hq_inv', JSON.stringify(inventario));
-        renderInv(); renderEquipado();
-    } else alert("Espacio ocupado o inválido.");
-}
+    // 2. LÓGICA DE REEMPLAZO O EQUIPADO DIRECTO
+    const objetoActual = equipado[slotId];
 
-function borrarTodo() { 
-    if (confirm("¿Vaciar mochila?")) { 
-        inventario = []; 
-        localStorage.removeItem('hq_inv'); 
-        renderInv(); 
-    } 
+    if (objetoActual) {
+        // Si la ranura está ocupada, preguntamos
+        if (confirm(`La ranura ${itemANuevo.Slot} ya tiene [${objetoActual.n}]. ¿Quieres reemplazarlo por [${itemANuevo.n}]?`)) {
+            // Intercambio: El viejo vuelve al inventario, el nuevo se equipa
+            inventario[index] = { ...objetoActual }; // Reemplazamos el nuevo en la mochila por el viejo
+            equipado[slotId] = { ...itemANuevo };
+            
+            alert(`Has equipado ${itemANuevo.n}. ${objetoActual.n} ha vuelto a tu mochila.`);
+        } else {
+            // Si cancela, no hacemos nada
+            return;
+        }
+    } else {
+        // Si estaba libre, equipamos normal y quitamos de la mochila
+        equipado[slotId] = { ...itemANuevo };
+        inventario.splice(index, 1);
+    }
+
+    // 3. GUARDAR Y RENDERIZAR
+    localStorage.setItem('hq_equipo', JSON.stringify(equipado));
+    localStorage.setItem('hq_inv', JSON.stringify(inventario));
+    renderInv(); 
+    renderEquipado();
 }
