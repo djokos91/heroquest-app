@@ -13,6 +13,7 @@
         .nav-btn.active { color: #3b82f6; }
         .nav-btn span { display: block; font-size: 22px; margin-bottom: 2px; }
         
+        /* TARJETA ENEMIGO */
         .card { background: #1e293b; border-radius: 15px; overflow: hidden; border: 1px solid #475569; margin-top: 10px; padding-bottom: 15px; }
         .card img { width: 100%; height: auto; max-height: 40vh; object-fit: contain; display: block; background: #000; }
         
@@ -35,21 +36,30 @@
         .silhouette { display: flex; align-items: center; justify-content: center; font-size: 100px; opacity: 0.1; }
         .bottom-slots { grid-column: span 3; display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
 
-        /* MOCHILA CON ANIMACIÓN RESTAURADA */
-        #lista-inv { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; max-width: 400px; margin: auto; }
-        .item-slot { 
-            width: 65px; height: 65px; background: #1e293b; border: 2px solid #475569; 
-            border-radius: 8px; display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; position: relative; transition: all 0.2s ease; 
+        /* MOCHILA ESTILO WOW */
+        #lista-inv { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); 
+            gap: 12px; padding: 10px; max-width: 500px; margin: auto; 
         }
-        .item-slot img { width: 85%; height: 85%; object-fit: contain; }
+        .item-slot { 
+            width: 80px; height: 105px; background: #1e293b; border: 2px solid #475569; 
+            border-radius: 8px; display: flex; flex-direction: column; align-items: center; 
+            justify-content: flex-start; padding: 6px; cursor: pointer; position: relative; 
+            transition: all 0.2s ease; box-sizing: border-box;
+        }
+        .item-slot img { width: 45px; height: 45px; object-fit: contain; margin-bottom: 6px; }
+        .item-name { 
+            font-size: 9px; text-align: center; line-height: 10px; 
+            word-wrap: break-word; width: 100%; font-weight: bold;
+        }
         
-        /* Efectos hover en mochila */
+        /* Animación mochila */
         .item-slot:hover {
             background: rgba(59, 130, 246, 0.2);
             border-color: #3b82f6;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
         }
         .item-slot:active { transform: scale(0.9); }
         
@@ -111,7 +121,7 @@
         </div>
         
         <div style="margin-top: 20px;">
-            <p style="font-size: 11px; color: #94a3b8; margin-bottom: 5px;">CONTENEDORES</p>
+            <p style="font-size: 11px; color: #94a3b8; margin-bottom: 5px;">CONTENEDORES (BOLSAS)</p>
             <div style="display: flex; gap: 8px; justify-content: center;">
                 <div id="slot-bolsa-1" class="slot" data-label="Base" onclick="gestionarEquipado(this)"></div>
                 <div id="slot-bolsa-2" class="slot" data-label="Bolsa" onclick="gestionarEquipado(this)"></div>
@@ -150,22 +160,20 @@
             try {
                 const v = Date.now();
                 const [resEn, resEq, resCo, resBa] = await Promise.all([
-                    fetch(`enemigos.json?v=${v}`),
-                    fetch(`equipacion.json?v=${v}`),
-                    fetch(`consumibles.json?v=${v}`),
-                    fetch(`basura.json?v=${v}`)
+                    fetch(`enemigos.json?v=${v}`), fetch(`equipacion.json?v=${v}`),
+                    fetch(`consumibles.json?v=${v}`), fetch(`basura.json?v=${v}`)
                 ]);
                 enemigos = await resEn.json();
                 itemsDB = { ...await resEq.json(), ...await resCo.json(), ...await resBa.json() };
                 document.getElementById('btn-explorar').disabled = false;
                 
-                // Inicializar mochila base visualmente
-                const slotBase = document.getElementById('slot-bolsa-1');
-                if (!slotBase.querySelector('img')) {
-                    slotBase.innerHTML = `<img src="img/inv_misc_bag_08.jpg" style="opacity: 0.7">`;
-                    slotBase.style.borderColor = coloresRareza["Common"];
+                // Inicializar visualmente la bolsa base (Slot 1)
+                const s1 = document.getElementById('slot-bolsa-1');
+                if (!s1.querySelector('img')) {
+                    s1.innerHTML = `<img src="img/inv_misc_bag_08.jpg" style="opacity:0.8">`;
+                    s1.style.borderColor = coloresRareza["Common"];
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error("Error cargando JSON:", err); }
         }
         cargarDatos();
 
@@ -178,7 +186,7 @@
         }
 
         function calcularCapacidadMax() {
-            let total = 16; // Mochila inicial en slot-bolsa-1
+            let total = 16; // Mochila inicial
             for (let i = 2; i <= 5; i++) {
                 const img = document.getElementById(`slot-bolsa-${i}`).querySelector('img');
                 if (img) {
@@ -203,15 +211,23 @@
 
         function derrotar() {
             const max = calcularCapacidadMax();
-            if (inventario.length >= max) { alert("Inventario lleno."); return; }
+            if (inventario.length >= max) { alert("¡Mochila llena!"); return; }
+            
             const nivelMax = jerarquiaRareza[actual.LootTable] || 0;
             const posibles = Object.keys(itemsDB).filter(k => (jerarquiaRareza[itemsDB[k].Rareza] || 0) <= nivelMax);
+            
             if (posibles.length > 0) {
                 const itemObtenido = { ...itemsDB[posibles[Math.floor(Math.random() * posibles.length)]] };
                 inventario.push(itemObtenido);
                 localStorage.setItem('hq_inv', JSON.stringify(inventario));
+                
                 const color = coloresRareza[itemObtenido.Rareza] || "#fff";
-                document.getElementById('botin-texto').innerHTML = `¡Encontrado!<br><img src="img/${itemObtenido.f}" style="width:40px; border:1px solid ${color}"><br><span style="color:${color}">[${itemObtenido.n}]</span>`;
+                document.getElementById('botin-texto').innerHTML = `
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:5px">
+                        ¡BOTÍN ENCONTRADO!<br>
+                        <img src="img/${itemObtenido.f}" style="width:45px; border:2px solid ${color}; border-radius:5px">
+                        <span style="color:${color}">${itemObtenido.n}</span>
+                    </div>`;
                 document.getElementById('btn-derrota').style.display = 'none';
             }
         }
@@ -219,11 +235,20 @@
         function renderInv() {
             const div = document.getElementById('lista-inv');
             const max = calcularCapacidadMax();
-            div.innerHTML = `<p style="grid-column: 1/-1; color:#94a3b8; font-size:12px">Espacio: ${inventario.length} / ${max}</p>`;
+            div.innerHTML = `<p style="grid-column: 1/-1; color:#94a3b8; font-size:12px; margin-bottom:10px">Espacio: ${inventario.length} / ${max}</p>`;
+            
             inventario.forEach((item, i) => {
-                div.innerHTML += `<div class="item-slot ${item.Rareza.toLowerCase()}" onclick="gestionarItem(${i})"><img src="img/${item.f}"></div>`;
+                const color = coloresRareza[item.Rareza] || "#fff";
+                div.innerHTML += `
+                    <div class="item-slot ${item.Rareza.toLowerCase()}" onclick="gestionarItem(${i})">
+                        <img src="img/${item.f}">
+                        <span class="item-name" style="color:${color}">${item.n}</span>
+                    </div>`;
             });
-            for (let i = inventario.length; i < max; i++) div.innerHTML += `<div class="item-slot" style="opacity:0.15"></div>`;
+            
+            for (let i = inventario.length; i < max; i++) {
+                div.innerHTML += `<div class="item-slot" style="opacity:0.15"></div>`;
+            }
         }
 
         function gestionarItem(index) {
@@ -240,7 +265,7 @@
             const item = inventario[index];
             let slotId = "";
             if (item.Slot === "bolsa") {
-                for (let i = 2; i <= 5; i++) { // Empezamos en 2 porque el 1 es la base
+                for (let i = 2; i <= 5; i++) {
                     if (!document.getElementById(`slot-bolsa-${i}`).querySelector('img')) { slotId = `slot-bolsa-${i}`; break; }
                 }
             } else if (item.Slot === "anillo") slotId = !document.getElementById("slot-anillo-1").querySelector('img') ? "slot-anillo-1" : "slot-anillo-2";
@@ -253,16 +278,17 @@
                 inventario.splice(index, 1);
                 localStorage.setItem('hq_inv', JSON.stringify(inventario));
                 renderInv();
-            } else alert("Slot ocupado o inválido.");
+            } else alert("Espacio ocupado o inválido.");
         }
 
         function gestionarEquipado(el) {
-            if (el.id === "slot-bolsa-1") { alert("No puedes quitar la mochila principal."); return; }
+            if (el.id === "slot-bolsa-1") { alert("La mochila principal no se puede quitar."); return; }
             const img = el.querySelector('img');
-            if (img && confirm("¿Desequipar?")) {
+            if (img && confirm("¿Desequipar objeto?")) {
                 const nombreF = img.src.split('/').pop().split('.')[0];
                 const item = Object.values(itemsDB).find(it => it.f.split('.')[0] === nombreF);
                 if (item) {
+                    if (inventario.length >= calcularCapacidadMax()) { alert("Mochila llena."); return; }
                     inventario.push({ ...item });
                     localStorage.setItem('hq_inv', JSON.stringify(inventario));
                     el.innerHTML = "";
