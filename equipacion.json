@@ -1,6 +1,6 @@
 {
   "arpillera_roja": { "n": "Arpillera Roja", "f": "equipacion/arpillera_roja.jpg", "Slot": "cabeza", "Rareza": "Common", "Tipo": "Equipable"},
   "espada_corta_defias": { "n": "Espada corta con agujeros Defias", "f": "equipacion/espada_corta_defias.jpg", "Slot": "mano2", "Rareza": "Poor", "Tipo": "Equipable"},
-  "zapatos_deshilachados": { "n": "Zapatos Deshilachados", "f": "equipacion/zapatos_deshilachados.jpg", "Slot": "mano2", "Rareza": "Poor", "Tipo": "Equipable"},
-  "botas_cuero_harapiento": { "n": "Botas de cuero harapiento", "f": "equipacion/botas_cuero_harapiento.jpg", "Slot": "mano2", "Rareza": "Poor", "Tipo": "Equipable"}
+  "zapatos_deshilachados": { "n": "Zapatos Deshilachados", "f": "equipacion/zapatos_deshilachados.jpg", "Slot": "pies", "Rareza": "Poor", "Tipo": "Equipable"},
+  "botas_cuero_harapiento": { "n": "Botas de cuero harapiento", "f": "equipacion/botas_cuero_harapiento.jpg", "Slot": "pies", "Rareza": "Poor", "Tipo": "Equipable"}
 }
