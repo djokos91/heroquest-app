@@ -214,30 +214,35 @@
         return total;
     }
 
-    function renderEquipado() {
-        const slots = document.querySelectorAll('.slot');
-        slots.forEach(s => {
-            if(s.id !== 'slot-bolsa-1') {
-                s.innerHTML = "";
-                s.style.borderColor = "#475569";
-                s.className = "slot";
-            }
-        });
+  function renderEquipado() {
+    const slots = document.querySelectorAll('.slot');
+    slots.forEach(s => {
+        if(s.id !== 'slot-bolsa-1') {
+            s.innerHTML = "";
+            s.style.borderColor = "#475569";
+            s.className = "slot";
+            s.title = ""; // Limpiamos el nombre al vaciar el slot
+        }
+    });
 
-        const s1 = document.getElementById('slot-bolsa-1');
-        s1.innerHTML = `<img src="img/equipacion/mochila.jpg" style="opacity:0.8">`;
-        s1.style.borderColor = coloresRareza["Common"];
+    const s1 = document.getElementById('slot-bolsa-1');
+    s1.innerHTML = `<img src="img/mochila.jpg" style="opacity:0.8">`;
+    s1.style.borderColor = coloresRareza["Common"];
+    s1.title = "Mochila Principal (Base)"; // Nombre para la mochila base
 
-        for (const slotId in equipado) {
-            const item = equipado[slotId];
-            const target = document.getElementById(slotId);
-            if (target && item) {
-                target.innerHTML = `<img src="${getPath(item)}">`;
-                target.style.borderColor = coloresRareza[item.Rareza] || "#475569";
-                target.classList.add(item.Rareza.toLowerCase());
-            }
+    for (const slotId in equipado) {
+        const item = equipado[slotId];
+        const target = document.getElementById(slotId);
+        if (target && item) {
+            target.innerHTML = `<img src="${getPath(item)}">`;
+            target.style.borderColor = coloresRareza[item.Rareza] || "#475569";
+            target.classList.add(item.Rareza.toLowerCase());
+            
+            // ESTA ES LA LÍNEA NUEVA:
+            target.title = `${item.n} (${item.Rareza})`; 
         }
     }
+}
 
     function generarEncuentro() {
         actual = enemigos[Math.floor(Math.random() * enemigos.length)];
