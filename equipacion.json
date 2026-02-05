@@ -1,5 +1,5 @@
 {
-  "agonía_escarcha": { "n": "Agonía de Escarcha", "f": "inv_sword_04", "wid": "36942", "Slot": "brazos", "Rareza": "Epic", "Tipo": "Equipable"},
-  "copa_rota": { "n": "Copa de Cristal Rota", "f": "inv_drink_02", "Tipo": "Basura", "Rareza": "Poor" },
-  "hueso_masticado": { "n": "Hueso Masticado", "f": "inv_misc_bone_01", "Tipo": "Basura", "Rareza": "Poor" },
+  "agonía_escarcha": { "n": "Agonía de Escarcha", "f": "inv_sword_04", "Slot": "brazos", "Rareza": "Epic", "Tipo": "Equipable"},
+  "agonía_escarcha": { "n": "Espada corta con agujeros Defias", "f": "inv_sword_04", "Slot": "brazos", "Rareza": "Epic", "Tipo": "Equipable"},
+
 }
