@@ -1,5 +1,5 @@
 {
-  "esqueleto": { "n": "Esqueleto", "f": "esqueleto.png", "LootTable": "Poor", "hp": 4 },
-  "orco": { "n": "Guerrero Orco", "f": "orco.jpg", "LootTable": "Uncommon", "hp": 8 },
-  "momia": { "n": "Momia", "f": "momia.jpg", "LootTable": "Epic", "hp": 12 }
+  "esqueleto": { "n": "Esqueleto", "f": "enemigos/esqueleto.png", "LootTable": "Poor", "hp": 4 },
+  "orco": { "n": "Guerrero Orco", "f": "enemigos/orco.jpg", "LootTable": "Uncommon", "hp": 8 },
+  "momia": { "n": "Momia", "f": "enemigos/momia.jpg", "LootTable": "Epic", "hp": 12 }
 }
