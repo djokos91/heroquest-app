@@ -1,4 +1,4 @@
 {
-  "vela_derretida": { "n": "Vela Derretida", "f": "vela_derretida.jpg", "Tipo": "Basura", "Rareza": "Poor" },
-  "hueso_masticado": { "n": "Hueso Masticado", "f": "inv_misc_bone_01", "Tipo": "Basura", "Rareza": "Poor" }
+  "vela_derretida": { "n": "Vela Derretida", "f": "basura/vela_derretida.jpg", "Tipo": "Basura", "Rareza": "Poor" },
+  "hueso_masticado": { "n": "Hueso Masticado", "f": "basura/inv_misc_bone_01", "Tipo": "Basura", "Rareza": "Poor" }
 }
