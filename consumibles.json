@@ -1,4 +1,4 @@
 {
-  "carne_lobo_dura": { "n": "Carne de Lobo Dura", "f": "carne_lobo_dura.jpg", "Tipo": "Consumible", "Rareza": "Poor", "Efecto": "Recupera 1 HP (Sabe fatal)" },
-  "queso_azul_darnassus": { "n": "Queso azul de Darnassus", "f": "queso_azul_darnassus.jpg", "Tipo": "Consumible", "Rareza": "Common", "Efecto": "Recupera 5 HP" }
+  "carne_lobo_dura": { "n": "Carne de Lobo Dura", "f": "carne_lobo_dura.jpg", "Tipo": "Consumible", "Rareza": "Common", "Efecto": "Recupera 1 HP (Sabe fatal)" },
+  "queso_azul_darnassus": { "n": "Queso azul de Darnassus", "f": "queso_azul_darnassus.jpg", "Tipo": "Consumible", "Rareza": "Poor", "Efecto": "Recupera 5 HP" }
 }
