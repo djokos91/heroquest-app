@@ -35,15 +35,23 @@
         .silhouette { display: flex; align-items: center; justify-content: center; font-size: 100px; opacity: 0.1; }
         .bottom-slots { grid-column: span 3; display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
 
-        /* MOCHILA */
+        /* MOCHILA CON ANIMACIÓN RESTAURADA */
         #lista-inv { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; max-width: 400px; margin: auto; }
         .item-slot { 
             width: 65px; height: 65px; background: #1e293b; border: 2px solid #475569; 
             border-radius: 8px; display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; position: relative; transition: transform 0.1s; 
+            cursor: pointer; position: relative; transition: all 0.2s ease; 
         }
         .item-slot img { width: 85%; height: 85%; object-fit: contain; }
-        .item-slot:active { transform: scale(0.95); }
+        
+        /* Efectos hover en mochila */
+        .item-slot:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+        .item-slot:active { transform: scale(0.9); }
         
         /* Rarezas */
         .poor { border-color: #9d9d9d; }
@@ -61,7 +69,6 @@
     <section id="vista-mundo" class="tab-content active-view">
         <h2 style="color: #ef4444; font-style: italic;">MAZMORRA</h2>
         <button id="btn-explorar" class="btn-action" onclick="generarEncuentro()" disabled>🎲 EXPLORAR</button>
-        
         <div id="pantalla-enemigo" style="display: none;">
             <div class="card">
                 <img id="enemigo-img" src="" alt="Enemigo">
@@ -104,13 +111,13 @@
         </div>
         
         <div style="margin-top: 20px;">
-            <p style="font-size: 11px; color: #94a3b8; margin-bottom: 5px;">BOLSAS EQUIPADAS</p>
+            <p style="font-size: 11px; color: #94a3b8; margin-bottom: 5px;">CONTENEDORES</p>
             <div style="display: flex; gap: 8px; justify-content: center;">
-                <div id="slot-bolsa-1" class="slot" style="border-color: #eab308" data-label="Bolsa" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-bolsa-2" class="slot" style="border-color: #eab308" data-label="Bolsa" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-bolsa-3" class="slot" style="border-color: #eab308" data-label="Bolsa" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-bolsa-4" class="slot" style="border-color: #eab308" data-label="Bolsa" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-bolsa-5" class="slot" style="border-color: #eab308" data-label="Bolsa" onclick="gestionarEquipado(this)"></div>
+                <div id="slot-bolsa-1" class="slot" data-label="Base" onclick="gestionarEquipado(this)"></div>
+                <div id="slot-bolsa-2" class="slot" data-label="Bolsa" onclick="gestionarEquipado(this)"></div>
+                <div id="slot-bolsa-3" class="slot" data-label="Bolsa" onclick="gestionarEquipado(this)"></div>
+                <div id="slot-bolsa-4" class="slot" data-label="Bolsa" onclick="gestionarEquipado(this)"></div>
+                <div id="slot-bolsa-5" class="slot" data-label="Bolsa" onclick="gestionarEquipado(this)"></div>
             </div>
         </div>
     </section>
@@ -139,7 +146,6 @@
         };
         const jerarquiaRareza = { "Poor": 0, "Common": 1, "Uncommon": 2, "Rare": 3, "Epic": 4, "Legendary": 5 };
 
-        // --- CARGA DE DATOS ---
         async function cargarDatos() {
             try {
                 const v = Date.now();
@@ -149,22 +155,20 @@
                     fetch(`consumibles.json?v=${v}`),
                     fetch(`basura.json?v=${v}`)
                 ]);
-
                 enemigos = await resEn.json();
-                const equipacion = await resEq.json();
-                const consumibles = await resCo.json();
-                const basura = await resBa.json();
-
-                itemsDB = { ...equipacion, ...consumibles, ...basura };
+                itemsDB = { ...await resEq.json(), ...await resCo.json(), ...await resBa.json() };
                 document.getElementById('btn-explorar').disabled = false;
-                console.log("Sistema: Datos cargados. Items:", Object.keys(itemsDB).length);
-            } catch (err) {
-                console.error("Error cargando archivos JSON:", err);
-            }
+                
+                // Inicializar mochila base visualmente
+                const slotBase = document.getElementById('slot-bolsa-1');
+                if (!slotBase.querySelector('img')) {
+                    slotBase.innerHTML = `<img src="img/inv_misc_bag_08.jpg" style="opacity: 0.7">`;
+                    slotBase.style.borderColor = coloresRareza["Common"];
+                }
+            } catch (err) { console.error(err); }
         }
         cargarDatos();
 
-        // --- GESTIÓN DE VISTAS ---
         function cambiarVista(donde) {
             document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active-view'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -173,27 +177,22 @@
             if(donde === 'mochila') renderInv();
         }
 
-        // --- LÓGICA DE CAPACIDAD ---
         function calcularCapacidadMax() {
-            let base = 16;
-            let extra = 0;
-            for (let i = 1; i <= 5; i++) {
+            let total = 16; // Mochila inicial en slot-bolsa-1
+            for (let i = 2; i <= 5; i++) {
                 const img = document.getElementById(`slot-bolsa-${i}`).querySelector('img');
                 if (img) {
                     const nombreF = img.src.split('/').pop().split('.')[0];
                     const itemB = Object.values(itemsDB).find(it => it.f.split('.')[0] === nombreF);
-                    if (itemB && itemB.espacios) extra += itemB.espacios;
+                    if (itemB && itemB.espacios) total += itemB.espacios;
                 }
             }
-            return base + extra;
+            return total;
         }
 
-        // --- MAZMORRA ---
         function generarEncuentro() {
-            if (!enemigos || Object.keys(enemigos).length === 0) return;
             const claves = Object.keys(enemigos);
             actual = enemigos[claves[Math.floor(Math.random() * claves.length)]];
-
             document.getElementById('pantalla-enemigo').style.display = 'block';
             document.getElementById('enemigo-nombre').innerText = actual.n;
             document.getElementById('enemigo-hp').innerText = actual.hp;
@@ -204,123 +203,76 @@
 
         function derrotar() {
             const max = calcularCapacidadMax();
-            if (inventario.length >= max) {
-                alert("¡Mochila llena! Necesitas más bolsas o vender algo.");
-                return;
-            }
-
+            if (inventario.length >= max) { alert("Inventario lleno."); return; }
             const nivelMax = jerarquiaRareza[actual.LootTable] || 0;
             const posibles = Object.keys(itemsDB).filter(k => (jerarquiaRareza[itemsDB[k].Rareza] || 0) <= nivelMax);
-
             if (posibles.length > 0) {
-                const itemKey = posibles[Math.floor(Math.random() * posibles.length)];
-                const itemObtenido = { ...itemsDB[itemKey] };
+                const itemObtenido = { ...itemsDB[posibles[Math.floor(Math.random() * posibles.length)]] };
                 inventario.push(itemObtenido);
                 localStorage.setItem('hq_inv', JSON.stringify(inventario));
-
                 const color = coloresRareza[itemObtenido.Rareza] || "#fff";
-                document.getElementById('botin-texto').innerHTML = `
-                    <div style="display:flex; flex-direction:column; align-items:center; gap:5px">
-                        ¡Encontrado! <br>
-                        <img src="img/${itemObtenido.f}" style="width:45px; border:2px solid ${color}; border-radius:5px">
-                        <span style="color:${color}">[${itemObtenido.n}]</span>
-                    </div>`;
+                document.getElementById('botin-texto').innerHTML = `¡Encontrado!<br><img src="img/${itemObtenido.f}" style="width:40px; border:1px solid ${color}"><br><span style="color:${color}">[${itemObtenido.n}]</span>`;
                 document.getElementById('btn-derrota').style.display = 'none';
             }
         }
 
-        // --- INVENTARIO ---
         function renderInv() {
             const div = document.getElementById('lista-inv');
             const max = calcularCapacidadMax();
-            div.innerHTML = `<p style="grid-column: 1/-1; color:#94a3b8; font-size:12px; margin-bottom:10px">Espacio: ${inventario.length} / ${max}</p>`;
-
+            div.innerHTML = `<p style="grid-column: 1/-1; color:#94a3b8; font-size:12px">Espacio: ${inventario.length} / ${max}</p>`;
             inventario.forEach((item, i) => {
-                const rareza = item.Rareza ? item.Rareza.toLowerCase() : 'common';
-                div.innerHTML += `
-                    <div class="item-slot ${rareza}" onclick="gestionarItem(${i})">
-                        <img src="img/${item.f}" alt="${item.n}">
-                    </div>`;
+                div.innerHTML += `<div class="item-slot ${item.Rareza.toLowerCase()}" onclick="gestionarItem(${i})"><img src="img/${item.f}"></div>`;
             });
-
-            for (let i = inventario.length; i < max; i++) {
-                div.innerHTML += `<div class="item-slot" style="opacity:0.15"></div>`;
-            }
+            for (let i = inventario.length; i < max; i++) div.innerHTML += `<div class="item-slot" style="opacity:0.15"></div>`;
         }
 
         function gestionarItem(index) {
             const item = inventario[index];
-            if (item.Tipo === "Equipable" && confirm(`¿Equipar ${item.n}?`)) {
-                equipar(index);
-            } else if (item.Tipo === "Consumible" && confirm(`¿Usar ${item.n}?`)) {
-                alert("Usaste " + item.n);
+            if (item.Tipo === "Equipable" && confirm(`¿Equipar ${item.n}?`)) equipar(index);
+            else if (confirm(`¿Eliminar o usar ${item.n}?`)) {
                 inventario.splice(index, 1);
                 localStorage.setItem('hq_inv', JSON.stringify(inventario));
                 renderInv();
-            } else if (item.Tipo === "Basura") {
-                if (confirm(`¿Vender ${item.n} por 5 de oro?`)) {
-                    inventario.splice(index, 1);
-                    localStorage.setItem('hq_inv', JSON.stringify(inventario));
-                    renderInv();
-                }
             }
         }
 
         function equipar(index) {
             const item = inventario[index];
             let slotId = "";
-
             if (item.Slot === "bolsa") {
-                for (let i = 1; i <= 5; i++) {
-                    if (!document.getElementById(`slot-bolsa-${i}`).querySelector('img')) {
-                        slotId = `slot-bolsa-${i}`; break;
-                    }
+                for (let i = 2; i <= 5; i++) { // Empezamos en 2 porque el 1 es la base
+                    if (!document.getElementById(`slot-bolsa-${i}`).querySelector('img')) { slotId = `slot-bolsa-${i}`; break; }
                 }
-            } else if (item.Slot === "anillo") {
-                slotId = !document.getElementById("slot-anillo-1").querySelector('img') ? "slot-anillo-1" : "slot-anillo-2";
-            } else if (item.Slot === "abalorio") {
-                slotId = !document.getElementById("slot-abalorio-1").querySelector('img') ? "slot-abalorio-1" : "slot-abalorio-2";
-            } else {
-                slotId = "slot-" + item.Slot;
-            }
+            } else if (item.Slot === "anillo") slotId = !document.getElementById("slot-anillo-1").querySelector('img') ? "slot-anillo-1" : "slot-anillo-2";
+            else slotId = "slot-" + item.Slot;
 
             const target = document.getElementById(slotId);
-            if (target) {
-                if (target.querySelector('img')) { alert("Ese slot ya está ocupado. Desequípalo primero."); return; }
+            if (target && !target.querySelector('img')) {
                 target.innerHTML = `<img src="img/${item.f}">`;
                 target.style.borderColor = coloresRareza[item.Rareza] || "#475569";
                 inventario.splice(index, 1);
                 localStorage.setItem('hq_inv', JSON.stringify(inventario));
                 renderInv();
-            } else {
-                alert("No puedes equipar eso.");
-            }
+            } else alert("Slot ocupado o inválido.");
         }
 
         function gestionarEquipado(el) {
+            if (el.id === "slot-bolsa-1") { alert("No puedes quitar la mochila principal."); return; }
             const img = el.querySelector('img');
-            if (!img) return;
-
-            const nombreF = img.src.split('/').pop().split('.')[0];
-            const item = Object.values(itemsDB).find(it => it.f.split('.')[0] === nombreF);
-
-            if (item && confirm(`¿Desequipar ${item.n}?`)) {
-                if (inventario.length >= calcularCapacidadMax()) { alert("Mochila llena."); return; }
-                inventario.push({ ...item });
-                localStorage.setItem('hq_inv', JSON.stringify(inventario));
-                el.innerHTML = "";
-                el.style.borderColor = el.classList.contains('slot-bag') ? "#eab308" : "#475569";
-                renderInv();
+            if (img && confirm("¿Desequipar?")) {
+                const nombreF = img.src.split('/').pop().split('.')[0];
+                const item = Object.values(itemsDB).find(it => it.f.split('.')[0] === nombreF);
+                if (item) {
+                    inventario.push({ ...item });
+                    localStorage.setItem('hq_inv', JSON.stringify(inventario));
+                    el.innerHTML = "";
+                    el.style.borderColor = "#475569";
+                    renderInv();
+                }
             }
         }
 
-        function borrarTodo() {
-            if (confirm("¿Vaciar mochila?")) {
-                inventario = [];
-                localStorage.removeItem('hq_inv');
-                renderInv();
-            }
-        }
+        function borrarTodo() { if (confirm("¿Vaciar mochila?")) { inventario = []; localStorage.removeItem('hq_inv'); renderInv(); } }
     </script>
 </body>
 </html>
