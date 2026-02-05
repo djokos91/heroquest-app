@@ -1,12 +1,4 @@
 {
-  "agua_sucia": { "n": "Agua Estancada", "f": "inv_drink_07", "Tipo": "Consumible", "Rareza": "Poor", "Efecto": "Recupera 1 HP (Sabe fatal)" },
-  "pan_duro": { "n": "Pan de ración", "f": "inv_misc_food_05", "Tipo": "Consumible", "Rareza": "Common", "Efecto": "Recupera 5 HP" },
-  "filete_lobo": { "n": "Filete de Lobo", "f": "inv_misc_food_15", "Tipo": "Consumible", "Rareza": "Common", "Efecto": "Recupera 10 HP" },
-  "pocion_vida_menor": { "n": "Poción de Vida Menor", "f": "inv_potion_51", "Tipo": "Consumible", "Rareza": "Uncommon", "Efecto": "Recupera 20 HP" },
-  "elixir_fuerza": { "n": "Elixir de Fuerza", "f": "inv_potion_43", "Tipo": "Consumible", "Rareza": "Uncommon", "Efecto": "+2 Daño el próximo combate" },
-  "pocion_vida_mayor": { "n": "Poción de Vida Mayor", "f": "inv_potion_54", "Tipo": "Consumible", "Rareza": "Rare", "Efecto": "Recupera 50 HP" },
-  "frasco_resistencia": { "n": "Frasco de Titanes", "f": "inv_potion_62", "Tipo": "Consumible", "Rareza": "Rare", "Efecto": "Inmunidad en el próximo turno" },
-  "pergamino_caos": { "n": "Pergamino de Caos", "f": "inv_scroll_03", "Tipo": "Consumible", "Rareza": "Epic", "Efecto": "Elimina al enemigo actual instantáneamente" },
-  "festin_heroico": { "n": "Festín de Héroes", "f": "inv_misc_food_79", "Tipo": "Consumible", "Rareza": "Epic", "Efecto": "Cura total y +10 HP max" },
-  "ambrosia_dioses": { "n": "Ambrosía del Olimpo", "f": "inv_potion_102", "Tipo": "Consumible", "Rareza": "Legendary", "Efecto": "Resurrección automática o Vida Infinita 3 turnos" }
+  "carne_lobo_dura": { "n": "Carne de Lobo Dura", "f": "carne_lobo_dura.jpg", "Tipo": "Consumible", "Rareza": "Poor", "Efecto": "Recupera 1 HP (Sabe fatal)" },
+  "queso_azul_darnassus": { "n": "Queso azul de Darnassus", "f": "queso_azul_darnassus.jpg", "Tipo": "Consumible", "Rareza": "Common", "Efecto": "Recupera 5 HP" }
 }
