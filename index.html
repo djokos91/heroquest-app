@@ -54,15 +54,6 @@
             word-wrap: break-word; width: 100%; font-weight: bold;
         }
         
-        /* Animación mochila */
-        .item-slot:hover {
-            background: rgba(59, 130, 246, 0.2);
-            border-color: #3b82f6;
-            transform: translateY(-4px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
-        }
-        .item-slot:active { transform: scale(0.9); }
-        
         /* Rarezas */
         .poor { border-color: #9d9d9d; }
         .common { border-color: #ffffff; }
@@ -147,7 +138,12 @@
     <script>
         let enemigos = [];
         let itemsDB = {};
+        
+        // --- CARGA DE DATOS ---
         let inventario = JSON.parse(localStorage.getItem('hq_inv')) || [];
+        // Nuevo: Cargamos el equipamiento (por defecto un objeto vacío)
+        let equipado = JSON.parse(localStorage.getItem('hq_equipo')) || {};
+
         let actual = null;
 
         const coloresRareza = {
@@ -165,14 +161,11 @@
                 ]);
                 enemigos = await resEn.json();
                 itemsDB = { ...await resEq.json(), ...await resCo.json(), ...await resBa.json() };
+                
                 document.getElementById('btn-explorar').disabled = false;
                 
-                // Inicializar visualmente la bolsa base (Slot 1)
-                const s1 = document.getElementById('slot-bolsa-1');
-                if (!s1.querySelector('img')) {
-                    s1.innerHTML = `<img src="img/mochila.jpg" style="opacity:0.8">`;
-                    s1.style.borderColor = coloresRareza["Common"];
-                }
+                // --- INICIALIZACIÓN DE SLOTS AL CARGAR ---
+                renderEquipado();
             } catch (err) { console.error("Error cargando JSON:", err); }
         }
         cargarDatos();
@@ -183,19 +176,43 @@
             document.getElementById('vista-' + donde).classList.add('active-view');
             document.getElementById('btn-nav-' + donde).classList.add('active');
             if(donde === 'mochila') renderInv();
+            if(donde === 'heroe') renderEquipado();
         }
 
         function calcularCapacidadMax() {
-            let total = 16; // Mochila inicial
+            let total = 16;
             for (let i = 2; i <= 5; i++) {
-                const img = document.getElementById(`slot-bolsa-${i}`).querySelector('img');
-                if (img) {
-                    const nombreF = img.src.split('/').pop().split('.')[0];
-                    const itemB = Object.values(itemsDB).find(it => it.f.split('.')[0] === nombreF);
-                    if (itemB && itemB.espacios) total += itemB.espacios;
-                }
+                const itemB = equipado[`slot-bolsa-${i}`];
+                if (itemB && itemB.espacios) total += itemB.espacios;
             }
             return total;
+        }
+
+        // --- PERSISTENCIA EQUIPO ---
+        function renderEquipado() {
+            // Limpiamos slots visualmente (excepto bolsa base que es fija)
+            const slots = document.querySelectorAll('.slot');
+            slots.forEach(s => {
+                if(s.id !== 'slot-bolsa-1') {
+                    s.innerHTML = "";
+                    s.style.borderColor = "#475569";
+                }
+            });
+
+            // Bolsa base siempre presente
+            const s1 = document.getElementById('slot-bolsa-1');
+            s1.innerHTML = `<img src="img/mochila.jpg" style="opacity:0.8">`;
+            s1.style.borderColor = coloresRareza["Common"];
+
+            // Rellenar con lo guardado en equipado
+            for (const slotId in equipado) {
+                const item = equipado[slotId];
+                const target = document.getElementById(slotId);
+                if (target && item) {
+                    target.innerHTML = `<img src="img/${item.f}">`;
+                    target.style.borderColor = coloresRareza[item.Rareza] || "#475569";
+                }
+            }
         }
 
         function generarEncuentro() {
@@ -212,7 +229,6 @@
         function derrotar() {
             const max = calcularCapacidadMax();
             if (inventario.length >= max) { alert("¡Mochila llena!"); return; }
-            
             const nivelMax = jerarquiaRareza[actual.LootTable] || 0;
             const posibles = Object.keys(itemsDB).filter(k => (jerarquiaRareza[itemsDB[k].Rareza] || 0) <= nivelMax);
             
@@ -245,7 +261,6 @@
                         <span class="item-name" style="color:${color}">${item.n}</span>
                     </div>`;
             });
-            
             for (let i = inventario.length; i < max; i++) {
                 div.innerHTML += `<div class="item-slot" style="opacity:0.15"></div>`;
             }
@@ -264,37 +279,45 @@
         function equipar(index) {
             const item = inventario[index];
             let slotId = "";
+
             if (item.Slot === "bolsa") {
                 for (let i = 2; i <= 5; i++) {
-                    if (!document.getElementById(`slot-bolsa-${i}`).querySelector('img')) { slotId = `slot-bolsa-${i}`; break; }
+                    if (!equipado[`slot-bolsa-${i}`]) { slotId = `slot-bolsa-${i}`; break; }
                 }
-            } else if (item.Slot === "anillo") slotId = !document.getElementById("slot-anillo-1").querySelector('img') ? "slot-anillo-1" : "slot-anillo-2";
-            else slotId = "slot-" + item.Slot;
+            } else if (item.Slot === "anillo") {
+                slotId = !equipado["slot-anillo-1"] ? "slot-anillo-1" : "slot-anillo-2";
+            } else {
+                slotId = "slot-" + item.Slot;
+            }
 
-            const target = document.getElementById(slotId);
-            if (target && !target.querySelector('img')) {
-                target.innerHTML = `<img src="img/${item.f}">`;
-                target.style.borderColor = coloresRareza[item.Rareza] || "#475569";
+            if (slotId && !equipado[slotId]) {
+                // Guardamos en el objeto de equipo
+                equipado[slotId] = item;
+                localStorage.setItem('hq_equipo', JSON.stringify(equipado));
+                
                 inventario.splice(index, 1);
                 localStorage.setItem('hq_inv', JSON.stringify(inventario));
+                
                 renderInv();
+                renderEquipado();
             } else alert("Espacio ocupado o inválido.");
         }
 
         function gestionarEquipado(el) {
             if (el.id === "slot-bolsa-1") { alert("La mochila principal no se puede quitar."); return; }
-            const img = el.querySelector('img');
-            if (img && confirm("¿Desequipar objeto?")) {
-                const nombreF = img.src.split('/').pop().split('.')[0];
-                const item = Object.values(itemsDB).find(it => it.f.split('.')[0] === nombreF);
-                if (item) {
-                    if (inventario.length >= calcularCapacidadMax()) { alert("Mochila llena."); return; }
-                    inventario.push({ ...item });
-                    localStorage.setItem('hq_inv', JSON.stringify(inventario));
-                    el.innerHTML = "";
-                    el.style.borderColor = "#475569";
-                    renderInv();
-                }
+            
+            const item = equipado[el.id];
+            if (item && confirm("¿Desequipar objeto?")) {
+                if (inventario.length >= calcularCapacidadMax()) { alert("Mochila llena."); return; }
+                
+                inventario.push({ ...item });
+                localStorage.setItem('hq_inv', JSON.stringify(inventario));
+                
+                delete equipado[el.id];
+                localStorage.setItem('hq_equipo', JSON.stringify(equipado));
+                
+                renderEquipado();
+                renderInv();
             }
         }
 
