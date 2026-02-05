@@ -1,4 +1,4 @@
 {
-  "arpillera_roja": { "n": "Arpillera Roja", "f": "arpillera_roja.jpg", "Slot": "cabeza", "Rareza": "Common", "Tipo": "Equipable"},
-  "espada_corta_defias": { "n": "Espada corta con agujeros Defias", "f": "espada_corta_defias.jpg", "Slot": "mano2", "Rareza": "Poor", "Tipo": "Equipable"}
+  "arpillera_roja": { "n": "Arpillera Roja", "f": "equipacion/arpillera_roja.jpg", "Slot": "cabeza", "Rareza": "Common", "Tipo": "Equipable"},
+  "espada_corta_defias": { "n": "Espada corta con agujeros Defias", "f": "equipacion/espada_corta_defias.jpg", "Slot": "mano2", "Rareza": "Poor", "Tipo": "Equipable"}
 }
