@@ -1,6 +1,8 @@
 // Variables globales de datos
 let enemigos = [];
 let itemsDB = {};
+let inventario = JSON.parse(localStorage.getItem('hq_inv')) || [];
+let equipado = JSON.parse(localStorage.getItem('hq_equipo')) || {};
 const coloresRareza = { "Poor": "#9d9d9d", "Common": "#ffffff", "Uncommon": "#1eff00", "Rare": "#0070dd", "Epic": "#a335ee", "Legendary": "#ff8000" };
 const jerarquiaRareza = { "Poor": 0, "Common": 1, "Uncommon": 2, "Rare": 3, "Epic": 4, "Legendary": 5 };
 
