@@ -143,16 +143,16 @@
         </div>
     </section>
 
-    <section id="vista-mochila" class="tab-content">
-        <h2 style="color: #eab308;">MOCHILA</h2>
+    <section id="vista-" class="tab-content">
+        <h2 style="color: #eab308;"></h2>
         <div id="lista-inv"></div>
-        <button class="btn-reset" onclick="borrarTodo()">🗑️ Vaciar Mochila</button>
+        <button class="btn-reset" onclick="borrarTodo()">🗑️ Vaciar </button>
     </section>
 
     <nav>
         <button class="nav-btn active" id="btn-nav-mundo" onclick="cambiarVista('mundo')"><span>⚔️</span>MAZMORRA</button>
         <button class="nav-btn" id="btn-nav-heroe" onclick="cambiarVista('heroe')"><span>🛡️</span>HÉROE</button>
-        <button class="nav-btn" id="btn-nav-mochila" onclick="cambiarVista('mochila')"><span>🎒</span>MOCHILA</button>
+        <button class="nav-btn" id="btn-nav-" onclick="cambiarVista('')"><span>🎒</span></button>
     </nav>
 
 <script>
@@ -201,7 +201,7 @@
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('vista-' + donde).classList.add('active-view');
         document.getElementById('btn-nav-' + donde).classList.add('active');
-        if(donde === 'mochila') renderInv();
+        if(donde === '') renderInv();
         if(donde === 'heroe') renderEquipado();
     }
 
@@ -226,7 +226,7 @@
     });
 
     const s1 = document.getElementById('slot-bolsa-1');
-    s1.innerHTML = `<img src="img/mochila.jpg" style="opacity:0.8">`;
+    s1.innerHTML = `<img src="img/equipacion/mochila.jpg" style="opacity:0.8">`;
     s1.style.borderColor = coloresRareza["Common"];
     s1.title = "Mochila Principal (Base)"; // Nombre para la mochila base
 
