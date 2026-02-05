@@ -1,6 +1,3 @@
-let inventario = JSON.parse(localStorage.getItem('hq_inv')) || [];
-let equipado = JSON.parse(localStorage.getItem('hq_equipo')) || {};
-
 function calcularCapacidadMax() {
     let total = 16;
     for (let i = 2; i <= 5; i++) {
