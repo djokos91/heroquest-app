@@ -1,5 +1,4 @@
 {
-  "agonía_escarcha": { "n": "Agonía de Escarcha", "f": "inv_sword_04", "Slot": "brazos", "Rareza": "Epic", "Tipo": "Equipable"},
-  "agonía_escarcha": { "n": "Espada corta con agujeros Defias", "f": "inv_sword_04", "Slot": "brazos", "Rareza": "Epic", "Tipo": "Equipable"},
-
+  "arpillera_roja": { "n": "Arpillera Roja", "f": "arpillera_roja.jpg", "Slot": "brazos", "Rareza": "Common", "Tipo": "Equipable"},
+  "espada_corta_defias": { "n": "Espada corta con agujeros Defias", "f": "espada_corta_defias.jpg", "Slot": "brazos", "Rareza": "Poor", "Tipo": "Equipable"}
 }
