@@ -327,20 +327,7 @@ function refundarPoblacion() {
     misionesActivas = [];
     misionesCompletadas = [];
 
-    // 3. Guardamos en el almacenamiento local
-    localStorage.setItem('hq_pueblo', JSON.stringify(puebloActual)); // Guardamos el nuevo pueblo
-    localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
-    localStorage.setItem('hq_quests_done', JSON.stringify(misionesCompletadas));
-
-    // 4. Actualizamos la interfaz
-    renderQuests(); 
-    renderPueblo(); 
-    
-    alert("Población refundada y misiones reiniciadas.");
-}
-
-            // Generar 3 NPCs aleatorios
-            for(let i=0; i<3; i++){
+    for(let i=0; i<3; i++){
                 puebloActual.npcs.push({
                     n: nombresNPC[Math.floor(Math.random()*nombresNPC.length)] + " " + i,
                     job: trabajos[Math.floor(Math.random()*trabajos.length)],
@@ -348,9 +335,14 @@ function refundarPoblacion() {
                 });
             }
 
-            localStorage.setItem('hq_pueblo', JSON.stringify(puebloActual));
-            renderPueblo();
-        }
+    // 3. Guardamos en el almacenamiento local
+    localStorage.setItem('hq_pueblo', JSON.stringify(puebloActual)); // Guardamos el nuevo pueblo
+    localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
+    localStorage.setItem('hq_quests_done', JSON.stringify(misionesCompletadas));
+
+    // 4. Actualizamos la interfaz
+    renderQuests();
+    }
 
         // --- SISTEMA DE MISIONES (TU ORIGINAL) ---
         function checkQuestProgress(tipo, valor) {
