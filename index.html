@@ -404,11 +404,19 @@
 
             const gN = document.getElementById('lista-npcs');
             gN.innerHTML = puebloActual.npcs.map((npc, idx) => {
-                const questDisponible = npc.misionId && !misionesCompletadas.includes(npc.misionId) && !misionesActivas.some(q => q.id === npc.misionId);
-                const questLista = misionesActivas.some(q => q.owner === npc.n && q.completada);
-                let iconHTML = '';
-                if (questLista) iconHTML = '<span class="quest-mark quest-ready">✅</span>';
-                else if (questDisponible) iconHTML = '<span class="quest-mark quest-available">❗</span>';
+            const questAceptada = misionesActivas.find(q => q.owner === npc.n);
+            const questDisponible = npc.misionId && !misionesCompletadas.includes(npc.misionId) && !questAceptada;
+            const questLista = questAceptada && questAceptada.completada;
+
+            let iconHTML = '';
+            if (questLista) {
+              iconHTML = '<span class="quest-mark quest-ready">✅</span>';
+            } else if (questAceptada) {
+            // ESTE ES EL NUEVO ICONO: Muestra que el NPC está esperando
+              iconHTML = '<span class="quest-mark" style="color: #f59e0b; opacity:0.7;">❓</span>'; 
+            } else if (questDisponible) {
+              iconHTML = '<span class="quest-mark quest-available">❗</span>';
+            }
                 return `<div class="npc-item" onclick="hablarConNPC(${idx})">
                     <div><b>${npc.n}</b><br><span class="npc-role">${npc.job}</span></div>
                     ${iconHTML}
@@ -446,22 +454,38 @@
 
         // --- LÓGICA DE AVENTURA (TU ORIGINAL) ---
         function derrotarEnemigo() {
-            if (inventario.length >= calcularCapacidadMax()) { alert("¡Mochila llena!"); return; }
-            const it = { ...Object.values(itemsDB)[Math.floor(Math.random()*Object.values(itemsDB).length)] };
-            const bronceGanado = Math.floor(Math.random() * 15) + 5;
-            
-            inventario.push(it);
-            totalBronce += bronceGanado;
-            
-            checkQuestProgress("kill", 1); 
-            checkQuestProgress("item", it.Rareza);
-            document.getElementById('botin-texto').innerHTML = `+${bronceGanado} Bronce y ${it.n}`;
-            document.getElementById('btn-derrota').style.display = 'none';
-            mundo.sectores[mundo.pos.x][mundo.pos.y].completado = true;
-            localStorage.setItem('hq_inv', JSON.stringify(inventario));
-            actualizarMonederoUI();
-        }
+    if (inventario.length >= calcularCapacidadMax()) { alert("¡Mochila llena!"); return; }
+    const it = { ...Object.values(itemsDB)[Math.floor(Math.random()*Object.values(itemsDB).length)] };
+    const bronceGanado = Math.floor(Math.random() * 15) + 5;
+    
+    // Determinar icono de moneda según la cantidad
+    let monedaIcono = "🟤";
+    if (bronceGanado >= 100) monedaIcono = "🟡";
+    else if (bronceGanado >= 50) monedaIcono = "⚪";
 
+    inventario.push(it);
+    totalBronce += bronceGanado;
+    
+    checkQuestProgress("kill", 1); 
+    checkQuestProgress("item", it.Rareza);
+
+    // Render visual del botín con iconos
+    document.getElementById('botin-texto').innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:center; gap:15px;">
+            <span>${monedaIcono} +${bronceGanado}</span>
+            <div style="display:flex; align-items:center; gap:5px;">
+                <img src="${getPath(it)}" style="width:25px; height:25px; border:1px solid ${coloresRareza[it.Rareza]}">
+                <span>${it.n}</span>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('btn-derrota').style.display = 'none';
+    mundo.sectores[mundo.pos.x][mundo.pos.y].completado = true;
+    localStorage.setItem('hq_inv', JSON.stringify(inventario));
+    actualizarMonederoUI();
+    }     
+        
         function calcularCapacidadMax() {
             let t = 16;
             [2,3,4,5].forEach(i => { const b = equipado[`slot-bolsa-${i}`]; if(b) t += (b.espacios || 0); });
@@ -567,25 +591,16 @@
             }
         }
 
-        function borrarTodo() { if(confirm("¿Reset total del progreso?")) { localStorage.clear(); location.reload(); } }
-
-        async function cargarDatos() {
-            try {
-                const v = Date.now();
-                const [rEn, rEq, rCo, rBa] = await Promise.all([
-                    fetch(`enemigos.json?v=${v}`).then(r => r.json()).catch(()=>({})),
-                    fetch(`equipacion.json?v=${v}`).then(r => r.json()).catch(()=>({})),
-                    fetch(`consumibles.json?v=${v}`).then(r => r.json()).catch(()=>({})),
-                    fetch(`basura.json?v=${v}`).then(r => r.json()).catch(()=>({}))
-                ]);
-                Object.values(rEq).forEach(i=>i.subfolder="equipacion");
-                Object.values(rCo).forEach(i=>i.subfolder="consumibles");
-                Object.values(rBa).forEach(i=>i.subfolder="basura");
-                enemigos = Object.values(rEn); enemigos.forEach(e=>e.subfolder="enemigos");
-                itemsDB = {...rEq, ...rCo, ...rBa};
-                renderPueblo(); renderEquipado();
-            } catch(e) { console.error(e); }
-        }
+ function borrarTodo() {
+    if(confirm("¿Deseas vaciar la mochila y el equipo? (El oro y el progreso se mantendrán)")) {
+        inventario = [];
+        equipado = { "slot-bolsa-1": { f: "mochila.jpg", subfolder: "equipacion" } }; // Mantiene la mochila base
+        localStorage.setItem('hq_inv', JSON.stringify(inventario));
+        localStorage.setItem('hq_equipo', JSON.stringify(equipado));
+        renderInv();
+        renderEquipado();
+    }
+}
 
         cargarDatos();
     </script>
