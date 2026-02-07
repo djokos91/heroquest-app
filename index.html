@@ -601,6 +601,23 @@
         renderEquipado();
     }
 }
+                async function cargarDatos() {
+            try {
+                const v = Date.now();
+                const [rEn, rEq, rCo, rBa] = await Promise.all([
+                    fetch(`enemigos.json?v=${v}`).then(r => r.json()).catch(()=>({})),
+                    fetch(`equipacion.json?v=${v}`).then(r => r.json()).catch(()=>({})),
+                    fetch(`consumibles.json?v=${v}`).then(r => r.json()).catch(()=>({})),
+                    fetch(`basura.json?v=${v}`).then(r => r.json()).catch(()=>({}))
+                ]);
+                Object.values(rEq).forEach(i=>i.subfolder="equipacion");
+                Object.values(rCo).forEach(i=>i.subfolder="consumibles");
+                Object.values(rBa).forEach(i=>i.subfolder="basura");
+                enemigos = Object.values(rEn); enemigos.forEach(e=>e.subfolder="enemigos");
+                itemsDB = {...rEq, ...rCo, ...rBa};
+                renderPueblo(); renderEquipado();
+            } catch(e) { console.error(e); }
+        }
 
         cargarDatos();
     </script>
