@@ -207,7 +207,6 @@
         }
         cargarDatos();
 
-        // --- SISTEMA DE MAPA ---
         function initMapa() {
             mundo.sectores = [];
             for (let x = 0; x < mundo.dimension; x++) {
@@ -248,13 +247,11 @@
 
         function clicarSector(x, y) {
             const dist = Math.abs(x - mundo.pos.x) + Math.abs(y - mundo.pos.y);
-            
             if (x === mundo.pos.x && y === mundo.pos.y) {
                 if (!mundo.sectores[x][y].completado) entrarEnSector();
                 else alert("Sector ya explorado.");
                 return;
             }
-
             if (dist === 1) {
                 mundo.pos = { x, y };
                 mundo.sectores[x][y].revelado = true;
@@ -276,7 +273,6 @@
             renderMapa();
         }
 
-        // --- SISTEMA DE COMBATE ---
         function generarEncuentro() {
             actual = enemigos[Math.floor(Math.random() * enemigos.length)];
             document.getElementById('enemigo-nombre').innerText = actual.n;
@@ -306,13 +302,10 @@
                         <span style="color:${color}">${itemObtenido.n}</span>
                     </div>`;
                 document.getElementById('btn-derrota').style.display = 'none';
-                
-                // Marcar sector completado
                 mundo.sectores[mundo.pos.x][mundo.pos.y].completado = true;
             }
         }
 
-        // --- GESTIÓN DE VISTAS ---
         function cambiarVista(donde) {
             document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active-view'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -322,7 +315,6 @@
             if(donde === 'heroe') renderEquipado();
         }
 
-        // --- EQUIPACIÓN Y MOCHILA ---
         function calcularCapacidadMax() {
             let total = 16;
             for (let i = 2; i <= 5; i++) {
@@ -339,14 +331,12 @@
                     s.innerHTML = "";
                     s.style.borderColor = "#475569";
                     s.className = "slot";
-                    s.title = "";
                 }
             });
 
             const s1 = document.getElementById('slot-bolsa-1');
             s1.innerHTML = `<img src="img/equipacion/mochila.jpg" style="opacity:0.8">`;
             s1.style.borderColor = coloresRareza["Common"];
-            s1.title = "Mochila Principal (Base)";
 
             for (const slotId in equipado) {
                 const item = equipado[slotId];
@@ -355,7 +345,6 @@
                     target.innerHTML = `<img src="${getPath(item)}">`;
                     target.style.borderColor = coloresRareza[item.Rareza] || "#475569";
                     target.classList.add(item.Rareza.toLowerCase());
-                    target.title = `${item.n}`; 
                 }
             }
         }
@@ -368,7 +357,7 @@
             inventario.forEach((item, i) => {
                 const color = coloresRareza[item.Rareza] || "#fff";
                 div.innerHTML += `
-                    <div class="item-slot ${item.Rareza.toLowerCase()}" onclick="gestionarItem(${i})" title="${item.n}">
+                    <div class="item-slot ${item.Rareza.toLowerCase()}" onclick="gestionarItem(${i})">
                         <img src="${getPath(item)}">
                         <span class="item-name" style="color:${color}">${item.n}</span>
                     </div>`;
@@ -406,9 +395,8 @@
             }
 
             const objetoActual = equipado[slotId];
-
             if (objetoActual) {
-                if (confirm(`La ranura tiene [${objetoActual.n}]. ¿Reemplazar por [${itemANuevo.n}]?`)) {
+                if (confirm(`¿Reemplazar ${objetoActual.n} por ${itemANuevo.n}?`)) {
                     inventario[index] = { ...objetoActual };
                     equipado[slotId] = { ...itemANuevo };
                 } else return;
@@ -428,8 +416,8 @@
             if (item && confirm("¿Desequipar objeto?")) {
                 if (inventario.length >= calcularCapacidadMax()) { alert("Mochila llena."); return; }
                 inventario.push({ ...item });
-                localStorage.setItem('hq_inv', JSON.stringify(inventario));
                 delete equipado[el.id];
+                localStorage.setItem('hq_inv', JSON.stringify(inventario));
                 localStorage.setItem('hq_equipo', JSON.stringify(equipado));
                 renderEquipado(); renderInv();
             }
