@@ -442,16 +442,47 @@
             actualizarMonederoUI();
         }
 
-        function renderQuests() {
-            const c = document.getElementById('quest-log-container');
-            c.innerHTML = misionesActivas.length ? misionesActivas.map(q => `
-                <div class="quest-entry">
-                    <div class="quest-title">${q.n} ${q.completada ? '✅' : ''}</div>
-                    <div style="font-size:11px; color:#94a3b8">${q.desc}</div>
-                    <div class="quest-progress">Progreso: ${q.actual}/${q.meta}</div>
-                </div>`).join("") : '<p style="font-size:12px; color:#64748b">No hay misiones activas.</p>';
-        }
+        function abandonarMision(questId) {
+    if (confirm("¿Seguro que quieres abandonar esta misión? Perderás todo el progreso acumulado en ella.")) {
+        misionesActivas = misionesActivas.filter(q => q.id !== questId);
+        localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
+        renderQuests(); // Actualiza la lista del diario
+        renderPueblo(); // Actualiza los iconos de los NPCs en el pueblo
+    }
+}
 
+function renderQuests() {
+    const c = document.getElementById('quest-log-container');
+    c.innerHTML = misionesActivas.length ? misionesActivas.map(q => {
+        const itemData = itemsDB[q.recompensa];
+        const nombreItem = itemData ? itemData.n : "Objeto desconocido";
+
+        return `
+        <div class="quest-entry" style="border-left: 3px solid #3b82f6; padding-left: 10px; margin-bottom: 15px; position: relative;">
+            <div class="quest-title">${q.n} ${q.completada ? '✅' : ''}</div>
+            <div style="font-size:10px; color:#3b82f6; margin-bottom: 4px;">👤 Otorgada por: ${q.owner}</div>
+            <div style="font-size:11px; color:#94a3b8; font-style: italic; margin-bottom: 6px;">"${q.desc}"</div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 8px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px;">
+                <span style="font-size: 10px; color: #cd7f32;">💰 ${q.bronce} Bronce</span>
+                <span style="font-size: 10px; color: #fbbf24;">🎁 ${nombreItem}</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="quest-progress" style="font-weight: bold; color: ${q.completada ? '#22c55e' : '#e2e8f0'}">
+                    Progreso: ${q.actual}/${q.meta}
+                </div>
+                
+                <button onclick="abandonarMision('${q.id}')" 
+                        style="background: none; border: 1px solid #ef4444; color: #ef4444; font-size: 9px; padding: 2px 5px; border-radius: 4px; cursor: pointer; opacity: 0.6;">
+                    🗑️ ABANDONAR
+                </button>
+            </div>
+        </div>`;
+    }).join("") : '<p style="font-size:12px; color:#64748b">No hay misiones activas.</p>';
+}
+
+             
         // --- LÓGICA DE AVENTURA (TU ORIGINAL) ---
         function derrotarEnemigo() {
     if (inventario.length >= calcularCapacidadMax()) { alert("¡Mochila llena!"); return; }
@@ -472,12 +503,12 @@
     // Render visual del botín con iconos
     document.getElementById('botin-texto').innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
-            <div style="color: #fbbf24; font-weight: bold; font-size: 24px; letter-spacing: 2px; text-transform: uppercase;">✨ BOTÍN ✨</div>
+            <div style="color: #fbbf24; font-weight: bold; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">✨ BOTÍN ✨</div>
             <div style="display:flex; align-items:center; gap:8px;">
-                    <img src="${getPath(it)}" style="width:50px; height:50px; border:2px solid ${coloresRareza[it.Rareza]}; border-radius: 4px;">
+                    <img src="${getPath(it)}" style="width:40px; height:40px; border:2px solid ${coloresRareza[it.Rareza]}; border-radius: 4px;">
                     <span style="color: ${coloresRareza[it.Rareza]}; font-size: 18px;">${it.n}</span></div>
                 <div style="display:flex; align-items:center; justify-content:center; gap:20px;">
-                <span style="font-size: 12px;">${bronceGanado} ${monedaIcono}</span></div>
+                <span style="font-size: 14px;">${bronceGanado} ${monedaIcono}</span></div>
         </div>`;
 
     document.getElementById('btn-derrota').style.display = 'none';
