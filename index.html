@@ -472,7 +472,8 @@
     // Render visual del botín con iconos
     document.getElementById('botin-texto').innerHTML = `
         <div style="display:flex; align-items:center; justify-content:center; gap:15px;">
-            <span>${monedaIcono} +${bronceGanado}</span>
+            <span style="color: #fbbf24; font-weight: bold; font-size: 12px; letter-spacing: 2px;">✨ BOTÍN ✨</span>
+            <span>${bronceGanado} +${monedaIcono}</span>
             <div style="display:flex; align-items:center; gap:5px;">
                 <img src="${getPath(it)}" style="width:25px; height:25px; border:1px solid ${coloresRareza[it.Rareza]}">
                 <span>${it.n}</span>
