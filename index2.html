@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - Town Update</title>
+    <title>HeroQuest Pro - Fix States</title>
     <style>
         /* --- ESTILOS GENERALES --- */
         body { 
@@ -62,7 +62,6 @@
         .town-header { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #334155; }
         .town-type { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 3px; }
         
-        /* Grid de Edificios */
         .edificios-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
             gap: 10px; padding: 10px;
@@ -75,7 +74,6 @@
         .edificio-icon { font-size: 30px; display: block; margin-bottom: 5px; }
         .edificio-name { font-size: 12px; font-weight: bold; color: #e2e8f0; }
 
-        /* Lista de NPCs */
         .npc-list { margin-top: 20px; text-align: left; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 10px; }
         .npc-item { 
             padding: 10px; border-bottom: 1px solid #334155; display: flex; 
@@ -132,7 +130,6 @@
         .item-slot img { width: 50px; height: 50px; object-fit: contain; }
         .item-name { font-size: 10px; text-align: center; font-weight: bold; width: 100%; }
         
-        /* Rarezas */
         .poor { border-color: #9d9d9d !important; } .common { border-color: #ffffff !important; }
         .uncommon { border-color: #1eff00 !important; } .rare { border-color: #0070dd !important; }
         .epic { border-color: #a335ee !important; } .legendary { border-color: #ff8000 !important; }
@@ -229,11 +226,11 @@
     </nav>
 
     <script>
-        // --- DATOS GLOBALES ---
+        // --- CONFIGURACIÓN ---
         const coloresRareza = { "Poor": "#9d9d9d", "Common": "#ffffff", "Uncommon": "#1eff00", "Rare": "#0070dd", "Epic": "#a335ee", "Legendary": "#ff8000" };
         const jerarquiaRareza = { "Poor": 0, "Common": 1, "Uncommon": 2, "Rare": 3, "Epic": 4, "Legendary": 5 };
 
-        // --- BASES DE DATOS GENERATIVAS ---
+        // --- BASES DE DATOS ---
         const prefijosPueblo = ["Val", "Roca", "Bosque", "Puerto", "Monte", "Rio", "Fuerte", "Aldea", "Villa"];
         const sufijosPueblo = ["mar", "luz", "sombra", "frio", "verde", "ferreo", "alto", "bajo", "piedra"];
         
@@ -257,11 +254,12 @@
         let inventario = safeParse('hq_inv', []);
         let equipado = safeParse('hq_equipo', {});
         
-        // Estado de Mapa y Pueblo
+        // ESTADO DE NAVEGACIÓN Y CIUDAD
         let puebloActual = safeParse('hq_pueblo', null);
         let modoAventura = false;
+        let enCombate = false; // NUEVO: Controla si estamos viendo al enemigo
         let mundo = { dimension: 3, sectores: [], pos: { x: 1, y: 1 } };
-        let actual = null; // Enemigo actual
+        let actual = null; 
 
         function safeParse(key, defaultVal) {
             try { return JSON.parse(localStorage.getItem(key)) || defaultVal; } catch { return defaultVal; }
@@ -272,9 +270,42 @@
             return item.f.includes('/') ? `img/${item.f}` : `img/${item.subfolder}/${item.f}`;
         }
 
-        // --- GENERADOR DE PUEBLOS ---
+        // --- GESTIÓN DE VISTAS (CORREGIDO) ---
+        function cambiarVista(donde) {
+            document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active-view'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('vista-' + donde).classList.add('active-view');
+            document.getElementById('btn-nav-' + donde).classList.add('active');
+            
+            // LÓGICA DE VISUALIZACIÓN DE LA PESTAÑA MUNDO
+            if(donde === 'mundo') {
+                if(modoAventura) {
+                    // Estamos fuera del pueblo
+                    document.getElementById('contenedor-pueblo').style.display = 'none';
+                    
+                    if(enCombate) {
+                        // Si hay combate activo, SOLO mostramos enemigo
+                        document.getElementById('contenedor-aventura').style.display = 'none';
+                        document.getElementById('pantalla-enemigo').style.display = 'block';
+                    } else {
+                        // Si no hay combate, mostramos el mapa
+                        document.getElementById('contenedor-aventura').style.display = 'block';
+                        document.getElementById('pantalla-enemigo').style.display = 'none';
+                    }
+                } else {
+                    // Estamos en el pueblo
+                    document.getElementById('contenedor-pueblo').style.display = 'block';
+                    document.getElementById('contenedor-aventura').style.display = 'none';
+                    document.getElementById('pantalla-enemigo').style.display = 'none';
+                    renderPueblo();
+                }
+            }
+            if(donde === 'mochila') renderInv();
+            if(donde === 'heroe') renderEquipado();
+        }
+
+        // --- SISTEMA DE PUEBLO ---
         function generarPoblacion() {
-            // 0: Aldea, 1: Pueblo, 2: Ciudad
             const tipoRoll = Math.random();
             let tipoId = 0;
             if (tipoRoll > 0.6) tipoId = 1;
@@ -284,12 +315,9 @@
             const nombre = prefijosPueblo[Math.floor(Math.random() * prefijosPueblo.length)] + 
                            sufijosPueblo[Math.floor(Math.random() * sufijosPueblo.length)];
             
-            // Generar Edificios
             let edificios = dbEdificios.filter(e => e.minType <= tipoId);
-            // Aleatoriedad: A veces faltan edificios en aldeas
             if (tipoId === 0) edificios = edificios.filter(() => Math.random() > 0.2);
 
-            // Generar NPCs
             const cantidadNPC = (tipoId + 1) * 2 + Math.floor(Math.random() * 3);
             let habitantes = [];
             for(let i=0; i<cantidadNPC; i++) {
@@ -335,27 +363,24 @@
             });
         }
 
+        function volverAlPueblo() {
+            modoAventura = false;
+            enCombate = false; // Aseguramos que se apaga el combate
+            // Se eliminó la regeneración aleatoria para mantener la persistencia
+            cambiarVista('mundo'); // Forzamos refresco de vista
+        }
+
         // --- SISTEMA DE AVENTURA ---
         function irDeAventura() {
             modoAventura = true;
-            document.getElementById('contenedor-pueblo').style.display = 'none';
-            document.getElementById('contenedor-aventura').style.display = 'block';
+            enCombate = false;
             initMapa();
-        }
-
-        function volverAlPueblo() {
-            modoAventura = false;
-            document.getElementById('contenedor-aventura').style.display = 'none';
-            document.getElementById('pantalla-enemigo').style.display = 'none';
-            document.getElementById('contenedor-pueblo').style.display = 'block';
-            // Opcional: Generar nuevo pueblo al volver, o mantener el mismo
-             if(Math.random() > 0.8) generarPoblacion(); // 20% de probabilidad de viajar a otro
-             renderPueblo();
+            cambiarVista('mundo');
         }
 
         function initMapa() {
             mundo.sectores = [];
-            mundo.pos = { x: 1, y: 1 }; // Reset posición al centro
+            mundo.pos = { x: 1, y: 1 }; 
             for (let x = 0; x < mundo.dimension; x++) {
                 mundo.sectores[x] = [];
                 for (let y = 0; y < mundo.dimension; y++) {
@@ -379,7 +404,7 @@
                     div.className = `sector ${s.revelado ? 'revelado' : ''} ${esActual ? 'actual' : ''} ${s.completado ? 'completado' : ''}`;
                     
                     if (s.revelado) div.innerHTML = esActual ? "🛡️" : (s.completado ? "🌲" : "❓");
-                    else div.innerHTML = "☁️"; // Niebla
+                    else div.innerHTML = "☁️"; 
                     
                     div.onclick = () => clicarSector(x, y);
                     grid.appendChild(div);
@@ -401,15 +426,15 @@
         }
 
         function mostrarCombate() {
-            document.getElementById('contenedor-aventura').style.display = 'none';
-            document.getElementById('pantalla-enemigo').style.display = 'block';
-            generarEncuentro(); 
+            enCombate = true; // Flag activado
+            generarEncuentro();
+            cambiarVista('mundo'); // Refresca para ocultar mapa y mostrar enemigo
         }
 
         function cerrarCombate() {
-            document.getElementById('pantalla-enemigo').style.display = 'none';
-            document.getElementById('contenedor-aventura').style.display = 'block';
+            enCombate = false; // Flag desactivado
             renderMapa();
+            cambiarVista('mundo'); // Refresca para mostrar mapa y ocultar enemigo
         }
 
         function generarEncuentro() {
@@ -444,27 +469,7 @@
             }
         }
 
-        // --- SISTEMA DE GESTIÓN (IGUAL QUE ANTES) ---
-        function cambiarVista(donde) {
-            document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active-view'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('vista-' + donde).classList.add('active-view');
-            document.getElementById('btn-nav-' + donde).classList.add('active');
-            
-            if(donde === 'mundo') {
-                if(modoAventura) {
-                    document.getElementById('contenedor-pueblo').style.display = 'none';
-                    document.getElementById('contenedor-aventura').style.display = 'block';
-                } else {
-                    document.getElementById('contenedor-pueblo').style.display = 'block';
-                    document.getElementById('contenedor-aventura').style.display = 'none';
-                    renderPueblo();
-                }
-            }
-            if(donde === 'mochila') renderInv();
-            if(donde === 'heroe') renderEquipado();
-        }
-
+        // --- UTILS EQUIPO E INVENTARIO ---
         function calcularCapacidadMax() {
             let total = 16;
             for (let i = 2; i <= 5; i++) {
@@ -581,7 +586,6 @@
                 enemigos.forEach(en => en.subfolder = "enemigos");
                 itemsDB = { ...resEq, ...resCo, ...resBa };
                 
-                // Inicialización
                 if(!puebloActual) generarPoblacion();
                 renderPueblo();
                 renderEquipado();
