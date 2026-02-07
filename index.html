@@ -4,25 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - Fix States</title>
+    <title>HeroQuest Pro - Quests</title>
     <style>
         /* --- ESTILOS GENERALES --- */
         body { 
-            background: #0f172a; 
-            color: white; 
+            background: #0f172a; color: white; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; 
-            padding-bottom: 80px; 
-            user-select: none;
+            margin: 0; padding-bottom: 80px; user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
-        .tab-content { 
-            display: none; 
-            padding: 15px; 
-            text-align: center; 
-            animation: fadeIn 0.3s ease-in-out;
-        }
+        .tab-content { display: none; padding: 15px; text-align: center; animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .active-view { display: block; }
 
@@ -32,131 +24,93 @@
             align-items: center; border-top: 2px solid #334155; z-index: 1000; 
             box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
         }
-        .nav-btn { 
-            background: none; border: none; color: #94a3b8; 
-            font-size: 10px; font-weight: bold; cursor: pointer; flex: 1; 
-        }
+        .nav-btn { background: none; border: none; color: #94a3b8; font-size: 10px; font-weight: bold; cursor: pointer; flex: 1; }
         .nav-btn.active { color: #3b82f6; transform: translateY(-2px); }
         .nav-btn span { display: block; font-size: 24px; margin-bottom: 4px; }
         
-        /* --- SISTEMA DE MAPA (GRID) --- */
+        /* --- MAPA --- */
         #contenedor-aventura { width: 100%; max-width: 500px; margin: auto; display: none; }
-        #mapa-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 12px; max-width: 320px; margin: 20px auto; padding: 10px;
-        }
-        .sector {
-            aspect-ratio: 1/1; background: #020617; border: 2px solid #334155;
-            border-radius: 15px; display: flex; align-items: center;
-            justify-content: center; font-size: 32px; cursor: pointer; position: relative;
-        }
+        #mapa-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 320px; margin: 20px auto; padding: 10px; }
+        .sector { aspect-ratio: 1/1; background: #020617; border: 2px solid #334155; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 32px; cursor: pointer; position: relative; }
         .sector.revelado { background: #064e3b; border-color: #22c55e; }
-        .sector.actual { 
-            border-color: #3b82f6; border-width: 3px; 
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); transform: scale(1.08); z-index: 10; 
-        }
+        .sector.actual { border-color: #3b82f6; border-width: 3px; box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); transform: scale(1.08); z-index: 10; }
         .sector.completado { opacity: 0.6; background: #1e293b; border-color: #475569; }
 
-        /* --- SISTEMA DE PUEBLO --- */
+        /* --- PUEBLO & NPC --- */
         #contenedor-pueblo { width: 100%; max-width: 600px; margin: auto; }
         .town-header { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #334155; }
-        .town-type { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 3px; }
-        
-        .edificios-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 10px; padding: 10px;
-        }
-        .edificio-card {
-            background: #1e293b; border: 1px solid #475569; border-radius: 12px;
-            padding: 15px 5px; cursor: pointer; transition: 0.2s;
-        }
-        .edificio-card:active { transform: scale(0.95); background: #334155; }
-        .edificio-icon { font-size: 30px; display: block; margin-bottom: 5px; }
-        .edificio-name { font-size: 12px; font-weight: bold; color: #e2e8f0; }
-
         .npc-list { margin-top: 20px; text-align: left; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 10px; }
+        
         .npc-item { 
-            padding: 10px; border-bottom: 1px solid #334155; display: flex; 
-            justify-content: space-between; align-items: center; 
+            padding: 12px; border-bottom: 1px solid #334155; display: flex; 
+            justify-content: space-between; align-items: center; cursor: pointer;
+            transition: 0.2s;
         }
-        .npc-item:last-child { border-bottom: none; }
-        .npc-role { font-size: 10px; color: #94a3b8; text-transform: uppercase; background: #0f172a; padding: 2px 6px; border-radius: 4px; }
+        .npc-item:active { background: #334155; }
+        .npc-has-quest::after {
+            content: "❗"; font-size: 20px; color: #fbbf24; 
+            animation: bounce 1s infinite; margin-left: 10px;
+        }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 
-        .btn-aventura {
-            width: 90%; background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
-            color: white; border: none; padding: 20px; font-size: 18px; font-weight: bold;
-            border-radius: 15px; margin-top: 20px; cursor: pointer;
-            box-shadow: 0 4px 0 #7c2d12; text-transform: uppercase;
+        /* --- QUEST LOG --- */
+        .quest-log { 
+            background: rgba(15, 23, 42, 0.9); border: 1px solid #f59e0b; 
+            border-radius: 8px; padding: 10px; margin: 10px auto; 
+            max-width: 90%; text-align: left; font-size: 12px;
         }
-        .btn-aventura:active { transform: translateY(4px); box-shadow: none; }
+        .quest-item { margin-bottom: 5px; color: #fbbf24; border-bottom: 1px dashed #451a03; padding-bottom: 4px; }
+        .quest-check { color: #22c55e; font-weight: bold; margin-right: 5px; }
 
-        /* --- INTERFAZ DE COMBATE --- */
-        .card { 
-            background: #1e293b; border-radius: 20px; overflow: hidden; 
-            border: 2px solid #475569; margin-top: 15px; padding-bottom: 20px;
-        }
+        /* --- COMBATE --- */
+        .card { background: #1e293b; border-radius: 20px; overflow: hidden; border: 2px solid #475569; margin-top: 15px; padding-bottom: 20px; }
         .card img { width: 100%; height: auto; max-height: 45vh; object-fit: contain; background: radial-gradient(circle, #334155 0%, #000 100%); }
-        .btn-action { 
-            background: #ef4444; color: white; border: none; padding: 18px; border-radius: 12px; 
-            font-weight: 900; width: 90%; margin: 10px; font-size: 18px; cursor: pointer; 
-            text-transform: uppercase; box-shadow: 0 4px 0 #991b1b;
-        }
+        .btn-action { background: #ef4444; color: white; border: none; padding: 18px; border-radius: 12px; font-weight: 900; width: 90%; margin: 10px; font-size: 18px; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 0 #991b1b; }
         .btn-win { background: #22c55e; box-shadow: 0 4px 0 #166534; }
-
-        /* --- FICHA DE HÉROE --- */
-        .hero-container { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; max-width: 480px; margin: auto; padding: 15px; background: rgba(15, 23, 42, 0.5); border-radius: 20px; }
-        .slot-column { display: flex; flex-direction: column; gap: 10px; justify-content: center; }
-        .slot { 
-            width: 54px; height: 54px; background: rgba(30, 41, 59, 0.9); border: 2px solid #475569; 
-            border-radius: 10px; display: flex; align-items: center; justify-content: center; 
-            position: relative; overflow: hidden; cursor: pointer; 
-        }
-        .slot img { width: 82%; height: 82%; object-fit: contain; z-index: 2; margin-bottom: 6px; }
-        .slot::after { 
-            content: attr(data-label); position: absolute; bottom: 0; font-size: 7px; 
-            color: #94a3b8; text-transform: uppercase; width: 100%; text-align: center; 
-            background: rgba(0,0,0,0.8); z-index: 1; padding: 1px 0; pointer-events: none;
-        }
-        .silhouette { font-size: 120px; opacity: 0.05; display: flex; align-items: center; justify-content: center; }
-        .bottom-slots { grid-column: span 3; display: flex; justify-content: center; gap: 12px; margin-top: 15px; }
 
         /* --- INVENTARIO --- */
         #lista-inv { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 15px; padding: 15px; max-width: 550px; margin: auto; }
-        .item-slot { 
-            width: 85px; height: 110px; background: #1e293b; border: 2px solid #475569; 
-            border-radius: 10px; display: flex; flex-direction: column; align-items: center; 
-            justify-content: space-between; padding: 8px; cursor: pointer; box-sizing: border-box;
-        }
+        .item-slot { width: 85px; height: 110px; background: #1e293b; border: 2px solid #475569; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 8px; cursor: pointer; box-sizing: border-box; }
         .item-slot img { width: 50px; height: 50px; object-fit: contain; }
-        .item-name { font-size: 10px; text-align: center; font-weight: bold; width: 100%; }
         
-        .poor { border-color: #9d9d9d !important; } .common { border-color: #ffffff !important; }
-        .uncommon { border-color: #1eff00 !important; } .rare { border-color: #0070dd !important; }
-        .epic { border-color: #a335ee !important; } .legendary { border-color: #ff8000 !important; }
+        .btn-aventura { width: 90%; background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); color: white; border: none; padding: 20px; font-size: 18px; font-weight: bold; border-radius: 15px; margin-top: 20px; cursor: pointer; box-shadow: 0 4px 0 #7c2d12; text-transform: uppercase; }
         
-        .btn-reset { margin: 40px auto; color: #ef4444; background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 12px 25px; border-radius: 8px; cursor: pointer; display: block; }
+        /* Modal simple para diálogo */
+        #modal-dialogo {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 2000; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        .modal-content { background: #1e293b; padding: 20px; border-radius: 15px; border: 2px solid #fbbf24; max-width: 80%; text-align: center; }
     </style>
 </head>
 <body>
 
+    <div id="modal-dialogo">
+        <div class="modal-content">
+            <h2 id="modal-titulo" style="color:#fbbf24"></h2>
+            <p id="modal-texto" style="color:#e2e8f0; font-size: 16px; margin: 20px 0;"></p>
+            <div id="modal-botones" style="display:flex; gap:10px; justify-content:center;"></div>
+        </div>
+    </div>
+
     <section id="vista-mundo" class="tab-content active-view">
+        
         <div id="contenedor-pueblo">
             <div class="town-header">
-                <div class="town-type" id="pueblo-tipo"></div>
                 <h2 style="color: #fbbf24; margin: 5px 0; font-size: 28px;" id="pueblo-nombre"></h2>
+                <div id="quest-log-pueblo" class="quest-log" style="display:none;"></div>
             </div>
 
-            <h3 style="font-size: 14px; color: #94a3b8; text-align: left; margin-left: 10px;">🏛️ EDIFICIOS</h3>
-            <div class="edificios-grid" id="lista-edificios"></div>
-
-            <h3 style="font-size: 14px; color: #94a3b8; text-align: left; margin-left: 10px; margin-top: 20px;">👥 HABITANTES</h3>
+            <h3 style="font-size: 14px; color: #94a3b8; text-align: left; margin-left: 10px;">👥 HABITANTES (MISIONES)</h3>
             <div class="npc-list" id="lista-npcs"></div>
 
-            <button class="btn-aventura" onclick="irDeAventura()">💀 SALIR DE AVENTURA</button>
+            <button class="btn-aventura" onclick="irDeAventura()">💀 IR DE AVENTURA</button>
         </div>
 
         <div id="contenedor-aventura">
-            <h2 style="color: #22c55e; font-style: italic;">BOSQUE OSCURO</h2>
+            <h2 style="color: #22c55e; font-style: italic;">EXPLORANDO...</h2>
+            <div id="quest-log-mapa" class="quest-log" style="display:none;"></div>
             <div id="mapa-grid"></div>
             <button class="btn-action btn-back" style="background: #334155; box-shadow: 0 4px 0 #1e293b;" onclick="volverAlPueblo()">🏳️ HUIR AL PUEBLO</button>
         </div>
@@ -168,55 +122,23 @@
                     <h3 id="enemigo-nombre" style="margin: 5px 0; font-size: 24px; color: #f87171;"></h3>
                     <p style="color: #94a3b8;">Vida: <span id="enemigo-hp" style="color: #ef4444; font-weight: bold;"></span></p>
                 </div>
-                <button id="btn-derrota" class="btn-action btn-win" onclick="derrotarEnemigo()">⚔️ VICTORIA</button>
+                <button id="btn-derrota" class="btn-action btn-win" onclick="derrotarEnemigo()">⚔️ ATACAR</button>
                 <div id="botin-texto" style="padding: 20px; color: #fbbf24; font-weight: bold; min-height: 50px;"></div>
-                <button class="btn-action btn-back" onclick="cerrarCombate()">VOLVER AL MAPA</button>
+                <button class="btn-action btn-back" onclick="cerrarCombate()">CONTINUAR</button>
             </div>
-        </div>
-    </section>
-
-    <section id="vista-heroe" class="tab-content">
-        <h2 style="color: #3b82f6;">FICHA DE PERSONAJE</h2>
-        <div class="hero-container">
-            <div class="slot-column">
-                <div id="slot-cabeza" class="slot" data-label="Cabeza" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-cuello" class="slot" data-label="Cuello" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-hombros" class="slot" data-label="Hombros" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-espalda" class="slot" data-label="Espalda" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-pecho" class="slot" data-label="Pecho" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-brazos" class="slot" data-label="Brazos" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-manos" class="slot" data-label="Manos" onclick="gestionarEquipado(this)"></div>
-            </div>
-            <div class="silhouette">👤</div>
-            <div class="slot-column">
-                <div id="slot-cintura" class="slot" data-label="Cintura" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-piernas" class="slot" data-label="Piernas" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-pies" class="slot" data-label="Pies" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-anillo-1" class="slot" data-label="Anillo" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-anillo-2" class="slot" data-label="Anillo" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-abalorio-1" class="slot" data-label="Abalorio" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-abalorio-2" class="slot" data-label="Abalorio" onclick="gestionarEquipado(this)"></div>
-            </div>
-            <div class="bottom-slots">
-                <div id="slot-mano1" class="slot" data-label="Mano 1" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-mano2" class="slot" data-label="Mano 2" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-distancia" class="slot" data-label="Rango" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-municion" class="slot" data-label="Munición" onclick="gestionarEquipado(this)"></div>
-            </div>
-        </div>
-        <div style="margin-top: 10px; display: flex; gap: 5px; justify-content: center;">
-             <div id="slot-bolsa-1" class="slot" data-label="Base" onclick="gestionarEquipado(this)"></div>
-             <div id="slot-bolsa-2" class="slot" data-label="Bolsa" onclick="gestionarEquipado(this)"></div>
-             <div id="slot-bolsa-3" class="slot" data-label="Bolsa" onclick="gestionarEquipado(this)"></div>
-             <div id="slot-bolsa-4" class="slot" data-label="Bolsa" onclick="gestionarEquipado(this)"></div>
-             <div id="slot-bolsa-5" class="slot" data-label="Bolsa" onclick="gestionarEquipado(this)"></div>
         </div>
     </section>
 
     <section id="vista-mochila" class="tab-content">
         <h2 style="color: #eab308;">INVENTARIO</h2>
         <div id="lista-inv"></div>
-        <button class="btn-reset" onclick="borrarTodo()">⚠️ ELIMINAR TODO</button>
+        <button class="btn-action" style="background:#334155; box-shadow:none; margin-top:20px" onclick="borrarTodo()">⚠️ RESET TOTAL</button>
+    </section>
+
+    <section id="vista-heroe" class="tab-content">
+        <h2 style="color: #3b82f6;">HÉROE</h2>
+        <p style="color:#94a3b8">Equipamiento (Próximamente stats reales)</p>
+        <div id="lista-equipo" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; max-width:300px; margin:auto;"></div>
     </section>
 
     <nav>
@@ -226,43 +148,30 @@
     </nav>
 
     <script>
-        // --- CONFIGURACIÓN ---
-        const coloresRareza = { "Poor": "#9d9d9d", "Common": "#ffffff", "Uncommon": "#1eff00", "Rare": "#0070dd", "Epic": "#a335ee", "Legendary": "#ff8000" };
-        const jerarquiaRareza = { "Poor": 0, "Common": 1, "Uncommon": 2, "Rare": 3, "Epic": 4, "Legendary": 5 };
-
-        // --- BASES DE DATOS ---
-        const prefijosPueblo = ["Val", "Roca", "Bosque", "Puerto", "Monte", "Rio", "Fuerte", "Aldea", "Villa"];
-        const sufijosPueblo = ["mar", "luz", "sombra", "frio", "verde", "ferreo", "alto", "bajo", "piedra"];
+        // --- ESTADO Y DATOS ---
+        const prefijosPueblo = ["Val", "Roca", "Bosque", "Puerto", "Villa", "Fuerte"];
+        const sufijosPueblo = ["mar", "luz", "sombra", "frio", "verde", "alta"];
+        const nombresNPC = ["Borg", "Ana", "Thorin", "Elena", "Grom", "Syla"];
+        const oficiosNPC = ["Herrero", "Mercader", "Guardia", "Mago", "Granjero"];
         
-        const dbEdificios = [
-            { id: "posada", n: "Posada", icono: "🍺", minType: 0 },
-            { id: "herrero", n: "Herrería", icono: "⚒️", minType: 0 },
-            { id: "tienda", n: "Mercader", icono: "⚖️", minType: 1 },
-            { id: "templo", n: "Templo", icono: "⛪", minType: 1 },
-            { id: "gremio", n: "Gremio", icono: "📜", minType: 2 },
-            { id: "torre", n: "Torre Mágica", icono: "🔮", minType: 2 },
-            { id: "establo", n: "Establos", icono: "🐴", minType: 1 },
-            { id: "cuartel", n: "Cuartel", icono: "🏰", minType: 2 }
-        ];
-
-        const nombresNPC = ["Borg", "Ana", "Thorin", "Elena", "Grom", "Syla", "Kael", "Mira", "Otto"];
-        const oficiosNPC = ["Tabernero", "Herrero", "Guardia", "Mercader", "Sacerdote", "Borracho", "Granjero", "Mago"];
-
-        // --- ESTADO DEL JUEGO ---
         let enemigos = [];
         let itemsDB = {};
         let inventario = safeParse('hq_inv', []);
-        let equipado = safeParse('hq_equipo', {});
-        
-        // ESTADO DE NAVEGACIÓN Y CIUDAD
         let puebloActual = safeParse('hq_pueblo', null);
+        let questsActivas = safeParse('hq_quests', []); // Lista de misiones activas
+        
+        // Variables de sesión (no se guardan)
         let modoAventura = false;
-        let enCombate = false; // NUEVO: Controla si estamos viendo al enemigo
+        let enCombate = false;
         let mundo = { dimension: 3, sectores: [], pos: { x: 1, y: 1 } };
-        let actual = null; 
+        let enemigoActual = null;
+        let esJefe = false;
 
-        function safeParse(key, defaultVal) {
-            try { return JSON.parse(localStorage.getItem(key)) || defaultVal; } catch { return defaultVal; }
+        function safeParse(key, def) { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } }
+        function saveAll() {
+            localStorage.setItem('hq_inv', JSON.stringify(inventario));
+            localStorage.setItem('hq_quests', JSON.stringify(questsActivas));
+            localStorage.setItem('hq_pueblo', JSON.stringify(puebloActual));
         }
 
         function getPath(item) {
@@ -270,107 +179,215 @@
             return item.f.includes('/') ? `img/${item.f}` : `img/${item.subfolder}/${item.f}`;
         }
 
-        // --- GESTIÓN DE VISTAS (CORREGIDO) ---
-        function cambiarVista(donde) {
-            document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active-view'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('vista-' + donde).classList.add('active-view');
-            document.getElementById('btn-nav-' + donde).classList.add('active');
-            
-            // LÓGICA DE VISUALIZACIÓN DE LA PESTAÑA MUNDO
-            if(donde === 'mundo') {
-                if(modoAventura) {
-                    // Estamos fuera del pueblo
-                    document.getElementById('contenedor-pueblo').style.display = 'none';
-                    
-                    if(enCombate) {
-                        // Si hay combate activo, SOLO mostramos enemigo
-                        document.getElementById('contenedor-aventura').style.display = 'none';
-                        document.getElementById('pantalla-enemigo').style.display = 'block';
-                    } else {
-                        // Si no hay combate, mostramos el mapa
-                        document.getElementById('contenedor-aventura').style.display = 'block';
-                        document.getElementById('pantalla-enemigo').style.display = 'none';
-                    }
+        // --- SISTEMA DE MISIONES ---
+        function generarMisionRandom(npcName) {
+            const tipos = ["caza", "exploracion", "recoleccion", "jefe"];
+            const tipo = tipos[Math.floor(Math.random() * tipos.length)];
+            let q = { id: Date.now() + Math.random(), npc: npcName, tipo: tipo, progreso: 0, meta: 1, desc: "", completada: false };
+
+            if (tipo === "caza") {
+                q.meta = 3 + Math.floor(Math.random() * 3);
+                q.desc = `Derrota a ${q.meta} enemigos en el bosque.`;
+            } else if (tipo === "exploracion") {
+                q.meta = 5;
+                q.desc = `Explora ${q.meta} sectores del mapa.`;
+            } else if (tipo === "recoleccion") {
+                // Buscamos un objeto basura aleatorio
+                const basuraItems = Object.values(itemsDB).filter(i => i.subfolder === 'basura');
+                if (basuraItems.length > 0) {
+                    const targetItem = basuraItems[Math.floor(Math.random() * basuraItems.length)];
+                    q.targetId = targetItem.n; // Usamos nombre por simplicidad
+                    q.desc = `Tráeme: ${targetItem.n}`;
                 } else {
-                    // Estamos en el pueblo
-                    document.getElementById('contenedor-pueblo').style.display = 'block';
-                    document.getElementById('contenedor-aventura').style.display = 'none';
-                    document.getElementById('pantalla-enemigo').style.display = 'none';
-                    renderPueblo();
+                    q.tipo = "caza"; q.meta = 2; q.desc = "Elimina 2 enemigos."; // Fallback
                 }
+            } else if (tipo === "jefe") {
+                q.desc = "Derrota al JEFE de la zona (última casilla).";
             }
-            if(donde === 'mochila') renderInv();
-            if(donde === 'heroe') renderEquipado();
+            return q;
         }
 
-        // --- SISTEMA DE PUEBLO ---
-        function generarPoblacion() {
-            const tipoRoll = Math.random();
-            let tipoId = 0;
-            if (tipoRoll > 0.6) tipoId = 1;
-            if (tipoRoll > 0.9) tipoId = 2;
+        function checkMisiones(accion, cantidad = 1, extraData = null) {
+            let huboCambios = false;
+            questsActivas.forEach(q => {
+                if (q.completada) return;
 
-            const tipos = ["Aldea", "Pueblo", "Ciudad"];
-            const nombre = prefijosPueblo[Math.floor(Math.random() * prefijosPueblo.length)] + 
-                           sufijosPueblo[Math.floor(Math.random() * sufijosPueblo.length)];
-            
-            let edificios = dbEdificios.filter(e => e.minType <= tipoId);
-            if (tipoId === 0) edificios = edificios.filter(() => Math.random() > 0.2);
+                if (accion === "matar" && q.tipo === "caza") {
+                    q.progreso += cantidad;
+                } 
+                else if (accion === "explorar" && q.tipo === "exploracion") {
+                    q.progreso += cantidad;
+                }
+                else if (accion === "matar_jefe" && q.tipo === "jefe") {
+                    q.progreso = 1;
+                }
+                else if (accion === "check_inv" && q.tipo === "recoleccion") {
+                    const tieneItem = inventario.some(i => i.n === q.targetId);
+                    if (tieneItem) q.progreso = 1;
+                    else q.progreso = 0;
+                }
 
-            const cantidadNPC = (tipoId + 1) * 2 + Math.floor(Math.random() * 3);
-            let habitantes = [];
-            for(let i=0; i<cantidadNPC; i++) {
-                habitantes.push({
-                    n: nombresNPC[Math.floor(Math.random() * nombresNPC.length)],
-                    job: oficiosNPC[Math.floor(Math.random() * oficiosNPC.length)]
-                });
+                // Verificar completado
+                if (q.progreso >= q.meta) {
+                    q.progreso = q.meta;
+                    if (!q.completada && accion !== "check_inv") { // Evitar spam en check_inv
+                        // alert("¡Misión Completada: " + q.desc + "!"); // Opcional
+                    }
+                    q.completada = true;
+                }
+                huboCambios = true;
+            });
+            if (huboCambios) {
+                saveAll();
+                renderQuestLog();
             }
+        }
 
-            puebloActual = {
-                nombre: nombre,
-                tipo: tipos[tipoId],
-                edificios: edificios,
-                npcs: habitantes
-            };
-            localStorage.setItem('hq_pueblo', JSON.stringify(puebloActual));
+        function renderQuestLog() {
+            const html = questsActivas.map(q => `
+                <div class="quest-item">
+                    ${q.completada ? '<span class="quest-check">✔</span>' : '<span>⚔</span>'} 
+                    ${q.desc} <span style="color:#94a3b8">(${q.progreso}/${q.meta})</span>
+                </div>
+            `).join('');
+            
+            const logPueblo = document.getElementById('quest-log-pueblo');
+            const logMapa = document.getElementById('quest-log-mapa');
+            
+            if (questsActivas.length > 0) {
+                logPueblo.innerHTML = "<b>📜 MISIONES ACTIVAS:</b>" + html;
+                logMapa.innerHTML = "<b>📜 OBJETIVOS:</b>" + html;
+                logPueblo.style.display = 'block';
+                logMapa.style.display = 'block';
+            } else {
+                logPueblo.style.display = 'none';
+                logMapa.style.display = 'none';
+            }
+        }
+
+        // --- INTERACCIÓN NPC ---
+        function abrirDialogoNPC(index) {
+            const npc = puebloActual.npcs[index];
+            const modal = document.getElementById('modal-dialogo');
+            const titulo = document.getElementById('modal-titulo');
+            const texto = document.getElementById('modal-texto');
+            const btns = document.getElementById('modal-botones');
+
+            modal.style.display = 'flex';
+            titulo.innerText = npc.n + " (" + npc.job + ")";
+            btns.innerHTML = "";
+
+            // Lógica de Misión
+            const misionActivaNPC = questsActivas.find(q => q.npc === npc.n);
+
+            if (misionActivaNPC) {
+                if (misionActivaNPC.completada) {
+                    texto.innerText = "¡Increíble! Has completado lo que te pedí. Aquí tienes tu recompensa.";
+                    btns.innerHTML = `<button class="btn-action btn-win" onclick="entregarMision('${npc.n}')">🎁 RECIBIR RECOMPENSA</button>`;
+                } else {
+                    texto.innerText = `Aún estoy esperando: "${misionActivaNPC.desc}"`;
+                    btns.innerHTML = `<button class="btn-action" style="background:#334155" onclick="cerrarModal()">Vale, sigo en ello</button>`;
+                }
+            } else if (npc.questDisponible) {
+                texto.innerText = "¡Eh, tú! Pareces fuerte. Tengo un trabajo para ti.";
+                // Crear botón aceptar que pasa el objeto quest completo (stringify para pasar por onclick)
+                // Truco: guardamos la quest temporal en una variable global para aceptarla
+                window.tempQuest = npc.questDisponible; 
+                btns.innerHTML = `
+                    <button class="btn-action btn-win" onclick="aceptarMision(${index})">ACEPTAR</button>
+                    <button class="btn-action" style="background:#64748b" onclick="cerrarModal()">RECHAZAR</button>
+                `;
+            } else {
+                const frases = ["Bonito día para morir.", "¿Has visto mis herramientas?", "Cuidado con el bosque.", "Compraría tus cosas si tuviera oro."];
+                texto.innerText = frases[Math.floor(Math.random() * frases.length)];
+                btns.innerHTML = `<button class="btn-action" style="background:#334155" onclick="cerrarModal()">Adiós</button>`;
+            }
+        }
+
+        function aceptarMision(npcIndex) {
+            const npc = puebloActual.npcs[npcIndex];
+            if (npc.questDisponible) {
+                questsActivas.push(npc.questDisponible);
+                npc.questDisponible = null; // Quitar la misión del NPC
+                saveAll();
+                renderPueblo(); // Actualizar iconos
+                renderQuestLog();
+                cerrarModal();
+                // Check inicial por si es de recolección y ya tenemos el objeto
+                checkMisiones("check_inv");
+            }
+        }
+
+        function entregarMision(npcName) {
+            // Borrar misión y dar reward
+            questsActivas = questsActivas.filter(q => q.npc !== npcName);
+            
+            // Recompensa simple: Objeto aleatorio
+            const pool = Object.values(itemsDB).filter(i => i.Rareza !== 'Poor');
+            if(pool.length > 0) {
+                const reward = pool[Math.floor(Math.random() * pool.length)];
+                inventario.push({...reward});
+                alert(`¡Has recibido: ${reward.n}!`);
+            }
+            
+            saveAll();
+            renderPueblo();
+            renderQuestLog();
+            cerrarModal();
+        }
+
+        function cerrarModal() { document.getElementById('modal-dialogo').style.display = 'none'; }
+
+
+        // --- SISTEMA PUEBLO ---
+        function generarPoblacion() {
+            const nombre = prefijosPueblo[Math.floor(Math.random()*prefijosPueblo.length)] + " " + sufijosPueblo[Math.floor(Math.random()*sufijosPueblo.length)];
+            let habitantes = [];
+            for(let i=0; i<6; i++) {
+                let npc = {
+                    n: nombresNPC[Math.floor(Math.random() * nombresNPC.length)],
+                    job: oficiosNPC[Math.floor(Math.random() * oficiosNPC.length)],
+                    questDisponible: null
+                };
+                // 30% Probabilidad de tener misión
+                if (Math.random() < 0.4) {
+                    npc.questDisponible = generarMisionRandom(npc.n);
+                }
+                habitantes.push(npc);
+            }
+            puebloActual = { nombre: nombre, npcs: habitantes };
+            saveAll();
         }
 
         function renderPueblo() {
             if (!puebloActual) generarPoblacion();
-            
             document.getElementById('pueblo-nombre').innerText = puebloActual.nombre;
-            document.getElementById('pueblo-tipo').innerText = puebloActual.tipo;
+            const lista = document.getElementById('lista-npcs');
+            lista.innerHTML = "";
             
-            const grid = document.getElementById('lista-edificios');
-            grid.innerHTML = "";
-            puebloActual.edificios.forEach(ed => {
-                grid.innerHTML += `
-                    <div class="edificio-card" onclick="alert('Entrando en ${ed.n} (Próximamente)')">
-                        <span class="edificio-icon">${ed.icono}</span>
-                        <span class="edificio-name">${ed.n}</span>
+            puebloActual.npcs.forEach((npc, i) => {
+                // Verificar si este NPC tiene una misión activa CON NOSOTROS
+                const tieneActiva = questsActivas.some(q => q.npc === npc.n);
+                // Tiene quest disponible para dar O tiene una activa pendiente
+                const showIcon = (npc.questDisponible !== null) || (tieneActiva && questsActivas.find(q => q.npc === npc.n).completada);
+                const classQuest = showIcon ? "npc-has-quest" : "";
+                
+                let statusText = npc.job;
+                if (tieneActiva) statusText = "Esperando resultados...";
+
+                lista.innerHTML += `
+                    <div class="npc-item ${classQuest}" onclick="abrirDialogoNPC(${i})">
+                        <div>
+                            <span style="font-weight:bold; font-size:16px; color:#e2e8f0">${npc.n}</span>
+                            <br><span style="font-size:12px; color:#94a3b8">${statusText}</span>
+                        </div>
+                        <div style="font-size:20px">💬</div>
                     </div>`;
             });
-
-            const listaNpc = document.getElementById('lista-npcs');
-            listaNpc.innerHTML = "";
-            puebloActual.npcs.forEach(npc => {
-                listaNpc.innerHTML += `
-                    <div class="npc-item">
-                        <span style="font-weight:bold; font-size:14px">${npc.n}</span>
-                        <span class="npc-role">${npc.job}</span>
-                    </div>`;
-            });
+            renderQuestLog();
         }
 
-        function volverAlPueblo() {
-            modoAventura = false;
-            enCombate = false; // Aseguramos que se apaga el combate
-            // Se eliminó la regeneración aleatoria para mantener la persistencia
-            cambiarVista('mundo'); // Forzamos refresco de vista
-        }
-
-        // --- SISTEMA DE AVENTURA ---
+        // --- AVENTURA ---
         function irDeAventura() {
             modoAventura = true;
             enCombate = false;
@@ -384,13 +401,11 @@
             for (let x = 0; x < mundo.dimension; x++) {
                 mundo.sectores[x] = [];
                 for (let y = 0; y < mundo.dimension; y++) {
-                    mundo.sectores[x][y] = { 
-                        revelado: (x === 1 && y === 1),
-                        completado: false 
-                    };
+                    mundo.sectores[x][y] = { revelado: (x===1 && y===1), completado: false };
                 }
             }
             renderMapa();
+            renderQuestLog();
         }
 
         function renderMapa() {
@@ -399,13 +414,17 @@
             for (let y = 0; y < mundo.dimension; y++) {
                 for (let x = 0; x < mundo.dimension; x++) {
                     const s = mundo.sectores[x][y];
-                    const div = document.createElement('div');
                     const esActual = (x === mundo.pos.x && y === mundo.pos.y);
+                    const div = document.createElement('div');
                     div.className = `sector ${s.revelado ? 'revelado' : ''} ${esActual ? 'actual' : ''} ${s.completado ? 'completado' : ''}`;
                     
-                    if (s.revelado) div.innerHTML = esActual ? "🛡️" : (s.completado ? "🌲" : "❓");
-                    else div.innerHTML = "☁️"; 
-                    
+                    if (s.revelado) {
+                        if (esActual) div.innerHTML = "🛡️";
+                        else if (s.completado) div.innerHTML = "🌲";
+                        else div.innerHTML = (x===2 && y===2) ? "💀" : "❓"; // Marcamos el jefe al final si se revela
+                    } else {
+                        div.innerHTML = "☁️"; 
+                    }
                     div.onclick = () => clicarSector(x, y);
                     grid.appendChild(div);
                 }
@@ -414,186 +433,151 @@
 
         function clicarSector(x, y) {
             const dist = Math.abs(x - mundo.pos.x) + Math.abs(y - mundo.pos.y);
+            
+            // Si clicamos donde estamos, peleamos
             if (x === mundo.pos.x && y === mundo.pos.y) {
-                if (!mundo.sectores[x][y].completado) mostrarCombate();
+                if (!mundo.sectores[x][y].completado) {
+                    esJefe = (x === 2 && y === 2); // Última casilla es jefe
+                    mostrarCombate();
+                }
                 return;
             }
+            
+            // Movimiento
             if (dist === 1) {
                 mundo.pos = { x, y };
-                mundo.sectores[x][y].revelado = true;
+                if (!mundo.sectores[x][y].revelado) {
+                    mundo.sectores[x][y].revelado = true;
+                    checkMisiones("explorar");
+                }
                 renderMapa();
             }
         }
 
+        // --- COMBATE ---
         function mostrarCombate() {
-            enCombate = true; // Flag activado
-            generarEncuentro();
-            cambiarVista('mundo'); // Refresca para ocultar mapa y mostrar enemigo
-        }
+            enCombate = true;
+            if (enemigos.length === 0) return;
+            
+            // Si es Jefe, buscamos uno fuerte o lo simulamos
+            if (esJefe) {
+                enemigoActual = { ...enemigos[enemigos.length - 1] }; // El último de la lista suele ser fuerte
+                enemigoActual.n = "JEFE " + enemigoActual.n;
+                enemigoActual.hp = parseInt(enemigoActual.hp) * 2;
+            } else {
+                enemigoActual = { ...enemigos[Math.floor(Math.random() * enemigos.length)] };
+            }
 
-        function cerrarCombate() {
-            enCombate = false; // Flag desactivado
-            renderMapa();
-            cambiarVista('mundo'); // Refresca para mostrar mapa y ocultar enemigo
-        }
-
-        function generarEncuentro() {
-            actual = enemigos[Math.floor(Math.random() * enemigos.length)];
-            document.getElementById('enemigo-nombre').innerText = actual.n;
-            document.getElementById('enemigo-hp').innerText = actual.hp;
-            document.getElementById('enemigo-img').src = getPath(actual);
+            document.getElementById('enemigo-nombre').innerText = enemigoActual.n;
+            document.getElementById('enemigo-hp').innerText = enemigoActual.hp;
+            document.getElementById('enemigo-img').src = getPath(enemigoActual);
+            
             document.getElementById('btn-derrota').style.display = 'inline-block';
             document.getElementById('botin-texto').innerHTML = "";
+            
+            cambiarVista('mundo');
         }
 
         function derrotarEnemigo() {
-            if (inventario.length >= calcularCapacidadMax()) { alert("¡Mochila llena!"); return; }
-            
-            const nivelMax = jerarquiaRareza[actual.LootTable] || 0;
-            const posibles = Object.values(itemsDB).filter(it => (jerarquiaRareza[it.Rareza] || 0) <= nivelMax);
-            
-            if (posibles.length > 0) {
-                const itemObtenido = { ...posibles[Math.floor(Math.random() * posibles.length)] };
-                inventario.push(itemObtenido);
-                localStorage.setItem('hq_inv', JSON.stringify(inventario));
-                
-                const color = coloresRareza[itemObtenido.Rareza];
-                document.getElementById('botin-texto').innerHTML = `
-                    <div style="display:flex; flex-direction:column; align-items:center; gap:8px">
-                        <span style="color:#fbbf24; font-size:12px">BOTÍN OBTENIDO</span>
-                        <img src="${getPath(itemObtenido)}" style="width:60px; border:2px solid ${color}; border-radius:8px; background:#000">
-                        <span style="color:${color}; font-size:18px">${itemObtenido.n}</span>
-                    </div>`;
-                document.getElementById('btn-derrota').style.display = 'none';
-                mundo.sectores[mundo.pos.x][mundo.pos.y].completado = true;
+            // Lógica de botín simple
+            if (inventario.length < 20) {
+                const loot = Object.values(itemsDB)[Math.floor(Math.random() * Object.values(itemsDB).length)];
+                if(loot) {
+                    inventario.push({...loot});
+                    document.getElementById('botin-texto').innerHTML = `Obtenido: ${loot.n}`;
+                    saveAll();
+                }
+            } else {
+                 document.getElementById('botin-texto').innerHTML = "Mochila llena...";
             }
+
+            // Actualizar Misiones
+            checkMisiones("matar");
+            if (esJefe) checkMisiones("matar_jefe");
+            checkMisiones("check_inv"); // Por si dropeamos item de quest
+
+            document.getElementById('btn-derrota').style.display = 'none';
+            mundo.sectores[mundo.pos.x][mundo.pos.y].completado = true;
         }
 
-        // --- UTILS EQUIPO E INVENTARIO ---
-        function calcularCapacidadMax() {
-            let total = 16;
-            for (let i = 2; i <= 5; i++) {
-                const b = equipado[`slot-bolsa-${i}`];
-                if (b && b.espacios) total += b.espacios;
-            }
-            return total;
+        function cerrarCombate() {
+            enCombate = false;
+            renderMapa();
+            cambiarVista('mundo');
         }
 
-        function renderEquipado() {
-            document.querySelectorAll('.slot').forEach(s => {
-                if(s.id !== 'slot-bolsa-1') { s.innerHTML = ""; s.style.borderColor = "#475569"; }
-            });
-            const s1 = document.getElementById('slot-bolsa-1');
-            if(s1) {
-                s1.innerHTML = `<img src="img/equipacion/mochila.jpg" style="opacity:0.6">`;
-                s1.style.borderColor = coloresRareza["Common"];
-            }
-            for (const slotId in equipado) {
-                const item = equipado[slotId];
-                const target = document.getElementById(slotId);
-                if (target && item) {
-                    target.innerHTML = `<img src="${getPath(item)}">`;
-                    target.style.borderColor = coloresRareza[item.Rareza] || "#475569";
+        function volverAlPueblo() {
+            modoAventura = false;
+            enCombate = false;
+            cambiarVista('mundo');
+        }
+
+        // --- UI AUXILIAR ---
+        function cambiarVista(donde) {
+            document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active-view'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('vista-' + donde).classList.add('active-view');
+            document.getElementById('btn-nav-' + donde).classList.add('active');
+            
+            if(donde === 'mundo') {
+                if(modoAventura) {
+                    document.getElementById('contenedor-pueblo').style.display = 'none';
+                    if(enCombate) {
+                        document.getElementById('contenedor-aventura').style.display = 'none';
+                        document.getElementById('pantalla-enemigo').style.display = 'block';
+                    } else {
+                        document.getElementById('contenedor-aventura').style.display = 'block';
+                        document.getElementById('pantalla-enemigo').style.display = 'none';
+                    }
+                } else {
+                    document.getElementById('contenedor-pueblo').style.display = 'block';
+                    document.getElementById('contenedor-aventura').style.display = 'none';
+                    document.getElementById('pantalla-enemigo').style.display = 'none';
+                    renderPueblo();
                 }
             }
+            if(donde === 'mochila') renderInv();
         }
 
         function renderInv() {
             const div = document.getElementById('lista-inv');
-            const max = calcularCapacidadMax();
-            div.innerHTML = `<p style="grid-column: 1/-1; color:#94a3b8; font-size:13px">Carga: ${inventario.length} / ${max}</p>`;
-            inventario.forEach((item, i) => {
-                const color = coloresRareza[item.Rareza] || "#fff";
-                div.innerHTML += `
-                    <div class="item-slot" onclick="gestionarItem(${i})">
-                        <img src="${getPath(item)}">
-                        <span class="item-name" style="color:${color}">${item.n}</span>
-                    </div>`;
+            div.innerHTML = "";
+            inventario.forEach(item => {
+                div.innerHTML += `<div class="item-slot"><img src="${getPath(item)}"><span style="font-size:9px">${item.n}</span></div>`;
             });
         }
-
-        function gestionarItem(index) {
-            const item = inventario[index];
-            if (item.Tipo === "Equipable") {
-                if (confirm(`Equipar ${item.n}?`)) equipar(index);
-            } else {
-                if (confirm(`Usar/Tirar ${item.n}?`)) {
-                    inventario.splice(index, 1);
-                    localStorage.setItem('hq_inv', JSON.stringify(inventario));
-                    renderInv();
-                }
-            }
+        
+        function borrarTodo() {
+            localStorage.clear();
+            location.reload();
         }
 
-        function equipar(index) {
-            const nuevo = inventario[index];
-            let slotId = "";
-            if (nuevo.Slot === "bolsa") {
-                for (let i = 2; i <= 5; i++) if (!equipado[`slot-bolsa-${i}`]) { slotId = `slot-bolsa-${i}`; break; }
-                if (!slotId) slotId = "slot-bolsa-2";
-            } else if (nuevo.Slot === "anillo") {
-                slotId = !equipado["slot-anillo-1"] ? "slot-anillo-1" : "slot-anillo-2";
-            } else {
-                slotId = "slot-" + nuevo.Slot;
-            }
-            const actualEnSlot = equipado[slotId];
-            if (actualEnSlot) {
-                inventario[index] = { ...actualEnSlot };
-                equipado[slotId] = { ...nuevo };
-            } else {
-                equipado[slotId] = { ...nuevo };
-                inventario.splice(index, 1);
-            }
-            localStorage.setItem('hq_equipo', JSON.stringify(equipado));
-            localStorage.setItem('hq_inv', JSON.stringify(inventario));
-            renderInv(); renderEquipado();
-        }
-
-        function gestionarEquipado(el) {
-            if (el.id === "slot-bolsa-1") return;
-            const item = equipado[el.id];
-            if (item && confirm(`Desequipar ${item.n}?`)) {
-                if (inventario.length >= calcularCapacidadMax()) return;
-                inventario.push({ ...item });
-                delete equipado[el.id];
-                localStorage.setItem('hq_inv', JSON.stringify(inventario));
-                localStorage.setItem('hq_equipo', JSON.stringify(equipado));
-                renderEquipado(); renderInv();
-            }
-        }
-
-        function borrarTodo() { 
-            if (confirm("Borrar todo?")) { 
-                inventario = []; 
-                localStorage.setItem('hq_inv', JSON.stringify(inventario)); 
-                renderInv(); 
-            } 
-        }
-
-        async function cargarDatos() {
+        // CARGA
+        async function init() {
+            const v = Date.now();
             try {
-                const v = Date.now();
-                const [resEn, resEq, resCo, resBa] = await Promise.all([
-                    fetch(`enemigos.json?v=${v}`).then(r => r.json()),
-                    fetch(`equipacion.json?v=${v}`).then(r => r.json()),
-                    fetch(`consumibles.json?v=${v}`).then(r => r.json()),
-                    fetch(`basura.json?v=${v}`).then(r => r.json())
+                const [en, it1, it2, it3] = await Promise.all([
+                    fetch('enemigos.json?v='+v).then(r=>r.json()),
+                    fetch('equipacion.json?v='+v).then(r=>r.json()),
+                    fetch('consumibles.json?v='+v).then(r=>r.json()),
+                    fetch('basura.json?v='+v).then(r=>r.json())
                 ]);
-                Object.values(resEq).forEach(it => it.subfolder = "equipacion");
-                Object.values(resCo).forEach(it => it.subfolder = "consumibles");
-                Object.values(resBa).forEach(it => it.subfolder = "basura");
-                enemigos = Object.values(resEn);
-                enemigos.forEach(en => en.subfolder = "enemigos");
-                itemsDB = { ...resEq, ...resCo, ...resBa };
                 
-                if(!puebloActual) generarPoblacion();
+                Object.values(it1).forEach(i=>i.subfolder="equipacion");
+                Object.values(it2).forEach(i=>i.subfolder="consumibles");
+                Object.values(it3).forEach(i=>i.subfolder="basura");
+                Object.values(en).forEach(e=>e.subfolder="enemigos");
+
+                enemigos = Object.values(en);
+                itemsDB = { ...it1, ...it2, ...it3 };
+
+                if (!puebloActual) generarPoblacion();
                 renderPueblo();
-                renderEquipado();
-
-            } catch (err) { console.error("Error cargando JSON:", err); }
+                
+            } catch (e) { console.error(e); alert("Error cargando JSONs"); }
         }
+        init();
 
-        cargarDatos();
     </script>
 </body>
 </html>
