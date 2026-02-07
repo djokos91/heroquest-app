@@ -322,7 +322,17 @@
                     {n: "Almacén", icono: "📦"}
                 ],
                 npcs: []
-            };
+                misionesActivas = [];
+                misionesCompletadas = [];
+        
+                // Limpiamos el almacenamiento local
+                localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
+                localStorage.setItem('hq_quests_done', JSON.stringify(misionesCompletadas));
+
+                // Actualizamos la interfaz
+                renderQuests(); // Vacía el diario de misiones
+                renderPueblo(); // Hace que los NPCs vuelvan a mostrar el signo "!"
+                };
 
             // Generar 3 NPCs aleatorios
             for(let i=0; i<3; i++){
