@@ -397,7 +397,12 @@
             const it = { ...Object.values(itemsDB)[Math.floor(Math.random()*Object.values(itemsDB).length)] };
             inventario.push(it);
             checkQuestProgress("kill", 1); checkQuestProgress("item", it.Rareza);
-            document.getElementById('botin-texto').innerHTML = `Botín: <img src="${getPath(it)}" style="width:30px; height:30px; vertical-align:middle; margin-right:8px; border:1px solid ${coloresRareza[it.Rareza]}"> <span style="color:${coloresRareza[it.Rareza]}">${it.n}</span>`;
+
+            document.getElementById('botin-texto').innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 5px;">
+            <span style="color: #fbbf24; font-weight: bold; font-size: 12px; letter-spacing: 2px;">✨ BOTÍN ✨</span>
+            <img src="${getPath(it)}" style="width: 60px; height: 60px; object-fit: contain; border: 3px solid ${coloresRareza[it.Rareza]}; border-radius: 10px; background: rgba(0,0,0,0.3); box-shadow: 0 0 20px ${coloresRareza[it.Rareza]}40;">
+            <span style="color: ${coloresRareza[it.Rareza]}; font-size: 16px; font-weight: bold;">${it.n}</span></div>`;
             document.getElementById('btn-derrota').style.display = 'none';
             mundo.sectores[mundo.pos.x][mundo.pos.y].completado = true;
             localStorage.setItem('hq_inv', JSON.stringify(inventario));
