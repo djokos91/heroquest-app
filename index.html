@@ -305,34 +305,39 @@
         }
 
         // --- SISTEMA DE POBLACIÓN (GENERADOR) ---
-        function refundarPoblacion() {
-            if(!confirm("¿Deseas generar una nueva población? Se perderá el pueblo actual.")) return;
-            
-            const nombres = ["Rocanegra", "Valle de Hierro", "Puerto Gélido", "Bastión Solar", "Cala Esmeralda"];
-            const tipos = ["Aldea", "Ciudadela", "Campamento", "Pueblo"];
-            const nombresNPC = ["Thorin", "Elena", "Kael", "Grom", "Sylvan", "Uther"];
-            const trabajos = ["Herrero", "Guía", "Alquimista", "Tabernero", "Explorador"];
+function refundarPoblacion() {
+    if(!confirm("¿Deseas generar una nueva población? Se perderá el pueblo actual.")) return;
+    
+    const nombres = ["Rocanegra", "Valle de Hierro", "Puerto Gélido", "Bastión Solar", "Cala Esmeralda"];
+    const tipos = ["Aldea", "Ciudadela", "Campamento", "Pueblo"];
+    
+    // 1. Definimos el objeto puebloActual correctamente (con comas)
+    puebloActual = {
+        nombre: nombres[Math.floor(Math.random()*nombres.length)],
+        tipo: tipos[Math.floor(Math.random()*tipos.length)],
+        edificios: [
+            {n: "Taberna", icono: "🍺"}, 
+            {n: "Forja", icono: "⚒️"},
+            {n: "Almacén", icono: "📦"}
+        ],
+        npcs: [] // Aquí va una COMA, no un punto y coma
+    }; // Aquí CERRAMOS el objeto con punto y coma
 
-            puebloActual = {
-                nombre: nombres[Math.floor(Math.random()*nombres.length)],
-                tipo: tipos[Math.floor(Math.random()*tipos.length)],
-                edificios: [
-                    {n: "Taberna", icono: "🍺"}, 
-                    {n: "Forja", icono: "⚒️"},
-                    {n: "Almacén", icono: "📦"}
-                ],
-                npcs: [];
-                misionesActivas = [];
-                misionesCompletadas = [];
-        
-                // Limpiamos el almacenamiento local
-                localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
-                localStorage.setItem('hq_quests_done', JSON.stringify(misionesCompletadas));
+    // 2. Ahora reiniciamos las variables de misiones (fuera del objeto)
+    misionesActivas = [];
+    misionesCompletadas = [];
 
-                // Actualizamos la interfaz
-                renderQuests(); // Vacía el diario de misiones
-                renderPueblo(); // Hace que los NPCs vuelvan a mostrar el signo "!"
-                };
+    // 3. Guardamos en el almacenamiento local
+    localStorage.setItem('hq_pueblo', JSON.stringify(puebloActual)); // Guardamos el nuevo pueblo
+    localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
+    localStorage.setItem('hq_quests_done', JSON.stringify(misionesCompletadas));
+
+    // 4. Actualizamos la interfaz
+    renderQuests(); 
+    renderPueblo(); 
+    
+    alert("Población refundada y misiones reiniciadas.");
+}
 
             // Generar 3 NPCs aleatorios
             for(let i=0; i<3; i++){
