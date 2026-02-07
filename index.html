@@ -14,22 +14,35 @@
         .nav-btn span { display: block; font-size: 22px; margin-bottom: 2px; }
         
         /* MAPA Y SECTORES */
-        #mapa-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 320px; margin: 20px auto; }
-        .sector { aspect-ratio: 1/1; background: #020617; border: 1px solid #334155; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; cursor: pointer; transition: all 0.3s ease; position: relative; }
+        #mapa-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 320px;
+            margin: 20px auto;
+        }
+        .sector {
+            aspect-ratio: 1/1;
+            background: #020617;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
         .sector.revelado { background: #14532d; border-color: #22c55e; }
         .sector.actual { border-color: #3b82f6; border-width: 3px; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); transform: scale(1.05); z-index: 2; }
         .sector.completado { opacity: 0.8; background: #064e3b; }
         .sector.niebla { color: #1e293b; }
 
-        /* CIUDADES Y NPCs */
-        .npc-card { background: #1e293b; border: 1px solid #475569; border-radius: 12px; padding: 15px; margin-bottom: 10px; text-align: left; display: flex; justify-content: space-between; align-items: center; }
-        .npc-info h4 { margin: 0; color: #f59e0b; }
-        .npc-info p { margin: 2px 0; font-size: 12px; color: #94a3b8; }
-        .rep-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #334155; color: #22c55e; }
-
         /* TARJETA ENEMIGO */
         .card { background: #1e293b; border-radius: 15px; overflow: hidden; border: 1px solid #475569; margin-top: 10px; padding-bottom: 15px; }
         .card img { width: 100%; height: auto; max-height: 40vh; object-fit: contain; display: block; background: #000; }
+        
         .btn-action { background: #ef4444; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 90%; margin: 10px; font-size: 16px; cursor: pointer; }
         .btn-win { background: #22c55e; }
         .btn-back { background: #475569; margin-bottom: 5px; }
@@ -37,7 +50,12 @@
         /* FICHA DE HÉROE Y SLOTS */
         .hero-container { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; max-width: 450px; margin: auto; padding: 10px; }
         .slot-column { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
-        .slot { width: 48px; height: 48px; background: rgba(30, 41, 59, 0.8); border: 2px solid #475569; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; cursor: pointer; transition: all 0.2s ease; }
+        .slot { 
+            width: 48px; height: 48px; background: rgba(30, 41, 59, 0.8); 
+            border: 2px solid #475569; border-radius: 8px; display: flex; 
+            align-items: center; justify-content: center; position: relative; 
+            overflow: hidden; cursor: pointer; transition: all 0.2s ease;
+        }
         .slot:hover { filter: brightness(1.2); transform: scale(1.05); }
         .slot img { width: 90%; height: 90%; object-fit: contain; }
         .slot::after { content: attr(data-label); position: absolute; bottom: 1px; font-size: 6px; color: #94a3b8; text-transform: uppercase; width: 100%; text-align: center; background: rgba(0,0,0,0.5); }
@@ -46,12 +64,23 @@
 
         /* MOCHILA */
         #lista-inv { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px; padding: 10px; max-width: 500px; margin: auto; }
-        .item-slot { width: 80px; height: 105px; background: #1e293b; border: 2px solid #475569; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 6px; cursor: pointer; position: relative; transition: all 0.2s ease; box-sizing: border-box; }
+        .item-slot { 
+            width: 80px; height: 105px; background: #1e293b; border: 2px solid #475569; 
+            border-radius: 8px; display: flex; flex-direction: column; align-items: center; 
+            justify-content: flex-start; padding: 6px; cursor: pointer; position: relative; 
+            transition: all 0.2s ease; box-sizing: border-box; 
+        }
         .item-slot img { width: 45px; height: 45px; object-fit: contain; margin-bottom: 6px; }
         .item-name { font-size: 9px; text-align: center; line-height: 10px; word-wrap: break-word; width: 100%; font-weight: bold; }
         
         /* Colores de Rareza */
-        .poor { border-color: #9d9d9d; color: #9d9d9d; } .common { border-color: #ffffff; color: #ffffff; } .uncommon { border-color: #1eff00; color: #1eff00; } .rare { border-color: #0070dd; color: #0070dd; } .epic { border-color: #a335ee; color: #a335ee; } .legendary { border-color: #ff8000; color: #ff8000; }
+        .poor { border-color: #9d9d9d; color: #9d9d9d; }
+        .common { border-color: #ffffff; color: #ffffff; }
+        .uncommon { border-color: #1eff00; color: #1eff00; }
+        .rare { border-color: #0070dd; color: #0070dd; }
+        .epic { border-color: #a335ee; color: #a335ee; }
+        .legendary { border-color: #ff8000; color: #ff8000; }
+
         .btn-reset { margin-top: 30px; color: #94a3b8; background: rgba(255,255,255,0.05); border: 1px solid #334155; padding: 10px 20px; border-radius: 8px; font-size: 12px; cursor: pointer; }
     </style>
 </head>
@@ -59,10 +88,12 @@
 
     <section id="vista-mundo" class="tab-content active-view">
         <h2 style="color: #22c55e; font-style: italic;">BOSQUE DE AVENTURAS</h2>
+        
         <div id="contenedor-mapa">
             <div id="mapa-grid"></div>
             <p id="mapa-info" style="font-size: 12px; color: #94a3b8;">Pulsa nubes para explorar o en tu icono para entrar.</p>
         </div>
+
         <div id="pantalla-enemigo" style="display: none;">
             <button class="btn-action btn-back" onclick="cerrarZoom()">⬅ VOLVER AL MAPA</button>
             <div class="card">
@@ -73,12 +104,6 @@
                 <div id="botin-texto" style="padding: 15px; color: gold; font-weight: bold; min-height: 80px;"></div>
             </div>
         </div>
-    </section>
-
-    <section id="vista-ciudad" class="tab-content">
-        <h2 id="poblacion-nombre" style="color: #f59e0b;">CIUDAD</h2>
-        <div id="lista-npcs" style="max-width: 500px; margin: auto; padding: 10px;"></div>
-        <button class="btn-action btn-back" style="width: auto; padding: 10px 20px;" onclick="viajar()">🗺️ VIAJAR A OTRO LUGAR</button>
     </section>
 
     <section id="vista-heroe" class="tab-content">
@@ -110,6 +135,7 @@
                 <div id="slot-municion" class="slot" data-label="Munición" onclick="gestionarEquipado(this)"></div>
             </div>
         </div>
+        
         <div style="margin-top: 20px;">
             <p style="font-size: 11px; color: #94a3b8; margin-bottom: 5px;">CONTENEDORES (BOLSAS)</p>
             <div style="display: flex; gap: 8px; justify-content: center;">
@@ -130,30 +156,22 @@
 
     <nav>
         <button class="nav-btn active" id="btn-nav-mundo" onclick="cambiarVista('mundo')"><span>⚔️</span>MAPA</button>
-        <button class="nav-btn" id="btn-nav-ciudad" onclick="cambiarVista('ciudad')"><span>🏛️</span>CIUDAD</button>
         <button class="nav-btn" id="btn-nav-heroe" onclick="cambiarVista('heroe')"><span>🛡️</span>HÉROE</button>
         <button class="nav-btn" id="btn-nav-mochila" onclick="cambiarVista('mochila')"><span>🎒</span>MOCHILA</button>
     </nav>
 
     <script>
-        // --- VARIABLES GLOBALES ---
         let enemigos = [];
         let itemsDB = {};
         let inventario = JSON.parse(localStorage.getItem('hq_inv')) || [];
         let equipado = JSON.parse(localStorage.getItem('hq_equipo')) || {};
-        let reputacion = JSON.parse(localStorage.getItem('hq_rep')) || {};
         let actual = null;
 
-        // Estado del Mundo y Ciudad
+        // Estado del Mapa
         let mundo = {
             dimension: 3,
             sectores: [],
-            pos: { x: 1, y: 1 },
-            nombrePoblacion: "Villacosta",
-            npcs: [
-                { id: "v_tab", n: "Garrick", job: "Tabernero", msg: "¡Cuidado con los lobos del norte!" },
-                { id: "v_her", n: "Thrum", job: "Herrero", msg: "¿Necesitas afilar ese acero?" }
-            ]
+            pos: { x: 1, y: 1 }
         };
 
         const coloresRareza = { "Poor": "#9d9d9d", "Common": "#ffffff", "Uncommon": "#1eff00", "Rare": "#0070dd", "Epic": "#a335ee", "Legendary": "#ff8000" };
@@ -185,7 +203,6 @@
                 
                 initMapa();
                 renderEquipado();
-                renderCiudad();
             } catch (err) { console.error("Error cargando JSON:", err); }
         }
         cargarDatos();
@@ -214,8 +231,15 @@
                     const s = mundo.sectores[x][y];
                     const div = document.createElement('div');
                     const esActual = (x === mundo.pos.x && y === mundo.pos.y);
+                    
                     div.className = `sector ${s.revelado ? 'revelado' : 'niebla'} ${esActual ? 'actual' : ''} ${s.completado ? 'completado' : ''}`;
-                    div.innerHTML = s.revelado ? (esActual ? "🛡️" : (s.completado ? "🌲" : "❓")) : "☁️";
+                    
+                    if (s.revelado) {
+                        div.innerHTML = esActual ? "🛡️" : (s.completado ? "🌲" : "❓");
+                    } else {
+                        div.innerHTML = "☁️";
+                    }
+                    
                     div.onclick = () => clicarSector(x, y);
                     grid.appendChild(div);
                 }
@@ -224,14 +248,19 @@
 
         function clicarSector(x, y) {
             const dist = Math.abs(x - mundo.pos.x) + Math.abs(y - mundo.pos.y);
+            
             if (x === mundo.pos.x && y === mundo.pos.y) {
                 if (!mundo.sectores[x][y].completado) entrarEnSector();
+                else alert("Sector ya explorado.");
                 return;
             }
+
             if (dist === 1) {
                 mundo.pos = { x, y };
                 mundo.sectores[x][y].revelado = true;
                 renderMapa();
+            } else {
+                alert("Solo puedes moverte a sectores adyacentes.");
             }
         }
 
@@ -247,45 +276,7 @@
             renderMapa();
         }
 
-        // --- SISTEMA DE CIUDAD ---
-        function renderCiudad() {
-            document.getElementById('poblacion-nombre').innerText = mundo.nombrePoblacion;
-            const lista = document.getElementById('lista-npcs');
-            lista.innerHTML = "";
-            mundo.npcs.forEach(npc => {
-                const rep = reputacion[npc.id] || 0;
-                lista.innerHTML += `
-                    <div class="npc-card">
-                        <div class="npc-info">
-                            <h4>${npc.n}</h4>
-                            <p>${npc.job}</p>
-                            <span class="rep-tag">REP: ${rep}</span>
-                        </div>
-                        <button class="nav-btn" style="color:#22c55e" onclick="hablarNPC('${npc.id}')"><span>💬</span>Hablar</button>
-                    </div>`;
-            });
-        }
-
-        function hablarNPC(id) {
-            const npc = mundo.npcs.find(n => n.id === id);
-            alert(`${npc.n} el ${npc.job}: "${npc.msg}"`);
-            reputacion[id] = (reputacion[id] || 0) + 1;
-            localStorage.setItem('hq_rep', JSON.stringify(reputacion));
-            renderCiudad();
-        }
-
-        function viajar() {
-            const destinos = ["Bastión Ámbar", "Puerto Seco", "Valleverde"];
-            const nuevo = destinos[Math.floor(Math.random()*destinos.length)];
-            if(confirm(`¿Viajar a ${nuevo}? El mapa se reiniciará.`)) {
-                mundo.nombrePoblacion = nuevo;
-                initMapa();
-                cambiarVista('mundo');
-                renderCiudad();
-            }
-        }
-
-        // --- COMBATE Y BOTÍN ---
+        // --- SISTEMA DE COMBATE ---
         function generarEncuentro() {
             actual = enemigos[Math.floor(Math.random() * enemigos.length)];
             document.getElementById('enemigo-nombre').innerText = actual.n;
@@ -298,6 +289,7 @@
         function derrotarEnemigo() {
             const max = calcularCapacidadMax();
             if (inventario.length >= max) { alert("¡Mochila llena!"); return; }
+            
             const nivelMax = jerarquiaRareza[actual.LootTable] || 0;
             const posibles = Object.values(itemsDB).filter(it => (jerarquiaRareza[it.Rareza] || 0) <= nivelMax);
             
@@ -314,6 +306,8 @@
                         <span style="color:${color}">${itemObtenido.n}</span>
                     </div>`;
                 document.getElementById('btn-derrota').style.display = 'none';
+                
+                // Marcar sector completado
                 mundo.sectores[mundo.pos.x][mundo.pos.y].completado = true;
             }
         }
@@ -345,10 +339,15 @@
                     s.innerHTML = "";
                     s.style.borderColor = "#475569";
                     s.className = "slot";
+                    s.title = "";
                 }
             });
+
             const s1 = document.getElementById('slot-bolsa-1');
             s1.innerHTML = `<img src="img/equipacion/mochila.jpg" style="opacity:0.8">`;
+            s1.style.borderColor = coloresRareza["Common"];
+            s1.title = "Mochila Principal (Base)";
+
             for (const slotId in equipado) {
                 const item = equipado[slotId];
                 const target = document.getElementById(slotId);
@@ -356,6 +355,7 @@
                     target.innerHTML = `<img src="${getPath(item)}">`;
                     target.style.borderColor = coloresRareza[item.Rareza] || "#475569";
                     target.classList.add(item.Rareza.toLowerCase());
+                    target.title = `${item.n}`; 
                 }
             }
         }
@@ -364,20 +364,24 @@
             const div = document.getElementById('lista-inv');
             const max = calcularCapacidadMax();
             div.innerHTML = `<p style="grid-column: 1/-1; color:#94a3b8; font-size:12px; margin-bottom:10px">Espacio: ${inventario.length} / ${max}</p>`;
+            
             inventario.forEach((item, i) => {
                 const color = coloresRareza[item.Rareza] || "#fff";
                 div.innerHTML += `
-                    <div class="item-slot ${item.Rareza.toLowerCase()}" onclick="gestionarItem(${i})">
+                    <div class="item-slot ${item.Rareza.toLowerCase()}" onclick="gestionarItem(${i})" title="${item.n}">
                         <img src="${getPath(item)}">
                         <span class="item-name" style="color:${color}">${item.n}</span>
                     </div>`;
             });
+            for (let i = inventario.length; i < max; i++) {
+                div.innerHTML += `<div class="item-slot" style="opacity:0.15"></div>`;
+            }
         }
 
         function gestionarItem(index) {
             const item = inventario[index];
             if (item.Tipo === "Equipable" && confirm(`¿Equipar ${item.n}?`)) equipar(index);
-            else if (confirm(`¿Eliminar ${item.n}?`)) {
+            else if (confirm(`¿Eliminar o usar ${item.n}?`)) {
                 inventario.splice(index, 1);
                 localStorage.setItem('hq_inv', JSON.stringify(inventario));
                 renderInv();
@@ -386,15 +390,33 @@
 
         function equipar(index) {
             const itemANuevo = inventario[index];
-            let slotId = (itemANuevo.Slot === "bolsa") ? "slot-bolsa-2" : "slot-" + itemANuevo.Slot;
+            let slotId = "";
+
+            if (itemANuevo.Slot === "bolsa") {
+                for (let i = 2; i <= 5; i++) {
+                    if (!equipado[`slot-bolsa-${i}`]) { slotId = `slot-bolsa-${i}`; break; }
+                }
+                if (!slotId) slotId = "slot-bolsa-2";
+            } else if (itemANuevo.Slot === "anillo") {
+                if (!equipado["slot-anillo-1"]) slotId = "slot-anillo-1";
+                else if (!equipado["slot-anillo-2"]) slotId = "slot-anillo-2";
+                else slotId = "slot-anillo-1";
+            } else {
+                slotId = "slot-" + itemANuevo.Slot;
+            }
+
             const objetoActual = equipado[slotId];
+
             if (objetoActual) {
-                inventario[index] = { ...objetoActual };
-                equipado[slotId] = { ...itemANuevo };
+                if (confirm(`La ranura tiene [${objetoActual.n}]. ¿Reemplazar por [${itemANuevo.n}]?`)) {
+                    inventario[index] = { ...objetoActual };
+                    equipado[slotId] = { ...itemANuevo };
+                } else return;
             } else {
                 equipado[slotId] = { ...itemANuevo };
                 inventario.splice(index, 1);
             }
+
             localStorage.setItem('hq_equipo', JSON.stringify(equipado));
             localStorage.setItem('hq_inv', JSON.stringify(inventario));
             renderInv(); renderEquipado();
@@ -403,10 +425,11 @@
         function gestionarEquipado(el) {
             if (el.id === "slot-bolsa-1") return;
             const item = equipado[el.id];
-            if (item && confirm("¿Desequipar?")) {
+            if (item && confirm("¿Desequipar objeto?")) {
+                if (inventario.length >= calcularCapacidadMax()) { alert("Mochila llena."); return; }
                 inventario.push({ ...item });
-                delete equipado[el.id];
                 localStorage.setItem('hq_inv', JSON.stringify(inventario));
+                delete equipado[el.id];
                 localStorage.setItem('hq_equipo', JSON.stringify(equipado));
                 renderEquipado(); renderInv();
             }
