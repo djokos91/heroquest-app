@@ -126,7 +126,7 @@
         .btn-win { background: #22c55e; box-shadow: 0 4px 0 #166534; }
         .btn-back { background: #475569; box-shadow: 0 4px 0 #1e293b; margin-bottom: 15px; }
 
-        /* --- FICHA DE HÉROE (DENSE GRID) --- */
+        /* --- FICHA DE HÉROE (CORRECCIÓN DE CENTRADO) --- */
         .hero-container { 
             display: grid; 
             grid-template-columns: 1fr 2fr 1fr; 
@@ -138,9 +138,10 @@
             border-radius: 20px;
         }
         .slot-column { display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+        
         .slot { 
-            width: 52px; 
-            height: 52px; 
+            width: 54px; 
+            height: 54px; 
             background: rgba(30, 41, 59, 0.9); 
             border: 2px solid #475569; 
             border-radius: 10px; 
@@ -153,7 +154,16 @@
             transition: all 0.2s;
         }
         .slot:hover { border-color: #3b82f6; background: #334155; }
-        .slot img { width: 85%; height: 85%; object-fit: contain; z-index: 2; }
+
+        /* CORRECCIÓN: La imagen ignora visualmente el espacio de la etiqueta inferior */
+        .slot img { 
+            width: 82%; 
+            height: 82%; 
+            object-fit: contain; 
+            z-index: 2; 
+            margin-bottom: 6px; /* Empuja el icono hacia arriba para centrarlo en el espacio libre */
+        }
+
         .slot::after { 
             content: attr(data-label); 
             position: absolute; 
@@ -163,9 +173,12 @@
             text-transform: uppercase; 
             width: 100%; 
             text-align: center; 
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.8);
             z-index: 1;
+            padding: 1px 0;
+            pointer-events: none;
         }
+
         .silhouette { font-size: 120px; opacity: 0.05; display: flex; align-items: center; justify-content: center; }
         .bottom-slots { grid-column: span 3; display: flex; justify-content: center; gap: 12px; margin-top: 15px; }
 
@@ -314,52 +327,32 @@
     </nav>
 
     <script>
-        /**
-         * CONFIGURACIÓN GLOBAL Y CONSTANTES
-         */
         const coloresRareza = { 
             "Poor": "#9d9d9d", "Common": "#ffffff", "Uncommon": "#1eff00", 
             "Rare": "#0070dd", "Epic": "#a335ee", "Legendary": "#ff8000" 
         };
         const jerarquiaRareza = { "Poor": 0, "Common": 1, "Uncommon": 2, "Rare": 3, "Epic": 4, "Legendary": 5 };
 
-        /**
-         * PERSISTENCIA DE DATOS SEGURA
-         */
         function safeParse(key, defaultVal) {
             const data = localStorage.getItem(key);
             if (!data || data === "undefined" || data === "null") return defaultVal;
             try { return JSON.parse(data); } catch(e) { return defaultVal; }
         }
 
-        /**
-         * VARIABLES DE ESTADO
-         */
         let enemigos = [];
         let itemsDB = {};
         let inventario = safeParse('hq_inv', []);
         let equipado = safeParse('hq_equipo', {});
         let actual = null;
-        let mundo = { 
-            dimension: 3, 
-            sectores: [], 
-            pos: { x: 1, y: 1 } 
-        };
+        let mundo = { dimension: 3, sectores: [], pos: { x: 1, y: 1 } };
 
-        /**
-         * UTILIDADES DE IMAGEN
-         */
         function getPath(item) {
             if (!item || !item.f) return "img/error.jpg";
             if (item.f.includes('/')) return `img/${item.f}`;
             return `img/${item.subfolder}/${item.f}`;
         }
 
-        /**
-         * CARGA DE ARCHIVOS JSON EXTERNOS
-         */
         async function cargarDatos() {
-            console.log("Iniciando carga de bases de datos...");
             try {
                 const v = Date.now();
                 const [resEn, resEq, resCo, resBa] = await Promise.all([
@@ -369,7 +362,6 @@
                     fetch(`basura.json?v=${v}`).then(r => r.json())
                 ]);
 
-                // Asignar carpetas para las rutas de imagen automáticas
                 Object.values(resEq).forEach(it => it.subfolder = "equipacion");
                 Object.values(resCo).forEach(it => it.subfolder = "consumibles");
                 Object.values(resBa).forEach(it => it.subfolder = "basura");
@@ -378,17 +370,11 @@
                 enemigos.forEach(en => en.subfolder = "enemigos");
                 itemsDB = { ...resEq, ...resCo, ...resBa };
                 
-                console.log("Datos cargados correctamente.");
                 initMapa();
                 renderEquipado();
-            } catch (err) { 
-                console.error("Error crítico cargando JSON:", err); 
-            }
+            } catch (err) { console.error("Error cargando JSON:", err); }
         }
 
-        /**
-         * LÓGICA DEL MAPA Y EXPLORACIÓN
-         */
         function initMapa() {
             mundo.sectores = [];
             for (let x = 0; x < mundo.dimension; x++) {
@@ -412,15 +398,9 @@
                     const s = mundo.sectores[x][y];
                     const div = document.createElement('div');
                     const esActual = (x === mundo.pos.x && y === mundo.pos.y);
-                    
                     div.className = `sector ${s.revelado ? 'revelado' : 'niebla'} ${esActual ? 'actual' : ''} ${s.completado ? 'completado' : ''}`;
-                    
-                    if (s.revelado) {
-                        div.innerHTML = esActual ? "🛡️" : (s.completado ? "🌲" : "❓");
-                    } else {
-                        div.innerHTML = "☁️";
-                    }
-                    
+                    if (s.revelado) div.innerHTML = esActual ? "🛡️" : (s.completado ? "🌲" : "❓");
+                    else div.innerHTML = "☁️";
                     div.onclick = () => clicarSector(x, y);
                     grid.appendChild(div);
                 }
@@ -431,15 +411,12 @@
             const dist = Math.abs(x - mundo.pos.x) + Math.abs(y - mundo.pos.y);
             if (x === mundo.pos.x && y === mundo.pos.y) {
                 if (!mundo.sectores[x][y].completado) entrarEnSector();
-                else alert("Esta zona ya ha sido limpiada de enemigos.");
                 return;
             }
             if (dist === 1) {
                 mundo.pos = { x, y };
                 mundo.sectores[x][y].revelado = true;
                 renderMapa();
-            } else {
-                alert("Demasiado lejos. Solo puedes moverte a zonas adyacentes.");
             }
         }
 
@@ -455,9 +432,6 @@
             renderMapa();
         }
 
-        /**
-         * LÓGICA DE COMBATE Y BOTÍN
-         */
         function generarEncuentro() {
             actual = enemigos[Math.floor(Math.random() * enemigos.length)];
             document.getElementById('enemigo-nombre').innerText = actual.n;
@@ -468,24 +442,19 @@
         }
 
         function derrotarEnemigo() {
-            const max = calcularCapacidadMax();
-            if (inventario.length >= max) { 
-                alert("¡Tu mochila está llena! Tira algo para poder recoger el botín."); 
+            if (inventario.length >= calcularCapacidadMax()) { 
+                alert("¡Mochila llena!"); 
                 return; 
             }
-            
             const nivelMax = jerarquiaRareza[actual.LootTable] || 0;
             const posibles = Object.values(itemsDB).filter(it => (jerarquiaRareza[it.Rareza] || 0) <= nivelMax);
-            
             if (posibles.length > 0) {
                 const itemObtenido = { ...posibles[Math.floor(Math.random() * posibles.length)] };
                 inventario.push(itemObtenido);
                 localStorage.setItem('hq_inv', JSON.stringify(inventario));
-                
                 const color = coloresRareza[itemObtenido.Rareza] || "#fff";
                 document.getElementById('botin-texto').innerHTML = `
                     <div style="display:flex; flex-direction:column; align-items:center; gap:8px">
-                        <span style="color:white; font-size:14px">BOTÍN:</span>
                         <img src="${getPath(itemObtenido)}" style="width:60px; border:3px solid ${color}; border-radius:8px; background:#000">
                         <span style="color:${color}; font-size:22px">${itemObtenido.n}</span>
                     </div>`;
@@ -494,24 +463,17 @@
             }
         }
 
-        /**
-         * GESTIÓN DE VISTAS (TABS)
-         */
         function cambiarVista(donde) {
             document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active-view'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('vista-' + donde).classList.add('active-view');
             document.getElementById('btn-nav-' + donde).classList.add('active');
-            
             if(donde === 'mochila') renderInv();
             if(donde === 'heroe') renderEquipado();
         }
 
-        /**
-         * CÁLCULO DE CAPACIDAD (BOLSAS)
-         */
         function calcularCapacidadMax() {
-            let total = 16; // Base
+            let total = 16;
             for (let i = 2; i <= 5; i++) {
                 const b = equipado[`slot-bolsa-${i}`];
                 if (b && b.espacios) total += b.espacios;
@@ -519,75 +481,48 @@
             return total;
         }
 
-        /**
-         * RENDERIZADO DE EQUIPAMIENTO
-         */
         function renderEquipado() {
-            const slots = document.querySelectorAll('.slot');
-            slots.forEach(s => {
+            document.querySelectorAll('.slot').forEach(s => {
                 if(s.id !== 'slot-bolsa-1') {
                     s.innerHTML = "";
                     s.style.borderColor = "#475569";
-                    s.className = "slot";
-                    s.title = "Vacío";
                 }
             });
-
-            // Slot fijo de mochila inicial
             const s1 = document.getElementById('slot-bolsa-1');
             if(s1) {
                 s1.innerHTML = `<img src="img/equipacion/mochila.jpg" style="opacity:0.6">`;
                 s1.style.borderColor = coloresRareza["Common"];
-                s1.title = "Mochila de Aventurero (Base)";
             }
-
-            // Cargar objetos equipados
             for (const slotId in equipado) {
                 const item = equipado[slotId];
                 const target = document.getElementById(slotId);
                 if (target && item) {
                     target.innerHTML = `<img src="${getPath(item)}">`;
                     target.style.borderColor = coloresRareza[item.Rareza] || "#475569";
-                    target.classList.add(item.Rareza.toLowerCase());
-                    target.title = item.n;
                 }
             }
         }
 
-        /**
-         * RENDERIZADO DE INVENTARIO
-         */
         function renderInv() {
             const div = document.getElementById('lista-inv');
             const max = calcularCapacidadMax();
-            div.innerHTML = `<p style="grid-column: 1/-1; color:#94a3b8; font-size:13px; margin-bottom:15px">Capacidad de carga: ${inventario.length} / ${max}</p>`;
-            
+            div.innerHTML = `<p style="grid-column: 1/-1; color:#94a3b8; font-size:13px">Carga: ${inventario.length} / ${max}</p>`;
             inventario.forEach((item, i) => {
                 const color = coloresRareza[item.Rareza] || "#fff";
                 div.innerHTML += `
-                    <div class="item-slot ${item.Rareza.toLowerCase()}" onclick="gestionarItem(${i})" title="${item.n}">
+                    <div class="item-slot" onclick="gestionarItem(${i})">
                         <img src="${getPath(item)}">
                         <span class="item-name" style="color:${color}">${item.n}</span>
                     </div>`;
             });
-            
-            // Rellenar huecos vacíos visualmente
-            for (let i = inventario.length; i < max; i++) {
-                div.innerHTML += `<div class="item-slot" style="opacity:0.1; border-style: dashed;"></div>`;
-            }
         }
 
-        /**
-         * ACCIONES DE OBJETOS
-         */
         function gestionarItem(index) {
             const item = inventario[index];
             if (item.Tipo === "Equipable") {
-                if (confirm(`¿Deseas equipar [${item.n}] en el slot de ${item.Slot}?`)) {
-                    equipar(index);
-                }
+                if (confirm(`Equipar ${item.n}?`)) equipar(index);
             } else {
-                if (confirm(`¿Usar o destruir [${item.n}]?`)) {
+                if (confirm(`Usar/Tirar ${item.n}?`)) {
                     inventario.splice(index, 1);
                     localStorage.setItem('hq_inv', JSON.stringify(inventario));
                     renderInv();
@@ -598,32 +533,22 @@
         function equipar(index) {
             const nuevo = inventario[index];
             let slotId = "";
-
-            // Lógica especial para anillos y bolsas
             if (nuevo.Slot === "bolsa") {
-                for (let i = 2; i <= 5; i++) {
-                    if (!equipado[`slot-bolsa-${i}`]) { slotId = `slot-bolsa-${i}`; break; }
-                }
-                if (!slotId) slotId = "slot-bolsa-2"; // Reemplaza la primera si todas llenas
+                for (let i = 2; i <= 5; i++) if (!equipado[`slot-bolsa-${i}`]) { slotId = `slot-bolsa-${i}`; break; }
+                if (!slotId) slotId = "slot-bolsa-2";
             } else if (nuevo.Slot === "anillo") {
-                if (!equipado["slot-anillo-1"]) slotId = "slot-anillo-1";
-                else if (!equipado["slot-anillo-2"]) slotId = "slot-anillo-2";
-                else slotId = "slot-anillo-1";
+                slotId = !equipado["slot-anillo-1"] ? "slot-anillo-1" : "slot-anillo-2";
             } else {
                 slotId = "slot-" + nuevo.Slot;
             }
-
             const actualEnSlot = equipado[slotId];
             if (actualEnSlot) {
-                // Intercambio
                 inventario[index] = { ...actualEnSlot };
                 equipado[slotId] = { ...nuevo };
             } else {
-                // Equipar nuevo
                 equipado[slotId] = { ...nuevo };
                 inventario.splice(index, 1);
             }
-
             localStorage.setItem('hq_equipo', JSON.stringify(equipado));
             localStorage.setItem('hq_inv', JSON.stringify(inventario));
             renderInv(); renderEquipado();
@@ -632,30 +557,24 @@
         function gestionarEquipado(el) {
             if (el.id === "slot-bolsa-1") return;
             const item = equipado[el.id];
-            if (item) {
-                if (confirm(`¿Quieres desequipar [${item.n}]?`)) {
-                    if (inventario.length >= calcularCapacidadMax()) {
-                        alert("No tienes espacio en la mochila para desequipar esto.");
-                        return;
-                    }
-                    inventario.push({ ...item });
-                    delete equipado[el.id];
-                    localStorage.setItem('hq_inv', JSON.stringify(inventario));
-                    localStorage.setItem('hq_equipo', JSON.stringify(equipado));
-                    renderEquipado(); renderInv();
-                }
+            if (item && confirm(`Desequipar ${item.n}?`)) {
+                if (inventario.length >= calcularCapacidadMax()) return;
+                inventario.push({ ...item });
+                delete equipado[el.id];
+                localStorage.setItem('hq_inv', JSON.stringify(inventario));
+                localStorage.setItem('hq_equipo', JSON.stringify(equipado));
+                renderEquipado(); renderInv();
             }
         }
 
         function borrarTodo() { 
-            if (confirm("¡ATENCIÓN! Esto borrará todos los objetos de tu mochila permanentemente. ¿Continuar?")) { 
+            if (confirm("Borrar todo?")) { 
                 inventario = []; 
                 localStorage.setItem('hq_inv', JSON.stringify(inventario)); 
                 renderInv(); 
             } 
         }
 
-        // Ejecutar carga inicial
         cargarDatos();
     </script>
 </body>
