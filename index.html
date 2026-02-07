@@ -471,29 +471,14 @@
 
     // Render visual del botín con iconos
     document.getElementById('botin-texto').innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:center; gap:15px;">
-            <span style="color: #fbbf24; font-weight: bold; font-size: 12px; letter-spacing: 2px;">✨ BOTÍN ✨</span>
-            <span>${bronceGanado} ${monedaIcono}</span>
-            <div style="display:flex; align-items:center; gap:5px;">
-                <img src="${getPath(it)}" style="width:25px; height:25px; border:1px solid ${coloresRareza[it.Rareza]}">
-                <span>${it.n}</span>
-            </div>
-        </div>
-    `;
-
-            document.getElementById('botin-texto').innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
             <div style="color: #fbbf24; font-weight: bold; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;">✨ BOTÍN ✨</div>
-            
-            <div style="display:flex; align-items:center; justify-content:center; gap:20px;">
-                <span style="font-size: 16px;">${bronceGanado} ${monedaIcono}</span>
-                <div style="display:flex; align-items:center; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
                     <img src="${getPath(it)}" style="width:30px; height:30px; border:2px solid ${coloresRareza[it.Rareza]}; border-radius: 4px;">
-                    <span style="color: ${coloresRareza[it.Rareza]}; font-size: 14px;">${it.n}</span>
-                </div>
-            </div>
-        </div>
-    `;
+                    <span style="color: ${coloresRareza[it.Rareza]}; font-size: 14px;">${it.n}</span></div>
+                <div style="display:flex; align-items:center; justify-content:center; gap:20px;">
+                <span style="font-size: 16px;">${bronceGanado} ${monedaIcono}</span></div>
+        </div>`;
 
     document.getElementById('btn-derrota').style.display = 'none';
     mundo.sectores[mundo.pos.x][mundo.pos.y].completado = true;
@@ -611,7 +596,6 @@
         inventario = [];
         equipado = { "slot-bolsa-1": { f: "mochila.jpg", subfolder: "equipacion" } }; // Mantiene la mochila base
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
-        localStorage.setItem('hq_equipo', JSON.stringify(equipado));
         renderInv();
         renderEquipado();
     }
