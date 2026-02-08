@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.7</title>
+    <title>HeroQuest Pro - 1.0.8</title>
     <style>
         /* --- ESTILOS GENERALES (TUS ORIGINALES) --- */
         body { 
@@ -661,7 +661,7 @@ function gestionarItem(i) {
         if (it.Slot === "bolsa") {
             let msg = `¿En qué ranura quieres equipar ${it.n}?\n`;
             for (let b = 2; b <= 5; b++) {
-                const ocupado = equipado["slot-bolsa-" + b] ? `[Ocupado: ${equipado["slot-bolsa-" + b].n}]` : "[Vacío]";
+                const ocupado = equipado["slot-bolsa-" + b] ? `[${equipado["slot-bolsa-" + b].n}]` : "[Vacío]";
                 msg += `${b}. Ranura Bolsa ${b} ${ocupado}\n`;
             }
             
