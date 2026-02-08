@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.58</title>
+    <title>HeroQuest Pro - 1.0.59</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -533,7 +533,7 @@ function filtrarInv(tipo) {
         }
 
         // --- SISTEMA DE POBLACIÓN (GENERADOR) ---
-function refundarPoblacion() {
+async function refundarPoblacion() {
     if(!await mostrarMensaje("¿Deseas generar una nueva población? Se perderá el pueblo actual.")) return;
     
     const nombres = ["Rocanegra", "Valle de Hierro", "Puerto Gélido", "Bastión Solar", "Cala Esmeralda"];
