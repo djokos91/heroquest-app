@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.1.2</title>
+    <title>HeroQuest Pro - 1.1.3</title>
     <style>
     /* Estilo Edificios -------------------------------------------------------*/
         .grid-edificios {
@@ -628,6 +628,34 @@ async function refundarPoblacion() {
     edificioAbierto = null; // Resetear la vista si estaba dentro de uno
     renderPueblo();
 }
+        function renderVistaCiudad(contenedor) {
+    const titulo = document.createElement('h2');
+    titulo.innerText = `${puebloActual.nombre} (${puebloActual.tipo})`;
+    contenedor.appendChild(titulo);
+
+    const grid = document.createElement('div');
+    grid.className = "grid-edificios";
+
+    puebloActual.edificios.forEach(ed => {
+        const card = document.createElement('div');
+        card.className = "edificio-card";
+        card.innerHTML = `
+            <span class="edificio-icono">${ed.icono || '🏠'}</span>
+            <div class="edificio-info">
+                <strong>${ed.n}</strong>
+                <p>${ed.npcs.length} habitantes</p>
+            </div>
+        `;
+        // Esto cambia el estado y vuelve a renderizar para "entrar"
+        card.onclick = () => {
+            edificioAbierto = ed.id;
+            renderPueblo();
+        };
+        grid.appendChild(card);
+    });
+    
+    contenedor.appendChild(grid);
+}
 
         // --- SISTEMA DE MISIONES (TU ORIGINAL) ---
 async function checkQuestProgress(tipo, valor) {
@@ -712,7 +740,7 @@ async function hablarConNPC(idx) {
     await mostrarMensaje(`${npc.n}: "Que las estrellas guíen tu camino."`, false);
 }
 
-        // --- RENDERIZADO (TUS ORIGINALES) ---
+// Render Pueblo -----------------------------------------------------------------
 function renderPueblo() {
     const contenedor = document.getElementById('pueblo-container');
     if (!contenedor || !puebloActual) return;
@@ -1253,6 +1281,8 @@ async function VaciarInventario() {
         renderInv();
     }
 }
+        // Variable global para controlar en qué edificio estamos
+let edificioAbierto = null;
 // --- Cargar Datos ---------------------------------------     
 async function cargarDatos() {
     try {
@@ -1270,40 +1300,45 @@ async function cargarDatos() {
 
         enemigos = Object.values(rEn); 
         enemigos.forEach(e => e.subfolder = "enemigos");
-
         itemsDB = {...rEq, ...rCo, ...rBa};
 
-        // --- INICIALIZACIÓN CRÍTICA DEL INVENTARIO ---
+        // --- INICIALIZACIÓN DEL INVENTARIO ---
         let invGuardado = JSON.parse(localStorage.getItem('hq_inv'));
         let capacidad = calcularCapacidadMax();
-
         if (!invGuardado) {
-            // Si es la primera vez, creamos array vacío con la capacidad actual
             inventario = new Array(capacidad).fill(null);
         } else {
             inventario = invGuardado;
-            // Si compramos bolsas nuevas, extendemos el array para no perder huecos
-            while (inventario.length < capacidad) {
-                inventario.push(null);
-            }
+            while (inventario.length < capacidad) { inventario.push(null); }
         }
-        // --- CARGAR MISIONES Y PROGRESO ---
+
+        // --- CARGAR PUEBLO (Movido aquí dentro) ---
+        const puebloGuardado = localStorage.getItem('hq_pueblo');
+        if (puebloGuardado) {
+            puebloActual = JSON.parse(puebloGuardado);
+        } else {
+            console.log("No hay pueblo inicial.");
+            // Opcional: refundarPoblacionSinConfirmar(); 
+        }
+
         misionesActivas = JSON.parse(localStorage.getItem('hq_quests')) || [];
         misionesCompletadas = JSON.parse(localStorage.getItem('hq_quests_done')) || [];
-
-        // --- CARGAR MONEDAS ---
-        // Intentamos cargar totalBronce, si no existe, empezamos en 0
         totalBronce = parseInt(localStorage.getItem('hq_bronce_total')) || 0;
 
+        // --- RENDERIZADO FINAL ---
+        renderInv();
         renderPueblo(); 
         renderEquipado();
         renderQuests(); 
+        actualizarMonederoUI();
         
     } catch(e) { 
-        console.error("Error en la carga de archivos JSON:", e); 
+        console.error("Error crítico en la carga:", e); 
     }
 }
-        cargarDatos();
+
+// Iniciar todo
+cargarDatos();
     </script>
 </body>
 </html>
