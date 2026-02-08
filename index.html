@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.59</title>
+    <title>HeroQuest Pro - 1.0.60</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -434,24 +434,21 @@ async function soltarObjeto(e, indexDestino) {
     e.preventDefault();
     const indexOriginal = e.dataTransfer.getData("indexOriginal");
     
-    if (indexOriginal === "" || indexOriginal === indexDestino) return;
+    // 1. Verificación básica
+    if (indexOriginal === "" || parseInt(indexOriginal) === indexDestino) return;
 
-    // Intercambiamos las posiciones en el array
-    const temp = inventario[indexOriginal];
-    inventario[indexOriginal] = inventario[indexDestino];
-    inventario[indexDestino] = temp;
+    // 2. Intercambiamos las posiciones en el array (convertimos a número para evitar fallos)
+    const origen = parseInt(indexOriginal);
+    const destino = indexDestino;
 
-    // Bloqueo de Mano 2 si Mano 1 es 2-manos
-    if (slotDestino === "slot-mano2") {
-        const armaPrincipal = equipado["slot-mano1"];
-        if (armaPrincipal && armaPrincipal.manos === 2) {
-            await mostrarMensaje(`"Tienes un arma a dos manos. No puedes usar la mano izquierda."`, false);
-            return;
-        }
-    }
+    const temp = inventario[origen];
+    inventario[origen] = inventario[destino];
+    inventario[destino] = temp;
 
-    // Guardamos el nuevo orden
+    // 3. Guardamos el nuevo orden
     localStorage.setItem('hq_inv', JSON.stringify(inventario));
+    
+    // 4. Dibujamos de nuevo inmediatamente
     renderInv();
 }
 
