@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.1</title>
+    <title>HeroQuest Pro - 1.0.2</title>
     <style>
         /* --- ESTILOS GENERALES (TUS ORIGINALES) --- */
         body { 
@@ -657,57 +657,64 @@ function gestionarItem(i) {
     if (it.Tipo === "Equipable") {
         let sId = "";
 
-        // CASO ESPECIAL: BOLSAS
+        // 1. DETERMINAR EL SLOT DESTINO
         if (it.Slot === "bolsa") {
             let msg = `¿En qué ranura quieres equipar ${it.n}?\n`;
             for (let b = 2; b <= 5; b++) {
-                const ocupado = equipado["slot-bolsa-" + b] ? `(Ocupado: ${equipado["slot-bolsa-" + b].n})` : "(Vacío)";
+                const ocupado = equipado["slot-bolsa-" + b] ? `[Ocupado: ${equipado["slot-bolsa-" + b].n}]` : "[Vacío]";
                 msg += `${b}. Ranura Bolsa ${b} ${ocupado}\n`;
             }
             
             const eleccion = prompt(msg, "2");
-            if (eleccion === null) return; // Cancelar
+            if (eleccion === null) return; 
             
             const numBolsa = parseInt(eleccion);
             if (numBolsa >= 2 && numBolsa <= 5) {
                 sId = "slot-bolsa-" + numBolsa;
             } else {
-                alert("Ranura no válida");
+                alert("Selección no válida (debe ser de 2 a 5)");
                 return;
             }
-
-        // CASO ESPECIAL: ANILLOS
         } else if (it.Slot === "anillo") {
             sId = !equipado["slot-anillo-1"] ? "slot-anillo-1" : "slot-anillo-2";
-            
-        // RESTO DE EQUIPO (Casco, Pechera, Arma, etc.)
         } else {
             sId = "slot-" + it.Slot;
         }
 
-        // --- LÓGICA DE INTERCAMBIO / REEMPLAZO ---
-        if (confirm(`¿Equipar ${it.n} en ${sId.replace('slot-', '')}?`)) {
-            const ex = equipado[sId]; // Objeto que ya estaba equipado
+        // 2. COMPROBAR SI EL SLOT ESTÁ OCUPADO Y PEDIR CONFIRMACIÓN
+        const ex = equipado[sId]; // Objeto que ya está puesto
+        let confirmacion = false;
 
+        if (ex) {
+            // Si hay algo, preguntamos específicamente por el reemplazo
+            confirmacion = confirm(`La ranura ${sId.replace('slot-', '')} ya tiene: ${ex.n}.\n\n¿Quieres reemplazarlo por tu ${it.n}?\n(El objeto antiguo volverá a tu inventario)`);
+        } else {
+            // Si está vacío, confirmación normal de equipo
+            confirmacion = confirm(`¿Equipar ${it.n} en la ranura vacía?`);
+        }
+
+        // 3. EJECUTAR EL INTERCAMBIO SI SE CONFIRMA
+        if (confirmacion) {
             if (ex) {
-                // Si el slot estaba ocupado, el objeto viejo va al inventario
+                // Reemplazo: el objeto del slot pasa a la posición i del inventario
                 inventario[i] = { ...ex }; 
             } else {
-                // Si estaba vacío, simplemente quitamos el objeto nuevo del inventario
+                // Equipo simple: eliminamos el objeto de la lista del inventario
                 inventario.splice(i, 1);
             }
 
-            // Colocamos el nuevo objeto en el equipo
+            // Colocamos el nuevo en el slot
             equipado[sId] = { ...it };
 
-            // Guardar y refrescar
+            // 4. GUARDAR Y REFRESCAR
             localStorage.setItem('hq_inv', JSON.stringify(inventario));
             localStorage.setItem('hq_equipo', JSON.stringify(equipado));
+            
             renderInv();
             renderEquipado();
         }
 
-    } else if (confirm("¿Eliminar objeto?")) {
+    } else if (confirm(`¿Eliminar ${it.n}?`)) {
         inventario.splice(i, 1);
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         renderInv();
