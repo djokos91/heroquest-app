@@ -4,9 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.60</title>
+    <title>HeroQuest Pro - 1.1.4</title>
     <style>
-        /* Clase para resaltar el slot seleccionado */
+    /* Estilo Edificios -------------------------------------------------------*/
+.edificios-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+}
+
+.edificio-card {
+    background: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 8px;
+    padding: 10px;
+    width: 90px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.edificio-card:hover {
+    border-color: #fbbf24;
+    transform: translateY(-2px);
+}
+
+.npc-list {
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 8px;
+    margin: 10px;
+}
+        /* Clase para resaltar el slot seleccionado----------------------------------------------- */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
     background: rgba(239, 68, 68, 0.2);
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
@@ -340,6 +369,23 @@
     </nav>
 
     <script>
+        // Rango de habitantes según tu petición
+const CONFIG_POBLACIONES = {
+    "Aldea":     { minEd: 2, maxEd: 4, habMin: 1, habMax: 2 },
+    "Pueblo":    { minEd: 4, maxEd: 6, habMin: 1, habMax: 3 },
+    "Ciudadela": { minEd: 6, maxEd: 10, habMin: 2, habMax: 4 }
+};
+
+// Lista global de edificios (Cualquiera puede salir en cualquier población)
+const TODOS_LOS_EDIFICIOS = [
+    { n: "Casa", icono: "🏠", acciones: ["Descansar", "Registrar cajones"] },
+    { n: "Taberna", icono: "🍺", acciones: ["Comprar comida", "Escuchar rumores"] },
+    { n: "Forja", icono: "⚒️", acciones: ["Reparar", "Comprar equipo"] },
+    { n: "Almacén", icono: "📦", acciones: ["Vender objetos", "Comprar suministros"] },
+    { n: "Templo", icono: "⛪", acciones: ["Curar", "Bendición"] },
+    { n: "Mercado", icono: "⚖️", acciones: ["Comerciar", "Regatear"] },
+    { n: "Cuartel", icono: "🛡️", acciones: ["Entrenar", "Contratar mercenario"] }
+];
         // --- TODAS TUS CONSTANTES ORIGINALES ---
         const coloresRareza = { "Poor": "#9d9d9d", "Common": "#ffffff", "Uncommon": "#1eff00", "Rare": "#0070dd", "Epic": "#a335ee", "Legendary": "#ff8000" };
         const jerarquiaRareza = { "Poor": 0, "Common": 1, "Uncommon": 2, "Rare": 3, "Epic": 4, "Legendary": 5 };
@@ -531,46 +577,84 @@ function filtrarInv(tipo) {
 
         // --- SISTEMA DE POBLACIÓN (GENERADOR) ---
 async function refundarPoblacion() {
-    if(!await mostrarMensaje("¿Deseas generar una nueva población? Se perderá el pueblo actual.")) return;
+    if(!await mostrarMensaje("¿Generar nueva población? El mundo cambiará por completo.")) return;
     
-    const nombres = ["Rocanegra", "Valle de Hierro", "Puerto Gélido", "Bastión Solar", "Cala Esmeralda"];
-    const tipos = ["Aldea", "Ciudadela", "Campamento", "Pueblo"];
-    const nombresNPC = ["Thorin", "Elena", "Kael", "Grom", "Sylvan", "Uther"];
-    const trabajos = ["Herrero", "Guía", "Alquimista", "Tabernero", "Explorador"];
-    
-    // 1. Definimos el objeto puebloActual correctamente (con comas)
+    const nombresPueblos = ["Oakhaven", "Ironforge", "Shadowfen", "Ravenrock", "Mistwood", "Goldshire"];
+    const tipos = Object.keys(CONFIG_POBLACIONES);
+    const tipoSel = tipos[Math.floor(Math.random() * tipos.length)];
+    const config = CONFIG_POBLACIONES[tipoSel];
+
+    const nombresNPC = ["Beric", "Lyra", "Kael", "Grom", "Sylvan", "Uther", "Morgra", "Doran"];
+    const trabajos = ["Ciudadano", "Vendedor", "Artesano", "Mendigo", "Guardia", "Viajero"];
+
     puebloActual = {
-        nombre: nombres[Math.floor(Math.random()*nombres.length)],
-        tipo: tipos[Math.floor(Math.random()*tipos.length)],
-        edificios: [
-            {n: "Taberna", icono: "🍺"}, 
-            {n: "Forja", icono: "⚒️"},
-            {n: "Almacén", icono: "📦"}
-        ],
-        npcs: [] // Aquí va una COMA, no un punto y coma
-    }; // Aquí CERRAMOS el objeto con punto y coma
+        nombre: nombresPueblos[Math.floor(Math.random() * nombresPueblos.length)],
+        tipo: tipoSel,
+        edificios: []
+    };
 
-    // 2. Ahora reiniciamos las variables de misiones (fuera del objeto)
-    misionesActivas = [];
-    misionesCompletadas = [];
+    // Determinamos cuántos edificios tendrá
+    const numEdificios = Math.floor(Math.random() * (config.maxEd - config.minEd + 1)) + config.minEd;
+    
+    for(let i = 0; i < numEdificios; i++) {
+        // Seleccionamos CUALQUIER edificio de la lista global
+        const plantilla = TODOS_LOS_EDIFICIOS[Math.floor(Math.random() * TODOS_LOS_EDIFICIOS.length)];
+        
+        let nuevoEdificio = {
+            id: i,
+            n: plantilla.n,
+            icono: plantilla.icono,
+            acciones: [...plantilla.acciones],
+            npcs: []
+        };
 
-    for(let i=0; i<3; i++){
-                puebloActual.npcs.push({
-                    n: nombresNPC[Math.floor(Math.random()*nombresNPC.length)] + " " + i,
-                    job: trabajos[Math.floor(Math.random()*trabajos.length)],
-                    misionId: dbMisiones[i].id
-                });
-            }
+        // Generamos habitantes según el rango de la población
+        const numHabitantes = Math.floor(Math.random() * (config.habMax - config.habMin + 1)) + config.habMin;
 
-    // 3. Guardamos en el almacenamiento local
-    localStorage.setItem('hq_pueblo', JSON.stringify(puebloActual)); // Guardamos el nuevo pueblo
-    localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
-    localStorage.setItem('hq_quests_done', JSON.stringify(misionesCompletadas));
+        for(let j = 0; j < numHabitantes; j++) {
+            nuevoEdificio.npcs.push({
+                n: nombresNPC[Math.floor(Math.random() * nombresNPC.length)],
+                // Si es una casa, el trabajo suele ser "Residente", si no, el del edificio
+                job: plantilla.n === "Casa" ? "Residente" : plantilla.n, 
+                misionId: dbMisiones[Math.floor(Math.random() * dbMisiones.length)].id
+            });
+        }
 
-    // 4. Actualizamos la interfaz
-    renderQuests();
-    renderPueblo();
+        puebloActual.edificios.push(nuevoEdificio);
     }
+
+    localStorage.setItem('hq_pueblo', JSON.stringify(puebloActual));
+    edificioAbierto = null; // Resetear la vista si estaba dentro de uno
+    renderPueblo();
+}
+        function renderVistaCiudad(contenedor) {
+    const titulo = document.createElement('h2');
+    titulo.innerText = `${puebloActual.nombre} (${puebloActual.tipo})`;
+    contenedor.appendChild(titulo);
+
+    const grid = document.createElement('div');
+    grid.className = "grid-edificios";
+
+    puebloActual.edificios.forEach(ed => {
+        const card = document.createElement('div');
+        card.className = "edificio-card";
+        card.innerHTML = `
+            <span class="edificio-icono">${ed.icono || '🏠'}</span>
+            <div class="edificio-info">
+                <strong>${ed.n}</strong>
+                <p>${ed.npcs.length} habitantes</p>
+            </div>
+        `;
+        // Esto cambia el estado y vuelve a renderizar para "entrar"
+        card.onclick = () => {
+            edificioAbierto = ed.id;
+            renderPueblo();
+        };
+        grid.appendChild(card);
+    });
+    
+    contenedor.appendChild(grid);
+}
 
         // --- SISTEMA DE MISIONES (TU ORIGINAL) ---
 async function checkQuestProgress(tipo, valor) {
@@ -655,40 +739,98 @@ async function hablarConNPC(idx) {
     await mostrarMensaje(`${npc.n}: "Que las estrellas guíen tu camino."`, false);
 }
 
-        // --- RENDERIZADO (TUS ORIGINALES) ---
-        function renderPueblo() {
-            if (!puebloActual) refundarPoblacion();
-            document.getElementById('pueblo-nombre').innerText = puebloActual.nombre;
-            document.getElementById('pueblo-tipo').innerText = puebloActual.tipo;
+// Render Pueblo -----------------------------------------------------------------
+function renderPueblo() {
+    // 1. Referencias a tus IDs del HTML
+    const txtNombre = document.getElementById('pueblo-nombre');
+    const txtTipo = document.getElementById('pueblo-tipo');
+    const contenedorEdificios = document.getElementById('lista-edificios');
+    const contenedorNPCs = document.getElementById('lista-npcs');
+    
+    // Títulos H3 para poder cambiarlos dinámicamente
+    const titulos = document.querySelectorAll('#contenedor-pueblo h3');
+
+    if (!puebloActual || !contenedorEdificios) return;
+
+    // 2. Títulos principales (Siempre visibles)
+    txtNombre.innerText = puebloActual.nombre;
+    txtTipo.innerText = puebloActual.tipo;
+
+    // 3. Limpieza de contenedores para evitar duplicados
+    contenedorEdificios.innerHTML = "";
+    contenedorNPCs.innerHTML = "";
+
+    if (edificioAbierto === null) {
+        // --- MODO: VISTA DE CIUDAD (LA CALLE) ---
+        titulos[0].innerText = "🏛️ EDIFICIOS";
+        titulos[1].style.display = "none"; // Ocultamos "HABITANTES" porque están dentro de los edificios
+
+        puebloActual.edificios.forEach(ed => {
+            const card = document.createElement('div');
+            card.className = "edificio-card"; // Usa el CSS que te pasé antes
+            card.innerHTML = `
+                <div style="font-size: 24px;">${ed.icono || '🏠'}</div>
+                <div style="font-weight: bold; font-size: 14px;">${ed.n}</div>
+                <div style="font-size: 11px; color: #94a3b8;">${ed.npcs.length} hab.</div>
+            `;
+            card.onclick = () => {
+                edificioAbierto = ed.id;
+                renderPueblo();
+            };
+            contenedorEdificios.appendChild(card);
+        });
+
+    } else {
+        // --- MODO: INTERIOR DEL EDIFICIO ---
+        const ed = puebloActual.edificios.find(e => e.id === edificioAbierto);
+        
+        // Actualizamos los títulos para dar contexto
+        titulos[0].innerText = `🏛️ ${ed.n.toUpperCase()}`;
+        titulos[1].style.display = "block";
+        titulos[1].innerText = `👥 HABITANTES EN ${ed.n.toUpperCase()}`;
+
+        // Añadimos botón de "VOLVER" como primera opción en el grid de edificios
+        const btnVolver = document.createElement('div');
+        btnVolver.className = "edificio-card";
+        btnVolver.style.borderColor = "#ef4444";
+        btnVolver.innerHTML = `<div style="font-size: 20px;">⬅️</div><div style="color: #ef4444; font-size: 12px;">SALIR</div>`;
+        btnVolver.onclick = () => {
+            edificioAbierto = null;
+            renderPueblo();
+        };
+        contenedorEdificios.appendChild(btnVolver);
+
+        // Renderizamos las ACCIONES en el mismo grid de edificios
+        ed.acciones.forEach(acc => {
+            const btnAcc = document.createElement('div');
+            btnAcc.className = "edificio-card";
+            btnAcc.style.borderColor = "#22c55e";
+            btnAcc.innerHTML = `<div style="font-size: 20px;">⚡</div><div style="font-size: 12px;">${acc.toUpperCase()}</div>`;
+            btnAcc.onclick = () => ejecutarAccion(acc); // Debemos crear esta función
+            contenedorEdificios.appendChild(btnAcc);
+        });
+
+        // Renderizamos los NPCs en su lista dedicada
+        ed.npcs.forEach((npc, idx) => {
+            const item = document.createElement('div');
+            item.className = "npc-item"; // Estilo de fila
+            item.style.display = "flex";
+            item.style.justifyContent = "space-between";
+            item.style.alignItems = "center";
+            item.style.padding = "10px";
+            item.style.borderBottom = "1px solid #334155";
             
-            const gE = document.getElementById('lista-edificios');
-            gE.innerHTML = puebloActual.edificios.map(ed => `
-                <div class="edificio-card" onclick="alert('Entrando en ${ed.n}')">
-                    <span class="edificio-icon">${ed.icono}</span>
-                    <span class="edificio-name">${ed.n}</span>
-                </div>`).join("");
-
-            const gN = document.getElementById('lista-npcs');
-            gN.innerHTML = puebloActual.npcs.map((npc, idx) => {
-            const questAceptada = misionesActivas.find(q => q.owner === npc.n);
-            const questDisponible = npc.misionId && !misionesCompletadas.includes(npc.misionId) && !questAceptada;
-            const questLista = questAceptada && questAceptada.completada;
-
-            let iconHTML = '';
-            if (questLista) {
-              iconHTML = '<span class="quest-mark quest-ready">✅</span>';
-            } else if (questAceptada) {
-            // ESTE ES EL NUEVO ICONO: Muestra que el NPC está esperando
-              iconHTML = '<span class="quest-mark" style="color: #f59e0b; opacity:0.7;">❓</span>'; 
-            } else if (questDisponible) {
-              iconHTML = '<span class="quest-mark quest-available">❗</span>';
-            }
-                return `<div class="npc-item" onclick="hablarConNPC(${idx})">
-                    <div><b>${npc.n}</b><br><span class="npc-role">${npc.job}</span></div>
-                    ${iconHTML}
-                </div>`;
-            }).join("");
-        }
+            item.innerHTML = `
+                <div>
+                    <div style="color: #fbbf24; font-weight: bold;">${npc.n}</div>
+                    <div style="font-size: 12px; color: #94a3b8;">${npc.job}</div>
+                </div>
+                <button class="btn-hablar" onclick="hablarConNPC(${ed.id}, ${idx})" style="padding: 5px 10px; background: #fbbf24; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">HABLAR</button>
+            `;
+            contenedorNPCs.appendChild(item);
+        });
+    }
+}
 
         function renderEquipado() {
             // 1. Limpiamos todos los slots primero
@@ -1176,6 +1318,8 @@ async function VaciarInventario() {
         renderInv();
     }
 }
+        // Variable global para controlar en qué edificio estamos
+let edificioAbierto = null;
 // --- Cargar Datos ---------------------------------------     
 async function cargarDatos() {
     try {
@@ -1193,40 +1337,45 @@ async function cargarDatos() {
 
         enemigos = Object.values(rEn); 
         enemigos.forEach(e => e.subfolder = "enemigos");
-
         itemsDB = {...rEq, ...rCo, ...rBa};
 
-        // --- INICIALIZACIÓN CRÍTICA DEL INVENTARIO ---
+        // --- INICIALIZACIÓN DEL INVENTARIO ---
         let invGuardado = JSON.parse(localStorage.getItem('hq_inv'));
         let capacidad = calcularCapacidadMax();
-
         if (!invGuardado) {
-            // Si es la primera vez, creamos array vacío con la capacidad actual
             inventario = new Array(capacidad).fill(null);
         } else {
             inventario = invGuardado;
-            // Si compramos bolsas nuevas, extendemos el array para no perder huecos
-            while (inventario.length < capacidad) {
-                inventario.push(null);
-            }
+            while (inventario.length < capacidad) { inventario.push(null); }
         }
-        // --- CARGAR MISIONES Y PROGRESO ---
+
+        // --- CARGAR PUEBLO (Movido aquí dentro) ---
+        const puebloGuardado = localStorage.getItem('hq_pueblo');
+        if (puebloGuardado) {
+            puebloActual = JSON.parse(puebloGuardado);
+        } else {
+            console.log("No hay pueblo inicial.");
+            // Opcional: refundarPoblacionSinConfirmar(); 
+        }
+
         misionesActivas = JSON.parse(localStorage.getItem('hq_quests')) || [];
         misionesCompletadas = JSON.parse(localStorage.getItem('hq_quests_done')) || [];
-
-        // --- CARGAR MONEDAS ---
-        // Intentamos cargar totalBronce, si no existe, empezamos en 0
         totalBronce = parseInt(localStorage.getItem('hq_bronce_total')) || 0;
 
+        // --- RENDERIZADO FINAL ---
+        renderInv();
         renderPueblo(); 
         renderEquipado();
         renderQuests(); 
+        actualizarMonederoUI();
         
     } catch(e) { 
-        console.error("Error en la carga de archivos JSON:", e); 
+        console.error("Error crítico en la carga:", e); 
     }
 }
-        cargarDatos();
+
+// Iniciar todo
+cargarDatos();
     </script>
 </body>
 </html>
