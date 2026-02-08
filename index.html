@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.29</title>
+    <title>HeroQuest Pro - 1.0.30</title>
     <style>
         .item-slot img:active {
     cursor: grabbing;
@@ -165,10 +165,12 @@
         .btn-win { background: #22c55e; box-shadow: 0 4px 0 #166534; }
 
         /* --- INVENTARIO --- */
-        #lista-inv { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 15px; padding: 15px; max-width: 550px; margin: auto; }
-        .item-slot { width: 85px; height: 110px; background: #1e293b; border: 2px solid #475569; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 8px; cursor: pointer; box-sizing: border-box; }
+        #lista-inv { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 8px; padding: 10px; max-width: 550px; margin: auto; }
+        .item-slot { width: 65px; height: 65px; background: #1e293b; border: 2px solid #475569; border-radius: 6px; display: flex; align-items: center; justify-content: center; padding: 4px; cursor: pointer; box-sizing: border-box; transition: background 0.2s; }
+        .item-slot:hover { background: #334155; border-color: #94a3b8; }
         .item-slot img { width: 50px; height: 50px; object-fit: contain; }
-        .item-name { font-size: 10px; text-align: center; font-weight: bold; width: 100%; }
+        .item-name { display: none; }
+        .item-slot.empty { border-style: dashed; opacity: 0.5; }
 
         /* --- RAREZAS --- */
         .poor { border-color: #9d9d9d !important; } .common { border-color: #ffffff !important; }
