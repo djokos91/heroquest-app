@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.56</title>
+    <title>HeroQuest Pro - 1.0.57</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -1171,8 +1171,8 @@ async function gestionarEquipado(el) {
     return capacidad;
 }
         
-function VaciarInventario() {
-    if (confirm("¿Estás seguro de que quieres destruir TODOS los objetos de tu mochila?")) {
+async function VaciarInventario() {
+    if (await mostrarMensaje("¿Estás seguro de que quieres destruir TODOS los objetos de tu mochila?")) {
         const capacidad = calcularCapacidadMax();
         inventario = new Array(capacidad).fill(null);
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
