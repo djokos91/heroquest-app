@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.8</title>
+    <title>HeroQuest Pro - 1.0.9</title>
     <style>
         /* --- ESTILOS GENERALES (TUS ORIGINALES) --- */
         body { 
@@ -657,46 +657,66 @@ function gestionarItem(i) {
     if (it.Tipo === "Equipable") {
         let sId = "";
 
-        // 1. DETERMINAR EL SLOT DESTINO
-        if (it.Slot === "bolsa") {
-            let msg = `¿En qué ranura quieres equipar ${it.n}?\n`;
-            for (let b = 2; b <= 5; b++) {
-                const ocupado = equipado["slot-bolsa-" + b] ? `[${equipado["slot-bolsa-" + b].n}]` : "[Vacío]";
-                msg += `${b}. Ranura Bolsa ${b} ${ocupado}\n`;
+        // --- LÓGICA DE SLOTS MÚLTIPLES (Bolsas, Anillos, Abalorios) ---
+        if (it.Slot === "bolsa" || it.Slot === "anillo" || it.Slot === "abalorio") {
+            const config = {
+                "bolsa": { min: 2, max: 5 },
+                "anillo": { min: 1, max: 2 },
+                "abalorio": { min: 1, max: 2 }
+            };
+
+            const range = config[it.Slot];
+            let slotLibre = null;
+
+            // 1. Buscamos el primer hueco vacío
+            for (let n = range.min; n <= range.max; n++) {
+                let tempId = `slot-${it.Slot}-${n}`;
+                if (!equipado[tempId]) {
+                    slotLibre = tempId;
+                    break;
+                }
             }
-            
-            const eleccion = prompt(msg, "2");
-            if (eleccion === null) return; 
-            
-            const numBolsa = parseInt(eleccion);
-            if (numBolsa >= 2 && numBolsa <= 5) {
-                sId = "slot-bolsa-" + numBolsa;
+
+            if (slotLibre) {
+                sId = slotLibre; // Encontrado hueco, se asigna directamente
             } else {
-                alert("Selección no válida (debe ser de 2 a 5)");
-                return;
+                // 2. Si todo está lleno, preguntamos por cuál reemplazar
+                let msg = `Todas las ranuras de ${it.Slot} están llenas. ¿Cuál quieres reemplazar por ${it.n}?\n`;
+                for (let n = range.min; n <= range.max; n++) {
+                    msg += `${n}. ${equipado[`slot-${it.Slot}-${n}`].n}\n`;
+                }
+                
+                const el = prompt(msg, range.min.toString());
+                if (el === null) return;
+                
+                const numSel = parseInt(el);
+                if (numSel >= range.min && numSel <= range.max) {
+                    sId = `slot-${it.Slot}-${numSel}`;
+                } else {
+                    alert("Selección no válida.");
+                    return;
+                }
             }
-        } else if (it.Slot === "anillo") {
-            sId = !equipado["slot-anillo-1"] ? "slot-anillo-1" : "slot-anillo-2";
         } else {
+            // --- LÓGICA DE SLOTS ÚNICOS (Casco, Pechera, Arma, etc.) ---
             sId = "slot-" + it.Slot;
         }
 
-        // 2. GESTIÓN DE EQUIPO / REEMPLAZO
+        // --- PROCESO DE EQUIPO / REEMPLAZO FINAL ---
         const ex = equipado[sId]; 
 
-        // Si el slot está ocupado, preguntamos por el reemplazo
         if (ex) {
+            // Si el slot está ocupado (sea automático o elegido), confirmamos cambio
             if (!confirm(`¿Quieres reemplazar ${ex.n} por ${it.n}?`)) return;
-            // Si acepta el reemplazo: el viejo vuelve al inventario
             inventario[i] = { ...ex }; 
         } else {
-            // Si está vacío, equipamos directamente sin preguntar más
+            // Si estaba vacío, equipo directo
             inventario.splice(i, 1);
         }
 
-        // 3. COLOCAR Y GUARDAR
         equipado[sId] = { ...it };
 
+        // Guardar y refrescar
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         localStorage.setItem('hq_equipo', JSON.stringify(equipado));
         
