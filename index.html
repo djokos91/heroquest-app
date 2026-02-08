@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.54</title>
+    <title>HeroQuest Pro - 1.0.55</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -1129,7 +1129,7 @@ async function gestionarEquipado(el) {
         return;
     }
 
-    if (confirm(`¿Desequipar ${it.n}?`)) {
+    if (await mostrarMensaje(`¿Desequipar ${it.n}?`)) {
         // --- PROCESO DE REDUCCIÓN DE ARRAY ---
         
         // A. Extraemos solo los objetos que ya tenías
