@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.47</title>
+    <title>HeroQuest Pro - 1.0.48</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -411,8 +411,8 @@
 
         function eliminarLote() {
     if (seleccionados.length === 0) return;
-
-    if (confirm(`¿Estás seguro de que quieres tirar ${seleccionados.length} objetos?`)) {
+    const confirmacion = await mostrarMensaje(`¿Eliminar los ${seleccionados.length} objetos seleccionados?`);
+    if (!confirmacion) return;
         // Marcamos como null cada índice seleccionado
         seleccionados.forEach(i => {
             inventario[i] = null;
@@ -446,7 +446,7 @@ function soltarObjeto(e, indexDestino) {
     if (slotDestino === "slot-mano2") {
         const armaPrincipal = equipado["slot-mano1"];
         if (armaPrincipal && armaPrincipal.manos === 2) {
-            alert("Tienes un arma a dos manos. No puedes usar la mano izquierda.");
+            await mostrarMensaje("Tienes un arma a dos manos. No puedes usar la mano izquierda.");
             return;
         }
     }
@@ -587,7 +587,7 @@ function refundarPoblacion() {
                     
                     if (q.actual >= q.meta) {
                         q.completada = true;
-                        alert(`¡Misión "${q.n}" Lista! Vuelve con el NPC.`);
+                        await mostrarMensaje(`¡Misión "${q.n}" Lista! Vuelve con el NPC.`);
                     }
                 }
             });
@@ -602,8 +602,9 @@ function hablarConNPC(idx) {
         // Validación de espacio... (mantenemos la anterior)
         const objetosReales = inventario.filter(slot => slot !== null).length;
         if (objetosReales >= calcularCapacidadMax()) {
-            alert(`${npc.n}: "¡Mochila llena!"`); return;
-        }
+        await mostrarMensaje(`${npc.n}: "¡Mochila llena!"`, false); 
+        return;
+}
 
         const itemData = itemsDB[qAceptada.recompensa];
         
@@ -619,7 +620,7 @@ function hablarConNPC(idx) {
         inventario[primerHueco] = { ...itemData, idInstance: Date.now() };
         totalBronce += v;
 
-        alert(`${npc.n}: "¡Excelente! Toma tu recompensa: ${itemData.n} y ${textoMonedas}."`);
+        await mostrarMensaje(`${npc.n}: "¡Excelente! Toma tu recompensa: ${itemData.n} y ${textoMonedas}."`);
 
         // Guardar y limpiar
         misionesCompletadas.push(qAceptada.id);
@@ -649,7 +650,7 @@ function hablarConNPC(idx) {
     }
 
     // 3. DIÁLOGO POR DEFECTO
-    alert(`${npc.n}: "Que las estrellas guíen tu camino."`);
+    await mostrarMensaje(`${npc.n}: "Que las estrellas guíen tu camino."`);
 }
 
         // --- RENDERIZADO (TUS ORIGINALES) ---
@@ -786,7 +787,7 @@ function renderQuests() {
     const capacidadMax = calcularCapacidadMax();
 
     if (objetosActuales >= capacidadMax) { 
-        alert("¡Tu mochila está totalmente llena! No puedes recoger más botín."); 
+        await mostrarMensaje("¡Tu mochila está totalmente llena! No puedes recoger más botín."); 
         return; 
     }
 
@@ -1011,7 +1012,7 @@ async function gestionarItem(i) {
                 if (numSel >= range.min && numSel <= range.max) {
                     sId = `slot-${it.Slot}-${numSel}`;
                 } else {
-                    alert("Selección no válida.");
+                    await mostrarMensaje("Selección no válida.");
                     return;
                 }
             }
@@ -1039,7 +1040,7 @@ async function gestionarItem(i) {
             
             // Necesitamos 'itemsADevolver - 1' huecos extras porque el arma nueva libera su propio slot (i)
             if (itemsADevolver > 1 && huecosLibres < 1) { 
-                alert("No tienes espacio suficiente en el inventario para desequipar ambos objetos.");
+                await mostrarMensaje("No tienes espacio suficiente en el inventario para desequipar ambos objetos.");
                 return;
             }
 
@@ -1059,7 +1060,7 @@ async function gestionarItem(i) {
             if (it.Slot === "mano2") {
                 const principal = equipado["slot-mano1"];
                 if (principal && principal.manos === 2) {
-                    alert(`No puedes equipar esto: ${principal.n} requiere ambas manos.`);
+                    await mostrarMensaje(`No puedes equipar esto: ${principal.n} requiere ambas manos.`);
                     return;
                 }
             }
@@ -1074,7 +1075,8 @@ async function gestionarItem(i) {
         if (ex) {
             // Solo pedimos confirmación aquí si NO es un arma de 2 manos (porque ya preguntamos arriba)
             if (!(it.Slot === "mano1" && it.manos === 2)) {
-                if (!confirm(`¿Quieres reemplazar ${ex.n} por ${it.n}?`)) return;
+                const confirmCambio = await mostrarMensaje(`¿Reemplazar ${ex.n} por ${it.n}?`);
+                if (!confirmCambio) return;
             }
             inventario[i] = { ...ex }; 
         } else {
@@ -1095,7 +1097,8 @@ async function gestionarItem(i) {
         renderInv();
         renderEquipado();
 
-    } else if (confirm(`¿Eliminar ${it.n}?`)) {
+    } const eliminar = await mostrarMensaje(`¿Seguro que quieres eliminar ${it.n}?`);
+        if (eliminar) {
         inventario[i] = null; 
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         renderInv();
@@ -1117,7 +1120,7 @@ function gestionarEquipado(el) {
     // 3. SEGURIDAD: ¿Caben los objetos + el que voy a desequipar?
     // Sumamos 1 porque la bolsa que desequipas pasará a ocupar un hueco en el inventario
     if ((objetosReales + 1) > capacidadSiQuitoBolsa) {
-        alert("¡No puedes desequipar esta bolsa! No hay espacio suficiente para guardar la bolsa y tus objetos.");
+        await mostrarMensaje("¡No puedes desequipar esta bolsa! No hay espacio suficiente para guardar la bolsa y tus objetos.");
         return;
     }
 
