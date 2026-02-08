@@ -465,7 +465,7 @@ function refundarPoblacion() {
     const c = document.getElementById('quest-log-container');
     c.innerHTML = misionesActivas.length ? misionesActivas.map(q => {
         const itemData = itemsDB[q.recompensa];
-        const nombreItem = itemData ? itemData.n : "Objeto desconocido";
+        const nombreItem = itemData ? itemData.n : `${q.recompensa}`;
 
         // Lógica de iconos de moneda dinámica
         let monedaIcono = "🟤";
