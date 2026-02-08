@@ -584,32 +584,40 @@ function refundarPoblacion() {
         }
 // 2. FUNCIÓN MOSTRAR VERSIÓN
 function mostrarVersion() {
-    console.log("Intentando mostrar la versión..."); // <-- Si ves esto en la consola, la función corre
     let el = document.getElementById('map-version');
     if (!el) {
         el = document.createElement('div');
         el.id = 'map-version';
-        el.style.cssText = `
-            position: fixed;
-            top: 10px;      /* Cambiado de bottom a top */
-            left: 10px;     /* Cambiado de right a left */
-            font-size: 12px;
-            color: #ffffff; 
-            background: #ff0000; /* Rojo brillante para que destaque sí o sí */
-            padding: 10px;
-            z-index: 99999;
-            border: 2px solid white;
-        `;
         document.body.appendChild(el);
     }
     
+    // Estilo ultra-resistente
+    el.style.cssText = `
+        position: fixed !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        width: auto !important;
+        height: auto !important;
+        background: rgba(0, 0, 0, 0.8) !important;
+        color: #4ade80 !important;
+        padding: 5px 10px !important;
+        border: 1px solid #22c55e !important;
+        border-radius: 5px !important;
+        font-family: monospace !important;
+        font-size: 12px !important;
+        z-index: 2147483647 !important; /* El valor máximo posible de z-index */
+        pointer-events: none !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    `;
+
     const ahora = new Date();
-    const hora = ahora.getHours().toString().padStart(2, '0');
-    const min = ahora.getMinutes().toString().padStart(2, '0');
-    const seg = ahora.getSeconds().toString().padStart(2, '0');
-    
-    // Aquí es donde se usa la variable que definimos arriba
-    el.innerText = `V.${SCRIPT_VERSION} | SYNC: ${hora}:${min}:${seg}`;
+    const h = ahora.getHours().toString().padStart(2, '0');
+    const m = ahora.getMinutes().toString().padStart(2, '0');
+    const s = ahora.getSeconds().toString().padStart(2, '0');
+
+    el.innerText = `V.${SCRIPT_VERSION} | ${h}:${m}:${s}`;
 }
         function renderMapa() {
             const g = document.getElementById('mapa-grid'); g.innerHTML = "";
