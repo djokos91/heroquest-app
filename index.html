@@ -701,6 +701,7 @@ async function cargarDatos() {
         renderPueblo(); 
         renderEquipado();
         renderQuests(); // <--- FUNDAMENTAL para que el diario use itemsDB cargado
+        mostrarVersion();
         
     } catch(e) { 
         console.error("Error en la carga de archivos JSON:", e); 
