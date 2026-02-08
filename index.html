@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.24</title>
+    <title>HeroQuest Pro - 1.0.25</title>
     <style>
         .item-slot img:active {
     cursor: grabbing;
@@ -883,7 +883,8 @@ function gestionarItem(i) {
         renderEquipado();
 
     } else if (confirm(`¿Eliminar ${it.n}?`)) {
-        inventario.splice(i, 1);
+        // En lugar de splice, simplemente vaciamos el hueco
+        inventario[i] = null; 
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         renderInv();
     }
@@ -893,22 +894,45 @@ function gestionarEquipado(el) {
     const it = equipado[el.id]; 
     if (el.id === "slot-bolsa-1" || !it) return;
 
-    // LÓGICA DE SEGURIDAD:
-    // Calculamos qué pasaría si quitamos la bolsa
+    // 1. Calculamos capacidad resultante
     const capacidadActual = calcularCapacidadMax();
-    const espacioQueOcupaBolsa = it.Espacios || 0;
-    const capacidadSiQuitoBolsa = capacidadActual - espacioQueOcupaBolsa;
+    const espacioQueAportaEstaBolsa = it.Espacios || 0;
+    const capacidadSiQuitoBolsa = capacidadActual - espacioQueAportaEstaBolsa;
 
-    if (inventario.length >= capacidadSiQuitoBolsa) {
-        alert("¡No puedes desequipar esta bolsa! El inventario resultante sería demasiado pequeño para tus objetos actuales.");
+    // 2. Contamos OBJETOS REALES (no nulls)
+    const objetosReales = inventario.filter(slot => slot !== null).length;
+
+    // 3. SEGURIDAD: ¿Caben los objetos + el que voy a desequipar?
+    // Sumamos 1 porque la bolsa que desequipas pasará a ocupar un hueco en el inventario
+    if ((objetosReales + 1) > capacidadSiQuitoBolsa) {
+        alert("¡No puedes desequipar esta bolsa! No hay espacio suficiente para guardar la bolsa y tus objetos.");
         return;
     }
 
     if (confirm(`¿Desequipar ${it.n}?`)) {
-        inventario.push({ ...it }); 
+        // --- PROCESO DE REDUCCIÓN DE ARRAY ---
+        
+        // A. Extraemos solo los objetos que ya tenías
+        let objetosParaMudar = inventario.filter(slot => slot !== null);
+        
+        // B. Añadimos la bolsa que acabamos de quitar a esa lista
+        objetosParaMudar.push({ ...it });
+
+        // C. Creamos el nuevo inventario más pequeño
+        let nuevoInventario = new Array(capacidadSiQuitoBolsa).fill(null);
+
+        // D. Colocamos todo en el nuevo array
+        objetosParaMudar.forEach((obj, idx) => {
+            nuevoInventario[idx] = obj;
+        });
+
+        // E. Guardamos cambios
+        inventario = nuevoInventario;
         delete equipado[el.id];
+        
         localStorage.setItem('hq_inv', JSON.stringify(inventario)); 
         localStorage.setItem('hq_equipo', JSON.stringify(equipado));
+        
         renderEquipado(); 
         renderInv();
     }
