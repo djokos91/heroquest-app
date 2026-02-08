@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.20</title>
+    <title>HeroQuest Pro - 1.0.21</title>
     <style>
         .item-slot img:active {
     cursor: grabbing;
@@ -313,11 +313,11 @@
         let misionesActivas = safeParse('hq_quests', []);
         let misionesCompletadas = safeParse('hq_quests_done', []);
         let puebloActual = safeParse('hq_pueblo', null);
-        let totalBronce = safeParse('hq_bronce_total', 0); // Almacenamos todo en bronce
         let modoAventura = false, enCombate = false;
         let mundo = { dimension: 3, sectores: [], pos: { x: 1, y: 1 } };
         let actual = null; 
         let filtroActual = 'Todos';
+        let totalBronce = safeParse('hq_bronce_total', 0); // Almacenamos todo en bronce
 
         function safeParse(key, def) { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } }
 // --- Mover objetos en el inventario ---
@@ -669,7 +669,7 @@ function renderQuests() {
     else if (bronceGanado >= 50) monedaIcono = "⚪";
 
     // Usamos el objeto global 'monedas' y no totalBronce para ser coherentes con tu monedero
-    monedas.bronce += bronceGanado;
+    totalBronce += bronceGanado;
     
     checkQuestProgress("kill", 1); 
     checkQuestProgress("item", it.Rareza);
