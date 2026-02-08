@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.32</title>
+    <title>HeroQuest Pro - 1.0.33</title>
     <style>
         .item-slot img:active { cursor: grabbing; opacity: 0.5; }
         .filter-btn { background: #334155; border: 1px solid #475569; color: white; border-radius: 4px; transition: 0.2s; cursor: pointer; display: block; }
@@ -457,51 +457,41 @@ function hablarConNPC(idx) {
     const npc = puebloActual.npcs[idx];
     const qAceptada = misionesActivas.find(q => q.owner === npc.n);
     
-    // 1. ENTREGA DE MISIÓN (Si ya está terminada)
     if (qAceptada && qAceptada.actual >= qAceptada.meta) {
-        // --- CORRECCIÓN DE ESPACIO ---
+        // Validación de espacio... (mantenemos la anterior)
         const objetosReales = inventario.filter(slot => slot !== null).length;
-        const capacidadMax = calcularCapacidadMax();
-
-        if (objetosReales >= capacidadMax) {
-            alert(`${npc.n}: "¡Tu mochila está llena! No puedo darte la recompensa así."`);
-            return;
+        if (objetosReales >= calcularCapacidadMax()) {
+            alert(`${npc.n}: "¡Mochila llena!"`); return;
         }
 
         const itemData = itemsDB[qAceptada.recompensa];
-        if (!itemData) {
-            alert("Error: Objeto no encontrado en la base de datos.");
-            return;
-        }
+        
+        // --- LÓGICA DE DESGLOSE DE MONEDAS ---
+        let v = qAceptada.bronce || 0;
+        let textoMonedas = "";
+        if (v >= 10000) textoMonedas = `${Math.floor(v/10000)} monedas de Oro 🟡`;
+        else if (v >= 100) textoMonedas = `${Math.floor(v/100)} monedas de Plata ⚪`;
+        else textoMonedas = `${v} monedas de Bronce 🟤`;
 
-        // --- ENTREGAR PREMIO EN EL PRIMER HUECO VACÍO ---
+        // Entregar recompensa
         const primerHueco = inventario.indexOf(null);
-        if (primerHueco !== -1) {
-            inventario[primerHueco] = { ...itemData, idInstance: Date.now() };
-        }
+        inventario[primerHueco] = { ...itemData, idInstance: Date.now() };
+        totalBronce += v;
 
-        // --- SUMAR MONEDAS (Correctamente a totalBronce) ---
-        const recompensaBronce = parseInt(qAceptada.bronce || 0);
-        totalBronce += recompensaBronce;
+        alert(`${npc.n}: "¡Excelente! Toma tu recompensa: ${itemData.n} y ${textoMonedas}."`);
 
-        alert(`${npc.n}: "¡Increíble trabajo! Aquí tienes tu ${itemData.n} y ${recompensaBronce} monedas."`);
-
-        // --- LIMPIAR Y GUARDAR ---
+        // Guardar y limpiar
         misionesCompletadas.push(qAceptada.id);
         misionesActivas = misionesActivas.filter(q => q.id !== qAceptada.id);
 
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
         localStorage.setItem('hq_quests_done', JSON.stringify(misionesCompletadas));
-        localStorage.setItem('hq_bronce_total', totalBronce); // Guardamos en tu variable real
+        localStorage.setItem('hq_bronce_total', totalBronce);
 
-        renderPueblo();
-        renderQuests();
-        renderInv();
-        actualizarMonederoUI();
+        renderPueblo(); renderQuests(); renderInv(); actualizarMonederoUI();
         return;
     }
-
     // 2. DAR MISIÓN NUEVA (Se mantiene igual, está bien)
     const questDisponible = npc.misionId && !misionesCompletadas.includes(npc.misionId) && !qAceptada;
     if (questDisponible) {
@@ -587,31 +577,24 @@ function renderQuests() {
     const c = document.getElementById('quest-log-container');
     if (!c) return;
 
-    // Diccionario de colores (asegúrate de que coincidan con tus strings de Rareza)
-    const coloresRareza = {
-        "Common": "#f1f5f9",    // Blanco/Gris
-        "Uncommon": "#4ade80",  // Verde
-        "Rare": "#3b82f6",      // Azul
-        "Epic": "#a855f7",      // Morado
-        "Legendary": "#fbbf24"  // Dorado
-    };
-
     c.innerHTML = misionesActivas.length ? misionesActivas.map(q => {
         const itemData = itemsDB[q.recompensa];
-        const nombreItem = itemData ? itemData.n : q.recompensa;
-        
-        // Obtenemos el color según la rareza del objeto
+        const nombreItem = itemData ? itemData.n : "Recompensa desconocida";
         const colorRareza = (itemData && coloresRareza[itemData.Rareza]) ? coloresRareza[itemData.Rareza] : "#fbbf24";
 
-        let monedaIcono = "🟤";
-        let textoRecompensa = `${q.bronce} bronce`;
+        // Lógica de conversión de monedas para el Diario
+        let icono = "🟤";
+        let cantidad = q.bronce || 0;
+        let tipo = "Bronce";
 
-        if (q.bronce >= 10000) { 
-            monedaIcono = "🟡"; 
-            textoRecompensa = `${(q.bronce / 10000).toFixed(1)} Oro`; 
-        } else if (q.bronce >= 100) { 
-            monedaIcono = "⚪"; 
-            textoRecompensa = `${(q.bronce / 100).toFixed(1)} Plata`; 
+        if (q.bronce >= 10000) {
+            icono = "🟡";
+            cantidad = Math.floor(q.bronce / 10000);
+            tipo = "Oro";
+        } else if (q.bronce >= 100) {
+            icono = "⚪";
+            cantidad = Math.floor(q.bronce / 100);
+            tipo = "Plata";
         }
 
         return `
@@ -624,23 +607,18 @@ function renderQuests() {
                     <span>🎁</span>
                     <span style="font-size: 11px; color: ${colorRareza}; font-weight: bold;">${nombreItem}</span>
                 </div>
-                  <div style="display: flex; align-items: center; gap: 4px;">
-                    <span style="font-size: 11px; color: #e2e8f0;">${cantidadMostrada}</span>
-                    <span>${monedaIcono}</span>                    
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="font-size: 11px; color: #e2e8f0;">${cantidad} ${icono} (${tipo})</span>                    
                 </div>
             </div>
-
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="font-size: 12px; font-weight: bold; color: ${q.completada ? '#22c55e' : '#e2e8f0'}">
                     Progreso: ${q.actual}/${q.meta}
                 </div>
-                <button onclick="abandonarMision('${q.id}')" 
-                        style="background: none; border: 1px solid #ef4444; color: #ef4444; font-size: 9px; padding: 2px 6px; border-radius: 4px; cursor: pointer;">
-                    🗑️ ABANDONAR
-                </button>
+                <button onclick="abandonarMision('${q.id}')" style="...">🗑️ ABANDONAR</button>
             </div>
         </div>`;
-    }).join("") : '<p style="font-size:12px; color:#64748b; text-align:center;">No tienes misiones en curso.</p>';
+    }).join("") : '<p style="text-align:center;">No tienes misiones en curso.</p>';
 }
              
         // --- LÓGICA DE AVENTURA (TU ORIGINAL) ---
@@ -1018,6 +996,13 @@ async function cargarDatos() {
                 inventario.push(null);
             }
         }
+        // --- CARGAR MISIONES Y PROGRESO ---
+        misionesActivas = JSON.parse(localStorage.getItem('hq_quests')) || [];
+        misionesCompletadas = JSON.parse(localStorage.getItem('hq_quests_done')) || [];
+
+        // --- CARGAR MONEDAS ---
+        // Intentamos cargar totalBronce, si no existe, empezamos en 0
+        totalBronce = parseInt(localStorage.getItem('hq_bronce_total')) || 0;
 
         renderPueblo(); 
         renderEquipado();
