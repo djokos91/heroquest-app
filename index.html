@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.51</title>
+    <title>HeroQuest Pro - 1.0.52</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -576,22 +576,28 @@ function refundarPoblacion() {
     }
 
         // --- SISTEMA DE MISIONES (TU ORIGINAL) ---
-       async function checkQuestProgress(tipo, valor) {
-            let actualizo = false;
-            misionesActivas.forEach(q => {
-                if (q.tipo === tipo && !q.completada) {
-                    if (tipo === "kill") { q.actual++; actualizo = true; }
-                    if (tipo === "go" && valor.x === q.coord.x && valor.y === q.coord.y) { q.actual = 1; actualizo = true; }
-                    if (tipo === "item" && jerarquiaRareza[valor] >= jerarquiaRareza[q.itemReq]) { q.actual = 1; actualizo = true; }
-                    
-                    if (q.actual >= q.meta) {
-                        q.completada = true;
-                        await mostrarMensaje(`¡Misión "${q.n}" Lista! Vuelve con el NPC.`, false);
-                    }
-                }
-            });
-            if (actualizo) localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
+async function checkQuestProgress(tipo, valor) {
+    let actualizo = false;
+
+    // Cambiamos el forEach por un for...of
+    for (const q of misionesActivas) {
+        if (q.tipo === tipo && !q.completada) {
+            if (tipo === "kill") { q.actual++; actualizo = true; }
+            if (tipo === "go" && valor.x === q.coord.x && valor.y === q.coord.y) { q.actual = 1; actualizo = true; }
+            if (tipo === "item" && jerarquiaRareza[valor] >= jerarquiaRareza[q.itemReq]) { q.actual = 1; actualizo = true; }
+            
+            if (q.actual >= q.meta) {
+                q.completada = true;
+                // Ahora este await sí funcionará perfectamente
+                await mostrarMensaje(`¡Misión "${q.n}" Lista! Vuelve con el NPC.`, false);
+            }
         }
+    }
+
+    if (actualizo) {
+        localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
+    }
+}
 
 async function hablarConNPC(idx) {
     const npc = puebloActual.npcs[idx];
