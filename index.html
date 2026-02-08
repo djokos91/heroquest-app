@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.26</title>
+    <title>HeroQuest Pro - 1.0.27</title>
     <style>
         .item-slot img:active {
     cursor: grabbing;
@@ -766,7 +766,7 @@ function renderInv() {
     if (!contenedor) return;
 
     const capacidadMax = calcularCapacidadMax();
-/ --- PASO CLAVE: Sincronizar el array con la nueva capacidad ---
+// --- PASO CLAVE: Sincronizar el array con la nueva capacidad ---
     while (inventario.length < capacidadMax) {
         inventario.push(null); // Añade huecos si la capacidad aumentó
     }
