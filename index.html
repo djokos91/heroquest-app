@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.57</title>
+    <title>HeroQuest Pro - 1.0.58</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -534,7 +534,7 @@ function filtrarInv(tipo) {
 
         // --- SISTEMA DE POBLACIÓN (GENERADOR) ---
 function refundarPoblacion() {
-    if(!confirm("¿Deseas generar una nueva población? Se perderá el pueblo actual.")) return;
+    if(!await mostrarMensaje("¿Deseas generar una nueva población? Se perderá el pueblo actual.")) return;
     
     const nombres = ["Rocanegra", "Valle de Hierro", "Puerto Gélido", "Bastión Solar", "Cala Esmeralda"];
     const tipos = ["Aldea", "Ciudadela", "Campamento", "Pueblo"];
@@ -644,7 +644,7 @@ async function hablarConNPC(idx) {
     if (questDisponible) {
         const mData = dbMisiones.find(m => m.id === npc.misionId);
         if (mData) {
-            if (confirm(`${npc.n}: ${mData.desc}\n\n¿Aceptas el encargo?`)) {
+            if (await mostrarMensaje(`${npc.n}: ${mData.desc}\n\n¿Aceptas el encargo?`)) {
                 misionesActivas.push({ ...mData, actual: 0, completada: false, owner: npc.n });
                 localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
                 renderPueblo();
