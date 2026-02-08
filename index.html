@@ -4,26 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.30</title>
+    <title>HeroQuest Pro - 1.0.31</title>
     <style>
-        .item-slot img:active {
-    cursor: grabbing;
-    opacity: 0.5;
-}
-        .filter-btn {
-    background: #334155;
-    border: 1px solid #475569;
-    color: white;
-    border-radius: 4px;
-    transition: 0.2s;
-    }
-        .filter-btn:hover {
-    background: #3b82f6;
-    }
-        .item-slot.empty {
-    background: rgba(0,0,0,0.1);
-    border: 1px dashed #334155;
-    }
+        .item-slot img:active { cursor: grabbing; opacity: 0.5; }
+        .filter-btn { background: #334155; border: 1px solid #475569; color: white; border-radius: 4px; transition: 0.2s; cursor: pointer; display: block; }
+        .filter-btn:hover { background: #3b82f6; }
+        .item-slot.empty { background: rgba(0,0,0,0.1); border: 1px dashed #334155; }
         /* --- ESTILOS GENERALES (TUS ORIGINALES) --- */
         body { 
             background: #0f172a; 
@@ -275,8 +261,8 @@
         <div id="filtros" style="display:flex; gap:5px;">
             <button class="filter-btn" onclick="filtrarInv('Todos')" style="font-size:10px; padding:5px; cursor:pointer;">Todos</button>
             <button class="filter-btn" onclick="filtrarInv('Equipable')" style="font-size:10px; padding:5px; cursor:pointer;">Equipo</button>
-            <button class="filter-btn" onclick="filtrarInv('Consumible')" style="font-size:10px; padding:5px; cursor:pointer;">Pociones</button>
-            <button class="filter-btn" onclick="filtrarInv('Basura')" style="font-size:10px; padding:5px; cursor:pointer;">Otros</button>
+            <button class="filter-btn" onclick="filtrarInv('Consumible')" style="font-size:10px; padding:5px; cursor:pointer;">Consumibles</button>
+            <button class="filter-btn" onclick="filtrarInv('Basura')" style="font-size:10px; padding:5px; cursor:pointer;">Basura</button>
         </div>
         <div style="color:#94a3b8; font-size:12px; font-weight:bold;">
             📦 <span id="inv-capacidad-texto">...</span>
