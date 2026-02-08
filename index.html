@@ -583,14 +583,38 @@ function refundarPoblacion() {
             renderMapa();
         }
 function mostrarVersion() {
-    const el = document.getElementById('map-version');
-    if (!el) return;
+    // 1. Buscamos si ya existe para no duplicarlo
+    let el = document.getElementById('map-version');
     
-    // Obtenemos la fecha actual para saber cuándo se cargó esta versión
+    // 2. Si no existe, lo creamos y lo pegamos al body (así no desaparece)
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'map-version';
+        // Estilo fijo para que flote sobre el mapa
+        el.style.cssText = `
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 10px;
+            color: #4ade80; 
+            font-family: monospace;
+            background: rgba(0,0,0,0.6);
+            padding: 3px 6px;
+            border-radius: 4px;
+            z-index: 9999;
+            pointer-events: none;
+            border: 1px solid #22c55e;
+        `;
+        document.body.appendChild(el);
+    }
+    
     const ahora = new Date();
-    const fechaFormateada = `${ahora.getDate()}/${ahora.getMonth()+1} ${ahora.getHours()}:${ahora.getMinutes()}`;
+    const hora = ahora.getHours().toString().padStart(2, '0');
+    const min = ahora.getMinutes().toString().padStart(2, '0');
+    const seg = ahora.getSeconds().toString().padStart(2, '0');
     
-    el.innerText = `v.${SCRIPT_VERSION} | Build: ${fechaFormateada}`;
+    // Mostramos la versión y la hora exacta del último refresco
+    el.innerText = `V.1.0.5 | SYNC: ${hora}:${min}:${seg}`;
 }
         function renderMapa() {
             const g = document.getElementById('mapa-grid'); g.innerHTML = "";
