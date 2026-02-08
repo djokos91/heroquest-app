@@ -614,15 +614,6 @@ function mostrarVersion() {
     // Aquí es donde se usa la variable que definimos arriba
     el.innerText = `V.${SCRIPT_VERSION} | SYNC: ${hora}:${min}:${seg}`;
 }
-    
-    const ahora = new Date();
-    const hora = ahora.getHours().toString().padStart(2, '0');
-    const min = ahora.getMinutes().toString().padStart(2, '0');
-    const seg = ahora.getSeconds().toString().padStart(2, '0');
-    
-    // Mostramos la versión y la hora exacta del último refresco
-    el.innerText = `V.1.0.5 | SYNC: ${hora}:${min}:${seg}`;
-}
         function renderMapa() {
             const g = document.getElementById('mapa-grid'); g.innerHTML = "";
             for(let y=0;y<3;y++) for(let x=0;x<3;x++) {
