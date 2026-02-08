@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.52</title>
+    <title>HeroQuest Pro - 1.0.53</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -729,7 +729,7 @@ async function hablarConNPC(idx) {
         }
 
         function abandonarMision(questId) {
-    if (confirm("¿Seguro que quieres abandonar esta misión? Perderás todo el progreso acumulado en ella.")) {
+    if (await mostrarMensaje("¿Seguro que quieres abandonar esta misión? Perderás todo el progreso acumulado en ella.")) {
         misionesActivas = misionesActivas.filter(q => q.id !== questId);
         localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
         renderQuests(); // Actualiza la lista del diario
@@ -1080,7 +1080,7 @@ async function gestionarItem(i) {
         if (ex) {
             // Solo pedimos confirmación aquí si NO es un arma de 2 manos (porque ya preguntamos arriba)
             if (!(it.Slot === "mano1" && it.manos === 2)) {
-                const confirmCambio = await mostrarMensaje(`¿Reemplazar ${ex.n} por ${it.n}?`, false);
+                const confirmCambio = await mostrarMensaje(`¿Reemplazar ${ex.n} por ${it.n}?`);
                 if (!confirmCambio) return;
             }
             inventario[i] = { ...ex }; 
@@ -1102,7 +1102,7 @@ async function gestionarItem(i) {
         renderInv();
         renderEquipado();
 
-    } const eliminar = await mostrarMensaje(`¿Seguro que quieres eliminar ${it.n}?`, false);
+    } const eliminar = await mostrarMensaje(`¿Seguro que quieres eliminar ${it.n}?`);
         if (eliminar) {
         inventario[i] = null; 
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
