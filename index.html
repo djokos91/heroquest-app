@@ -264,7 +264,6 @@
         // --- TODAS TUS CONSTANTES ORIGINALES ---
         const coloresRareza = { "Poor": "#9d9d9d", "Common": "#ffffff", "Uncommon": "#1eff00", "Rare": "#0070dd", "Epic": "#a335ee", "Legendary": "#ff8000" };
         const jerarquiaRareza = { "Poor": 0, "Common": 1, "Uncommon": 2, "Rare": 3, "Epic": 4, "Legendary": 5 };
-        const SCRIPT_VERSION = "1.0.1"; // <--- Cambia esto manualmente cada vez que hagas "Commit"
 
         const dbMisiones = [
             { id: "m1", n: "Cacería Primaria", desc: "Derrota a 3 monstruos.", tipo: "kill", meta: 3, recompensa: "arco_caza", bronce: 50 },
@@ -606,38 +605,7 @@ function renderQuests() {
             }
             renderMapa();
         }
-// 2. FUNCIÓN MOSTRAR VERSIÓN
-function mostrarVersion() {
-    let el = document.getElementById('map-version');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'map-version';
-        document.body.appendChild(el);
-    }
-    
-    // Estilo ultra-resistente
-    el.style.cssText = `
-        position: fixed !important;
-        bottom: 20px !important;
-        right: 20px !important;
-        width: auto !important;
-        height: auto !important;
-        background: rgba(0, 0, 0, 0.8) !important;
-        color: #4ade80 !important;
-        padding: 5px 10px !important;
-        border: 1px solid #22c55e !important;
-        border-radius: 5px !important;
-        font-family: monospace !important;
-        font-size: 12px !important;
-        z-index: 2147483647 !important; /* El valor máximo posible de z-index */
-        pointer-events: none !important;
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    `;
-
-    el.innerText = `V.${SCRIPT_VERSION}`;
-}
+        
         function renderMapa() {
             const g = document.getElementById('mapa-grid'); g.innerHTML = "";
             for(let y=0;y<3;y++) for(let x=0;x<3;x++) {
