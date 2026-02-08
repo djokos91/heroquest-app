@@ -264,8 +264,7 @@
         // --- TODAS TUS CONSTANTES ORIGINALES ---
         const coloresRareza = { "Poor": "#9d9d9d", "Common": "#ffffff", "Uncommon": "#1eff00", "Rare": "#0070dd", "Epic": "#a335ee", "Legendary": "#ff8000" };
         const jerarquiaRareza = { "Poor": 0, "Common": 1, "Uncommon": 2, "Rare": 3, "Epic": 4, "Legendary": 5 };
-        const SCRIPT_VERSION = "1.0.1"; // <--- Cambia esto manualmente cada vez que hagas "Commit"
-        const SCRIPT_DATE = "08/02 13:49"; // <--- Cambia esto a mano cuando hagas el commit
+        const SCRIPT_VERSION = "1.0.0"; // <--- Cambia esto manualmente cada vez que hagas "Commit"
 
         const dbMisiones = [
             { id: "m1", n: "Cacería Primaria", desc: "Derrota a 3 monstruos.", tipo: "kill", meta: 3, recompensa: "arco_caza", bronce: 50 },
@@ -638,12 +637,7 @@ function mostrarVersion() {
         opacity: 1 !important;
     `;
 
-    const ahora = new Date();
-    const h = ahora.getHours().toString().padStart(2, '0');
-    const m = ahora.getMinutes().toString().padStart(2, '0');
-    const s = ahora.getSeconds().toString().padStart(2, '0');
-
-    el.innerText = `V.${SCRIPT_VERSION} | BUILD: ${SCRIPT_DATE}`;
+    el.innerText = `V.${SCRIPT_VERSION}`;
 }
         function renderMapa() {
             const g = document.getElementById('mapa-grid'); g.innerHTML = "";
