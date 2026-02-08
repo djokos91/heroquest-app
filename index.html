@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.45</title>
+    <title>HeroQuest Pro - 1.0.46</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -188,9 +188,40 @@
         .quest-entry { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #334155; }
         .quest-title { color: #fbbf24; font-weight: bold; font-size: 14px; }
         .btn-reset { margin: 40px auto; color: #ef4444; background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 12px 25px; border-radius: 8px; cursor: pointer; display: block; }
+
+        .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85); z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+}
+.modal-content {
+    background: #1e293b; border: 2px solid #eab308; padding: 25px;
+    border-radius: 8px; text-align: center; max-width: 400px; width: 90%;
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.3);
+}
+.modal-content h3 { color: #eab308; margin-top: 0; text-transform: uppercase; }
+.modal-content p { color: #f8fafc; font-size: 1.1em; line-height: 1.4; }
+.modal-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+.modal-btn {
+    padding: 10px 25px; border: none; border-radius: 4px; cursor: pointer;
+    font-weight: bold; font-family: inherit; transition: 0.2s;
+}
+.btn-confirm { background: #16a34a; color: white; }
+.btn-cancel { background: #ef4444; color: white; }
+.modal-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
     </style>
 </head>
 <body>
+    <div id="custom-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <h3 id="modal-title">MENSAJE</h3>
+        <p id="modal-text"></p>
+        <div class="modal-buttons">
+            <button id="modal-confirm" class="modal-btn btn-confirm">Aceptar</button>
+            <button id="modal-cancel" class="modal-btn btn-cancel">Cancelar</button>
+        </div>
+    </div>
+</div>
 
     <section id="vista-mundo" class="tab-content active-view">
         <div id="contenedor-pueblo">
@@ -335,6 +366,29 @@
         let seleccionados = []; // Guardará los índices [i] de los objetos marcados
 
         function safeParse(key, def) { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } }
+  // Mostrar Pantalla Emergente-----------------------------------------------------------------------
+        function mostrarMensaje(texto, esConfirm = true) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('custom-modal');
+        const txt = document.getElementById('modal-text');
+        const btnConfirm = document.getElementById('modal-confirm');
+        const btnCancel = document.getElementById('modal-cancel');
+
+        txt.innerText = texto;
+        btnCancel.style.display = esConfirm ? 'block' : 'none'; // Si es solo aviso, oculta cancelar
+        modal.style.display = 'flex';
+
+        btnConfirm.onclick = () => {
+            modal.style.display = 'none';
+            resolve(true);
+        };
+
+        btnCancel.onclick = () => {
+            modal.style.display = 'none';
+            resolve(false);
+        };
+    });
+}
 // --- Selección multiple en el inventario y eliminar -----------------------------------------------------------------------
         function toggleModoSeleccion() {
     modoSeleccion = !modoSeleccion;
@@ -906,7 +960,7 @@ function renderInv() {
     }
 }
 
-function gestionarItem(i) {
+async gestionarItem(i) {
     const it = inventario[i];
     
     if (modoSeleccion) {
@@ -974,7 +1028,8 @@ function gestionarItem(i) {
 
             if (itemsAQuitar.length > 0) {
                 const mensaje = `${it.n} es a dos manos. ¿Quieres reemplazar ${itemsAQuitar.join(" y ")} por este arma?`;
-                if (!confirm(mensaje)) return;
+                const respuesta = await mostrarMensaje(mensaje);
+                if (!respuesta) return;
             }
 
             // Verificamos si hay espacio suficiente para devolver AMBOS al inventario
