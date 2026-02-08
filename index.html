@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.9</title>
+    <title>HeroQuest Pro - 1.0.10</title>
     <style>
         /* --- ESTILOS GENERALES (TUS ORIGINALES) --- */
         body { 
@@ -400,7 +400,7 @@ function hablarConNPC(idx) {
 
         renderPueblo();
         renderQuests();
-        renderInv();
+        ();
         return;
     }
 
@@ -571,12 +571,6 @@ function renderQuests() {
     actualizarMonederoUI();
     }     
         
-        function calcularCapacidadMax() {
-            let t = 16;
-            [2,3,4,5].forEach(i => { const b = equipado[`slot-bolsa-${i}`]; if(b) t += (b.espacios || 0); });
-            return t;
-        }
-
         // --- NAVEGACIÓN Y AUXILIARES ---
         function cambiarVista(d) {
             document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active-view'));
@@ -589,7 +583,7 @@ function renderQuests() {
                 document.getElementById('pantalla-enemigo').style.display = enCombate ? 'block' : 'none';
                 if(!modoAventura) renderPueblo();
             }
-            if(d === 'mochila') renderInv();
+            if(d === 'mochila') ();
             if(d === 'heroe') { renderEquipado(); renderQuests(); }
         }
 
@@ -637,19 +631,35 @@ function renderQuests() {
             document.getElementById('btn-derrota').style.display = 'inline-block';
             document.getElementById('botin-texto').innerHTML = "";
         }
+// --- Inventario -----------------------------------------------------------------
 
         function renderInv() {
-            const g = document.getElementById('lista-inv'); 
-            g.innerHTML = `<p style="grid-column:1/-1; font-size:12px; color:#94a3b8">Espacio: ${inventario.length}/${calcularCapacidadMax()}</p>`;
-            inventario.forEach((it, i) => {
-                g.innerHTML += `
-                <div class="item-slot" onclick="gestionarItem(${i})">
-                    <img src="${getPath(it)}">
-                    <span class="item-name" style="color:${coloresRareza[it.Rareza]}">${it.n}</span>
-                </div>`;
-            });
-        }
-// --- Inventario -----------------------------------------------------------------
+    const contenedor = document.getElementById('inventario-grid');
+    const capacidadMax = calcularCapacidadMax();
+    
+    // Actualizar un contador visual en el HTML (asegurate de tener este ID en tu HTML)
+    const contadorTexto = document.getElementById('inv-capacidad-texto');
+    if (contadorTexto) {
+        contadorTexto.innerText = `${inventario.length} / ${capacidadMax}`;
+        // Cambiar color si está lleno
+        contadorTexto.style.color = inventario.length >= capacidadMax ? "#ef4444" : "#94a3b8";
+    }
+
+    // Dibujamos los slots reales
+    let html = inventario.map((it, idx) => `
+        <div class="item-slot" onclick="gestionarItem(${idx})" style="border-color: ${coloresRareza[it.Rareza]}">
+            <img src="img/${it.f}" title="${it.n}">
+        </div>
+    `).join("");
+
+    // Opcional: Dibujar huecos vacíos hasta llegar al máximo para que se vea el tamaño real
+    for (let i = inventario.length; i < capacidadMax; i++) {
+        html += `<div class="item-slot empty"></div>`;
+    }
+
+    contenedor.innerHTML = html;
+}
+
 function gestionarItem(i) {
     const it = inventario[i];
     if (!it) return;
@@ -732,30 +742,50 @@ function gestionarItem(i) {
 
 function gestionarEquipado(el) {
     const it = equipado[el.id]; 
-    // Impedimos tocar la bolsa principal (slot-bolsa-1) o slots vacíos
     if (el.id === "slot-bolsa-1" || !it) return;
 
-    if (confirm(`¿Desequipar ${it.n}?`) && inventario.length < calcularCapacidadMax()) {
+    // LÓGICA DE SEGURIDAD:
+    // Calculamos qué pasaría si quitamos la bolsa
+    const capacidadActual = calcularCapacidadMax();
+    const espacioQueOcupaBolsa = it.Espacios || 0;
+    const capacidadSiQuitoBolsa = capacidadActual - espacioQueOcupaBolsa;
+
+    if (inventario.length >= capacidadSiQuitoBolsa) {
+        alert("¡No puedes desequipar esta bolsa! El inventario resultante sería demasiado pequeño para tus objetos actuales.");
+        return;
+    }
+
+    if (confirm(`¿Desequipar ${it.n}?`)) {
         inventario.push({ ...it }); 
         delete equipado[el.id];
-
         localStorage.setItem('hq_inv', JSON.stringify(inventario)); 
-        localStorage.setItem('hq_equipo', JSON.stringify(equipado)); // Coherencia en el nombre
-
+        localStorage.setItem('hq_equipo', JSON.stringify(equipado));
         renderEquipado(); 
         renderInv();
-    } else if (inventario.length >= calcularCapacidadMax()) {
-        alert("¡No tienes espacio en el inventario para desequipar esto!");
     }
 }
-        // --- Vaciar Inventario ---
+
+        function calcularCapacidadMax() {
+    let capacidad = 16; // Mochila base
+
+    // Recorremos los slots de bolsa (del 2 al 5, el 1 es la fija)
+    for (let i = 2; i <= 5; i++) {
+        const bolsa = equipado[`slot-bolsa-${i}`];
+        if (bolsa && bolsa.Espacios) {
+            capacidad += bolsa.Espacios;
+        }
+    }
+    return capacidad;
+}
+        
         function VaciarInventario() {
     if(confirm("¿Deseas vaciar el inventario?")) {        
         inventario = []; // 1. Vaciamos solo el array de la mochila             
         localStorage.setItem('hq_inv', JSON.stringify(inventario)); // 2. Guardamos solo el cambio del inventario               
-        renderInv(); // 3. Actualizamos solo la vista de la mochila
+        (); // 3. Actualizamos solo la vista de la mochila
     }
 }
+// --- Cargar Datos ---------------------------------------     
 async function cargarDatos() {
     try {
         const v = Date.now();
