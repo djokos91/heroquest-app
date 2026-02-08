@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.2</title>
+    <title>HeroQuest Pro - 1.0.3</title>
     <style>
         /* --- ESTILOS GENERALES (TUS ORIGINALES) --- */
         body { 
@@ -687,10 +687,10 @@ function gestionarItem(i) {
 
         if (ex) {
             // Si hay algo, preguntamos específicamente por el reemplazo
-            confirmacion = confirm(`La ranura ${sId.replace('slot-', '')} ya tiene: ${ex.n}.\n\n¿Quieres reemplazarlo por tu ${it.n}?\n(El objeto antiguo volverá a tu inventario)`);
+            confirmacion = confirm(`¿Quieres reemplazar ${ex.n}.\n\n por ${it.n}?\n`);
         } else {
             // Si está vacío, confirmación normal de equipo
-            confirmacion = confirm(`¿Equipar ${it.n} en la ranura vacía?`);
+            confirmacion = confirm(`¿Quieres equipar ${it.n}?`);
         }
 
         // 3. EJECUTAR EL INTERCAMBIO SI SE CONFIRMA
