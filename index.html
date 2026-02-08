@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.19</title>
+    <title>HeroQuest Pro - 1.0.20</title>
     <style>
         .item-slot img:active {
     cursor: grabbing;
@@ -210,7 +210,7 @@
                     <h3 id="enemigo-nombre" style="margin: 5px 0; font-size: 24px; color: #f87171;"></h3>
                     <p style="color: #94a3b8;">Vida: <span id="enemigo-hp" style="color: #ef4444; font-weight: bold;"></span></p>
                 </div>
-                <button id="btn-derrota" class="btn-action btn-win" onclick="()">⚔️ VICTORIA</button>
+                <button id="btn-derrota" class="btn-action btn-win" onclick="derrotarEnemigo()">⚔️ VICTORIA</button>
                 <div id="botin-texto" style="padding: 20px; color: #fbbf24; font-weight: bold; min-height: 50px;"></div>
                 <button class="btn-action" onclick="cerrarCombate()">VOLVER AL MAPA</button>
             </div>
@@ -283,11 +283,10 @@
 
     <div id="lista-inv"></div>
     
-    <button class="btn-reset" onclick="VaciarInventario()">⚠️ Vaciar Inventario</button>
-    <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
-    <button class="filter-btn" onclick="AutoOrdenarInventario()" style="background:#064e3b; border-color:#22c55e;">📦 Auto-Ordenar</button>
-    <button class="btn-reset" onclick="VaciarInventario()" style="margin:0;">⚠️ Vaciar</button>
-</div>
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:15px; padding: 0 15px;">
+        <button class="filter-btn" onclick="AutoOrdenarInventario()" style="background:#064e3b; border-color:#22c55e; flex:1; padding:10px;">📦 Ordenar</button>
+        <button class="btn-reset" onclick="VaciarInventario()" style="margin:0; flex:1; padding:10px;">⚠️ Vaciar</button>
+    </div>
 </section>
 
     <nav>
