@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.5</title>
+    <title>HeroQuest Pro - 1.0.6</title>
     <style>
         /* --- ESTILOS GENERALES (TUS ORIGINALES) --- */
         body { 
@@ -681,38 +681,27 @@ function gestionarItem(i) {
             sId = "slot-" + it.Slot;
         }
 
-        // 2. COMPROBAR SI EL SLOT ESTÁ OCUPADO Y PEDIR CONFIRMACIÓN
-        const ex = equipado[sId]; // Objeto que ya está puesto
-        let confirmacion = false;
+        // 2. GESTIÓN DE EQUIPO / REEMPLAZO
+        const ex = equipado[sId]; 
 
+        // Si el slot está ocupado, preguntamos por el reemplazo
         if (ex) {
-            // Si hay algo, preguntamos específicamente por el reemplazo
-            confirmacion = confirm(`¿Quieres reemplazar ${ex.n} por ${it.n}?`);
+            if (!confirm(`¿Quieres reemplazar ${ex.n} por ${it.n}?`)) return;
+            // Si acepta el reemplazo: el viejo vuelve al inventario
+            inventario[i] = { ...ex }; 
         } else {
-            // Si está vacío, confirmación normal de equipo
-            confirmacion = confirm(`¿Quieres equipar ${it.n}?`);
+            // Si está vacío, equipamos directamente sin preguntar más
+            inventario.splice(i, 1);
         }
 
-        // 3. EJECUTAR EL INTERCAMBIO SI SE CONFIRMA
-        if (confirmacion) {
-            if (ex) {
-                // Reemplazo: el objeto del slot pasa a la posición i del inventario
-                inventario[i] = { ...ex }; 
-            } else {
-                // Equipo simple: eliminamos el objeto de la lista del inventario
-                inventario.splice(i, 1);
-            }
+        // 3. COLOCAR Y GUARDAR
+        equipado[sId] = { ...it };
 
-            // Colocamos el nuevo en el slot
-            equipado[sId] = { ...it };
-
-            // 4. GUARDAR Y REFRESCAR
-            localStorage.setItem('hq_inv', JSON.stringify(inventario));
-            localStorage.setItem('hq_equipo', JSON.stringify(equipado));
-            
-            renderInv();
-            renderEquipado();
-        }
+        localStorage.setItem('hq_inv', JSON.stringify(inventario));
+        localStorage.setItem('hq_equipo', JSON.stringify(equipado));
+        
+        renderInv();
+        renderEquipado();
 
     } else if (confirm(`¿Eliminar ${it.n}?`)) {
         inventario.splice(i, 1);
