@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.40</title>
+    <title>HeroQuest Pro - 1.0.41</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -388,6 +388,15 @@ function soltarObjeto(e, indexDestino) {
     inventario[indexOriginal] = inventario[indexDestino];
     inventario[indexDestino] = temp;
 
+    // Bloqueo de Mano 2 si Mano 1 es 2-manos
+    if (slotDestino === "slot-mano2") {
+        const armaPrincipal = equipado["slot-mano1"];
+        if (armaPrincipal && armaPrincipal.manos === 2) {
+            alert("Tienes un arma a dos manos. No puedes usar la mano izquierda.");
+            return;
+        }
+    }
+
     // Guardamos el nuevo orden
     localStorage.setItem('hq_inv', JSON.stringify(inventario));
     renderInv();
@@ -639,6 +648,19 @@ function hablarConNPC(idx) {
                     target.style.borderColor = coloresRareza[it.Rareza] || "#475569";
                 }
             }
+
+            // En renderEquipado, al dibujar el slot de mano 2:
+            const slotMano2 = document.getElementById('slot-mano2');
+            const armaMano1 = equipado["slot-mano1"];
+
+            if (armaMano1 && armaMano1.manos === 2) {
+                slotMano2.style.opacity = "0.3";
+                slotMano2.style.background = "#450a0a"; // Rojo oscuro/bloqueado
+                slotMano2.innerHTML = `<span style="font-size:20px; color:#ef4444;">🚫</span>`;
+            } else {
+                slotMano2.style.opacity = "1";
+                slotMano2.style.background = "rgba(30, 41, 59, 0.9)";
+            }
             actualizarMonederoUI();
         }
 
@@ -882,20 +904,20 @@ function renderInv() {
 
 function gestionarItem(i) {
     const it = inventario[i];
-    //Selección Multiple--------
+    
+    // --- Selección Múltiple ---
     if (modoSeleccion) {
-        if (!inventario[i]) return; // No seleccionar slots vacíos
-
+        if (!inventario[i]) return;
         const index = seleccionados.indexOf(i);
         if (index > -1) {
-            seleccionados.splice(index, 1); // Deseleccionar
+            seleccionados.splice(index, 1);
         } else {
-            seleccionados.push(i); // Seleccionar
+            seleccionados.push(i);
         }
         renderInv();
-        return; // Detenemos aquí para que no se equipe el objeto
+        return;
     }
-    //-----------------------------
+
     if (!it) return;
 
     if (it.Tipo === "Equipable") {
@@ -912,7 +934,6 @@ function gestionarItem(i) {
             const range = config[it.Slot];
             let slotLibre = null;
 
-            // 1. Buscamos el primer hueco vacío
             for (let n = range.min; n <= range.max; n++) {
                 let tempId = `slot-${it.Slot}-${n}`;
                 if (!equipado[tempId]) {
@@ -922,17 +943,14 @@ function gestionarItem(i) {
             }
 
             if (slotLibre) {
-                sId = slotLibre; // Encontrado hueco, se asigna directamente
+                sId = slotLibre;
             } else {
-                // 2. Si todo está lleno, preguntamos por cuál reemplazar
                 let msg = `Todas las ranuras de ${it.Slot} están llenas. ¿Cuál quieres reemplazar por ${it.n}?\n`;
                 for (let n = range.min; n <= range.max; n++) {
                     msg += `${n}. ${equipado[`slot-${it.Slot}-${n}`].n}\n`;
                 }
-                
                 const el = prompt(msg, range.min.toString());
                 if (el === null) return;
-                
                 const numSel = parseInt(el);
                 if (numSel >= range.min && numSel <= range.max) {
                     sId = `slot-${it.Slot}-${numSel}`;
@@ -942,31 +960,56 @@ function gestionarItem(i) {
                 }
             }
         } else {
-            // --- LÓGICA DE SLOTS ÚNICOS (Casco, Pechera, Arma, etc.) ---
+            // --- LÓGICA DE SLOTS ÚNICOS Y 2 MANOS ---
+            
+            // 1. Bloqueo de mano izquierda si ya hay un arma de 2 manos
+            if (it.Slot === "mano2") {
+                const principal = equipado["slot-mano1"];
+                if (principal && principal.manos === 2) {
+                    alert(`No puedes equipar esto: ${principal.n} requiere ambas manos.`);
+                    return;
+                }
+            }
+
             sId = "slot-" + it.Slot;
+
+            // 2. Si equipas algo de 2 manos, hay que limpiar la mano izquierda
+            if (it.Slot === "mano1" && it.manos === 2) {
+                const mano2 = equipado["slot-mano2"];
+                if (mano2) {
+                    if (!confirm(`${it.n} es a dos manos. Se desequipará ${mano2.n}. ¿Continuar?`)) return;
+                    
+                    // Buscamos hueco para devolver el escudo/arma de la mano2 al inventario
+                    const huecoVacio = inventario.indexOf(null);
+                    if (huecoVacio !== -1) {
+                        inventario[huecoVacio] = { ...mano2 };
+                        equipado["slot-mano2"] = null;
+                    } else {
+                        alert("No hay espacio en el inventario para desequipar el objeto de la otra mano.");
+                        return;
+                    }
+                }
+            }
         }
 
         // --- PROCESO DE EQUIPO / REEMPLAZO FINAL ---
         const ex = equipado[sId]; 
 
         if (ex) {
-            // Si el slot está ocupado (sea automático o elegido), confirmamos cambio
             if (!confirm(`¿Quieres reemplazar ${ex.n} por ${it.n}?`)) return;
             inventario[i] = { ...ex }; 
         } else {
-            // Si estaba vacío, equipo directo
-            inventario[i] = null
+            inventario[i] = null;
         }
 
         equipado[sId] = { ...it };
 
-        // --- ACTUALIZAR TAMAÑO DEL ARRAY ---
+        // Actualizar capacidad y guardar
         const nuevaCapacidad = calcularCapacidadMax();
         while (inventario.length < nuevaCapacidad) {
             inventario.push(null);
         }
 
-        // Guardar y refrescar
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         localStorage.setItem('hq_equipo', JSON.stringify(equipado));
         
@@ -974,7 +1017,6 @@ function gestionarItem(i) {
         renderEquipado();
 
     } else if (confirm(`¿Eliminar ${it.n}?`)) {
-        // En lugar de splice, simplemente vaciamos el hueco
         inventario[i] = null; 
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         renderInv();
