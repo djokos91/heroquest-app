@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.31</title>
+    <title>HeroQuest Pro - 1.0.32</title>
     <style>
         .item-slot img:active { cursor: grabbing; opacity: 0.5; }
         .filter-btn { background: #334155; border: 1px solid #475569; color: white; border-radius: 4px; transition: 0.2s; cursor: pointer; display: block; }
@@ -308,7 +308,8 @@
         let totalBronce = safeParse('hq_bronce_total', 0); // Almacenamos todo en bronce
 
         function safeParse(key, def) { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } }
-// --- Mover objetos en el inventario ---
+        
+// --- Mover objetos en el inventario -----------------------------------------------------------------------
 function arrastrarObjeto(e, indexOriginal) {
     e.dataTransfer.setData("indexOriginal", indexOriginal);
 }
@@ -458,8 +459,11 @@ function hablarConNPC(idx) {
     
     // 1. ENTREGA DE MISIÓN (Si ya está terminada)
     if (qAceptada && qAceptada.actual >= qAceptada.meta) {
-        // Comprobar espacio
-        if (inventario.length >= calcularCapacidadMax()) {
+        // --- CORRECCIÓN DE ESPACIO ---
+        const objetosReales = inventario.filter(slot => slot !== null).length;
+        const capacidadMax = calcularCapacidadMax();
+
+        if (objetosReales >= capacidadMax) {
             alert(`${npc.n}: "¡Tu mochila está llena! No puedo darte la recompensa así."`);
             return;
         }
@@ -470,36 +474,45 @@ function hablarConNPC(idx) {
             return;
         }
 
-        // Entregar premio
-        alert(`${npc.n}: "¡Increíble! Aquí tienes tu ${itemData.n}."`);
-        
-        inventario.push({ ...itemData, idInstance: Date.now() });
-        monedas.bronce += (qAceptada.bronce || 0);
+        // --- ENTREGAR PREMIO EN EL PRIMER HUECO VACÍO ---
+        const primerHueco = inventario.indexOf(null);
+        if (primerHueco !== -1) {
+            inventario[primerHueco] = { ...itemData, idInstance: Date.now() };
+        }
 
-        // Limpiar y guardar
+        // --- SUMAR MONEDAS (Correctamente a totalBronce) ---
+        const recompensaBronce = parseInt(qAceptada.bronce || 0);
+        totalBronce += recompensaBronce;
+
+        alert(`${npc.n}: "¡Increíble trabajo! Aquí tienes tu ${itemData.n} y ${recompensaBronce} monedas."`);
+
+        // --- LIMPIAR Y GUARDAR ---
         misionesCompletadas.push(qAceptada.id);
         misionesActivas = misionesActivas.filter(q => q.id !== qAceptada.id);
 
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
         localStorage.setItem('hq_quests_done', JSON.stringify(misionesCompletadas));
-        localStorage.setItem('hq_monedas', JSON.stringify(monedas));
+        localStorage.setItem('hq_bronce_total', totalBronce); // Guardamos en tu variable real
 
         renderPueblo();
         renderQuests();
         renderInv();
+        actualizarMonederoUI();
         return;
     }
 
-    // 2. DAR MISIÓN NUEVA
+    // 2. DAR MISIÓN NUEVA (Se mantiene igual, está bien)
     const questDisponible = npc.misionId && !misionesCompletadas.includes(npc.misionId) && !qAceptada;
     if (questDisponible) {
         const mData = dbMisiones.find(m => m.id === npc.misionId);
-        if (confirm(`${npc.n}: ${mData.desc}\n\n¿Aceptas el encargo?`)) {
-            misionesActivas.push({ ...mData, actual: 0, completada: false, owner: npc.n });
-            localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
-            renderPueblo();
-            renderQuests();
+        if (mData) {
+            if (confirm(`${npc.n}: ${mData.desc}\n\n¿Aceptas el encargo?`)) {
+                misionesActivas.push({ ...mData, actual: 0, completada: false, owner: npc.n });
+                localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
+                renderPueblo();
+                renderQuests();
+            }
         }
         return;
     }
@@ -591,9 +604,15 @@ function renderQuests() {
         const colorRareza = (itemData && coloresRareza[itemData.Rareza]) ? coloresRareza[itemData.Rareza] : "#fbbf24";
 
         let monedaIcono = "🟤";
-        let cantidadMostrada = q.bronce;
-        if (q.bronce >= 10000) { monedaIcono = "🟡"; cantidadMostrada = Math.floor(q.bronce / 10000); }
-        else if (q.bronce >= 100) { monedaIcono = "⚪"; cantidadMostrada = Math.floor(q.bronce / 100); }
+        let textoRecompensa = `${q.bronce} bronce`;
+
+        if (q.bronce >= 10000) { 
+            monedaIcono = "🟡"; 
+            textoRecompensa = `${(q.bronce / 10000).toFixed(1)} Oro`; 
+        } else if (q.bronce >= 100) { 
+            monedaIcono = "⚪"; 
+            textoRecompensa = `${(q.bronce / 100).toFixed(1)} Plata`; 
+        }
 
         return `
         <div class="quest-entry" style="border-left: 3px solid #3b82f6; padding: 10px; margin-bottom: 15px; background: rgba(30, 41, 59, 0.5); border-radius: 0 8px 8px 0;">
