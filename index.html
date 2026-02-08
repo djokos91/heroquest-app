@@ -513,16 +513,15 @@ function renderQuests() {
         <div class="quest-entry" style="border-left: 3px solid #3b82f6; padding: 10px; margin-bottom: 15px; background: rgba(30, 41, 59, 0.5); border-radius: 0 8px 8px 0;">
             <div class="quest-title" style="font-weight: bold; color: white;">${q.n} ${q.completada ? '✅' : ''}</div>
             <div style="font-size:10px; color:#3b82f6; margin-bottom: 4px;">👤 ${q.owner}</div>
-            <div style="font-size:11px; color:#94a3b8; font-style: italic; margin-bottom: 8px;">"${q.desc}"</div>
-            
-            <div style="display: flex; gap: 15px; margin-bottom: 8px; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px;">
-                <div style="display: flex; align-items: center; gap: 4px;">
-                    <span>${monedaIcono}</span>
-                    <span style="font-size: 11px; color: #e2e8f0;">${cantidadMostrada}</span>
-                </div>
+            <div style="font-size:11px; color:#94a3b8; font-style: italic; margin-bottom: 8px;">"${q.desc}"</div>            
+            <div style="display: flex; gap: 15px; margin-bottom: 8px; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px;">              
                 <div style="display: flex; align-items: center; gap: 4px;">
                     <span>🎁</span>
                     <span style="font-size: 11px; color: ${colorRareza}; font-weight: bold;">${nombreItem}</span>
+                </div>
+                  <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="font-size: 11px; color: #e2e8f0;">${cantidadMostrada}</span>
+                    <span>${monedaIcono}</span>                    
                 </div>
             </div>
 
