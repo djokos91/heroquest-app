@@ -649,16 +649,6 @@ function refundarPoblacion() {
             }
         }
 
- function borrarTodo() {
-    if(confirm("¿Deseas vaciar la mochila y el equipo? (El oro y el progreso se mantendrán)")) {
-        inventario = [];
-        equipado = { "slot-bolsa-1": { f: "mochila.jpg", subfolder: "equipacion" } }; // Mantiene la mochila base
-        localStorage.setItem('hq_inv', JSON.stringify(inventario));
-        renderInv();
-        renderEquipado();
-    }
-}
-
         function borrarTodo() {
     if(confirm("¿Deseas vaciar el inventario?")) {
         // 1. Vaciamos solo el array de la mochila
@@ -671,23 +661,38 @@ function refundarPoblacion() {
         renderInv();
     }
 }
-                async function cargarDatos() {
-            try {
-                const v = Date.now();
-                const [rEn, rEq, rCo, rBa] = await Promise.all([
-                    fetch(`enemigos.json?v=${v}`).then(r => r.json()).catch(()=>({})),
-                    fetch(`equipacion.json?v=${v}`).then(r => r.json()).catch(()=>({})),
-                    fetch(`consumibles.json?v=${v}`).then(r => r.json()).catch(()=>({})),
-                    fetch(`basura.json?v=${v}`).then(r => r.json()).catch(()=>({}))
-                ]);
-                Object.values(rEq).forEach(i=>i.subfolder="equipacion");
-                Object.values(rCo).forEach(i=>i.subfolder="consumibles");
-                Object.values(rBa).forEach(i=>i.subfolder="basura");
-                enemigos = Object.values(rEn); enemigos.forEach(e=>e.subfolder="enemigos");
-                itemsDB = await respuesta.json(); // Aquí volcamos el JSON a la variable
-                renderPueblo(); renderEquipado(); renderQuests(); // Llamamos a renderizar después de cargar
-            } catch(e) { console.error(e); }
-        }
+async function cargarDatos() {
+    try {
+        const v = Date.now();
+        // Cargamos todos los JSON de forma paralela
+        const [rEn, rEq, rCo, rBa] = await Promise.all([
+            fetch(`enemigos.json?v=${v}`).then(r => r.json()).catch(()=>({})),
+            fetch(`equipacion.json?v=${v}`).then(r => r.json()).catch(()=>({})),
+            fetch(`consumibles.json?v=${v}`).then(r => r.json()).catch(()=>({})),
+            fetch(`basura.json?v=${v}`).then(r => r.json()).catch(()=>({}))
+        ]);
+
+        // Asignamos carpetas para las imágenes de cada tipo
+        Object.values(rEq).forEach(i => i.subfolder = "equipacion");
+        Object.values(rCo).forEach(i => i.subfolder = "consumibles");
+        Object.values(rBa).forEach(i => i.subfolder = "basura");
+
+        // Procesamos enemigos
+        enemigos = Object.values(rEn); 
+        enemigos.forEach(e => e.subfolder = "enemigos");
+
+        // Fusionamos todos los objetos en la base de datos global
+        itemsDB = {...rEq, ...rCo, ...rBa};
+
+        // RENDERIZADO: Es vital el orden para que todo aparezca bien
+        renderPueblo(); 
+        renderEquipado();
+        renderQuests(); // <--- FUNDAMENTAL para que el diario use itemsDB cargado
+        
+    } catch(e) { 
+        console.error("Error en la carga de archivos JSON:", e); 
+    }
+}
         cargarDatos();
     </script>
 </body>
