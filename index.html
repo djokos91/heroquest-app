@@ -4,8 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.34</title>
+    <title>HeroQuest Pro - 1.0.35</title>
     <style>
+        /* Clase para resaltar el slot seleccionado */
+.item-slot.selected { border-color: #ef4444 !important; /* Rojo */
+    background: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    transform: scale(0.95);
+}
+
+/* Animación para el botón de selección cuando está activo */
+.btn-multi-select.active {
+    background: #ef4444 !important;
+    color: white;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
         .item-slot img:active { cursor: grabbing; opacity: 0.5; }
         .filter-btn { background: #334155; border: 1px solid #475569; color: white; border-radius: 4px; transition: all 0.2s; cursor: pointer; display: block; }
         .filter-btn:hover { background: #3b82f6; }
@@ -277,6 +296,10 @@
         <button class="filter-btn" onclick="AutoOrdenarInventario()" style="background:#064e3b; border-color:#22c55e; flex:1; padding:10px;">📦 Ordenar</button>
         <button class="btn-reset" onclick="VaciarInventario()" style="margin:0; flex:1; padding:10px;">⚠️ Vaciar</button>
     </div>
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:15px; padding: 0 15px;">
+    <button id="btn-modo-seleccion" class="filter-btn" onclick="toggleModoSeleccion()" style="flex:1; padding:10px;">🛡️ Selección</button>
+    <button id="btn-eliminar-lote" class="btn-reset" onclick="eliminarLote()" style="flex:1; padding:10px; display:none; background:#7f1d1d;">🗑️ Tirar Seleccionados</button>
+</div>
 </section>
 
     <nav>
@@ -308,8 +331,46 @@
         let actual = null; 
         let filtroActual = 'Todos';
         let totalBronce = safeParse('hq_bronce_total', 0); // Almacenamos todo en bronce
+        let modoSeleccion = false;
+        let seleccionados = []; // Guardará los índices [i] de los objetos marcados
 
         function safeParse(key, def) { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } }
+// --- Selección multiple en el inventario y eliminar -----------------------------------------------------------------------
+        function toggleModoSeleccion() {
+    modoSeleccion = !modoSeleccion;
+    seleccionados = []; // Limpiamos selección al cambiar de modo
+    
+    const btn = document.getElementById('btn-modo-seleccion');
+    const btnEliminar = document.getElementById('btn-eliminar-lote');
+    
+    if (modoSeleccion) {
+        btn.classList.add('active');
+        btn.innerText = "❌ Cancelar";
+        btnEliminar.style.display = "block";
+    } else {
+        btn.classList.remove('active');
+        btn.innerText = "🛡️ Selección";
+        btnEliminar.style.display = "none";
+    }
+    renderInv();
+}
+
+        function eliminarLote() {
+    if (seleccionados.length === 0) return;
+
+    if (confirm(`¿Estás seguro de que quieres tirar ${seleccionados.length} objetos?`)) {
+        // Marcamos como null cada índice seleccionado
+        seleccionados.forEach(i => {
+            inventario[i] = null;
+        });
+
+        // Limpiamos y guardamos
+        seleccionados = [];
+        toggleModoSeleccion(); // Desactivamos el modo tras borrar
+        localStorage.setItem('hq_inv', JSON.stringify(inventario));
+        renderInv();
+    }
+}
         
 // --- Mover objetos en el inventario -----------------------------------------------------------------------
 function arrastrarObjeto(e, indexOriginal) {
@@ -797,6 +858,9 @@ function renderInv() {
         const slot = document.createElement('div');
         slot.className = 'item-slot' + (inventario[i] ? '' : ' empty');
         slot.dataset.index = i; // Guardamos la posición del slot
+        // Selección multiple
+        if (seleccionados.includes(i)) {
+         slot.classList.add('selected');
 
         // Lógica de Soltar (Drop)
         slot.ondragover = (e) => e.preventDefault();
@@ -825,6 +889,20 @@ function renderInv() {
 
 function gestionarItem(i) {
     const it = inventario[i];
+    //Selección Multiple--------
+    if (modoSeleccion) {
+        if (!inventario[i]) return; // No seleccionar slots vacíos
+
+        const index = seleccionados.indexOf(i);
+        if (index > -1) {
+            seleccionados.splice(index, 1); // Deseleccionar
+        } else {
+            seleccionados.push(i); // Seleccionar
+        }
+        renderInv();
+        return; // Detenemos aquí para que no se equipe el objeto
+    }
+    //-----------------------------
     if (!it) return;
 
     if (it.Tipo === "Equipable") {
