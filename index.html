@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.55</title>
+    <title>HeroQuest Pro - 1.0.56</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -411,7 +411,7 @@
 
         async function eliminarLote() {
     if (seleccionados.length === 0) return;
-    const confirmacion = await mostrarMensaje(`¿Eliminar los ${seleccionados.length} objetos seleccionados?`, false);
+    const confirmacion = await mostrarMensaje(`¿Eliminar los ${seleccionados.length} objetos seleccionados?`);
     if (!confirmacion) return;
         // Marcamos como null cada índice seleccionado
         seleccionados.forEach(i => {
