@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.0</title>
+    <title>HeroQuest Pro - 1.0.1</title>
     <style>
         /* --- ESTILOS GENERALES (TUS ORIGINALES) --- */
         body { 
@@ -251,7 +251,7 @@
     <section id="vista-mochila" class="tab-content">
         <h2 style="color: #eab308;">INVENTARIO</h2>
         <div id="lista-inv"></div>
-        <button class="btn-reset" onclick="borrarTodo()">⚠️ Vaciar Inventario</button>
+        <button class="btn-reset" onclick="VaciarInventario()">⚠️ Vaciar Inventario</button>
     </section>
 
     <nav>
@@ -649,34 +649,91 @@ function renderQuests() {
                 </div>`;
             });
         }
+// --- Inventario -----------------------------------------------------------------
+function gestionarItem(i) {
+    const it = inventario[i];
+    if (!it) return;
 
-        function gestionarItem(i) {
-            const it = inventario[i];
-            if(it.Tipo === "Equipable" && confirm(`¿Equipar ${it.n}?`)) {
-                let sId = (it.Slot==="anillo") ? (!equipado["slot-anillo-1"]?"slot-anillo-1":"slot-anillo-2") : "slot-"+it.Slot;
-                if(it.Slot==="bolsa") { for(let b=2;b<=5;b++) if(!equipado["slot-bolsa-"+b]) { sId="slot-bolsa-"+b; break; } }
-                const ex = equipado[sId];
-                if(ex) inventario[i] = {...ex}; else inventario.splice(i,1);
-                equipado[sId] = {...it};
-                localStorage.setItem('hq_inv', JSON.stringify(inventario)); localStorage.setItem('hq_equipo', JSON.stringify(equipado));
-                renderInv();
-            } else if(confirm("¿Eliminar objeto?")) { 
-                inventario.splice(i,1); 
-                localStorage.setItem('hq_inv', JSON.stringify(inventario)); 
-                renderInv(); 
+    if (it.Tipo === "Equipable") {
+        let sId = "";
+
+        // CASO ESPECIAL: BOLSAS
+        if (it.Slot === "bolsa") {
+            let msg = `¿En qué ranura quieres equipar ${it.n}?\n`;
+            for (let b = 2; b <= 5; b++) {
+                const ocupado = equipado["slot-bolsa-" + b] ? `(Ocupado: ${equipado["slot-bolsa-" + b].n})` : "(Vacío)";
+                msg += `${b}. Ranura Bolsa ${b} ${ocupado}\n`;
             }
+            
+            const eleccion = prompt(msg, "2");
+            if (eleccion === null) return; // Cancelar
+            
+            const numBolsa = parseInt(eleccion);
+            if (numBolsa >= 2 && numBolsa <= 5) {
+                sId = "slot-bolsa-" + numBolsa;
+            } else {
+                alert("Ranura no válida");
+                return;
+            }
+
+        // CASO ESPECIAL: ANILLOS
+        } else if (it.Slot === "anillo") {
+            sId = !equipado["slot-anillo-1"] ? "slot-anillo-1" : "slot-anillo-2";
+            
+        // RESTO DE EQUIPO (Casco, Pechera, Arma, etc.)
+        } else {
+            sId = "slot-" + it.Slot;
         }
 
-        function gestionarEquipado(el) {
-            const it = equipado[el.id]; if(el.id === "slot-bolsa-1" || !it) return;
-            if(confirm("¿Desequipar?") && inventario.length < calcularCapacidadMax()) {
-                inventario.push({...it}); delete equipado[el.id];
-                localStorage.setItem('hq_inv', JSON.stringify(inventario)); localStorage.setItem('hq_equipo', JSON.stringify(equipado));
-                renderEquipado(); renderInv();
+        // --- LÓGICA DE INTERCAMBIO / REEMPLAZO ---
+        if (confirm(`¿Equipar ${it.n} en ${sId.replace('slot-', '')}?`)) {
+            const ex = equipado[sId]; // Objeto que ya estaba equipado
+
+            if (ex) {
+                // Si el slot estaba ocupado, el objeto viejo va al inventario
+                inventario[i] = { ...ex }; 
+            } else {
+                // Si estaba vacío, simplemente quitamos el objeto nuevo del inventario
+                inventario.splice(i, 1);
             }
+
+            // Colocamos el nuevo objeto en el equipo
+            equipado[sId] = { ...it };
+
+            // Guardar y refrescar
+            localStorage.setItem('hq_inv', JSON.stringify(inventario));
+            localStorage.setItem('hq_equipo', JSON.stringify(equipado));
+            renderInv();
+            renderEquipado();
         }
 
-        function borrarTodo() {
+    } else if (confirm("¿Eliminar objeto?")) {
+        inventario.splice(i, 1);
+        localStorage.setItem('hq_inv', JSON.stringify(inventario));
+        renderInv();
+    }
+}
+
+function gestionarEquipado(el) {
+    const it = equipado[el.id]; 
+    // Impedimos tocar la bolsa principal (slot-bolsa-1) o slots vacíos
+    if (el.id === "slot-bolsa-1" || !it) return;
+
+    if (confirm(`¿Desequipar ${it.n}?`) && inventario.length < calcularCapacidadMax()) {
+        inventario.push({ ...it }); 
+        delete equipado[el.id];
+
+        localStorage.setItem('hq_inv', JSON.stringify(inventario)); 
+        localStorage.setItem('hq_equipo', JSON.stringify(equipado)); // Coherencia en el nombre
+
+        renderEquipado(); 
+        renderInv();
+    } else if (inventario.length >= calcularCapacidadMax()) {
+        alert("¡No tienes espacio en el inventario para desequipar esto!");
+    }
+}
+        // --- Vaciar Inventario ---
+        function VaciarInventario() {
     if(confirm("¿Deseas vaciar el inventario?")) {        
         inventario = []; // 1. Vaciamos solo el array de la mochila             
         localStorage.setItem('hq_inv', JSON.stringify(inventario)); // 2. Guardamos solo el cambio del inventario               
