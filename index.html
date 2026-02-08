@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.22</title>
+    <title>HeroQuest Pro - 1.0.23</title>
     <style>
         .item-slot img:active {
     cursor: grabbing;
@@ -762,14 +762,18 @@ function renderQuests() {
 // --- Inventario -----------------------------------------------------------------
 
 function renderInv() {
-    const contenedor = document.getElementById('inventario-grid');
+    const contenedor = document.getElementById('lista-inv');
     if (!contenedor) return;
 
     const capacidadMax = calcularCapacidadMax();
     const contadorTexto = document.getElementById('inv-capacidad-texto');
+    
     if (contadorTexto) {
-        contadorTexto.innerText = `${inventario.length} / ${capacidadMax}`;
-        contadorTexto.style.color = inventario.length >= capacidadMax ? "#ef4444" : "#94a3b8";
+        const objetosReales = inventario.filter(slot => slot !== null).length;
+        contadorTexto.innerText = `${objetosReales} / ${capacidadMax}`;
+        
+        // CORRECCIÓN AQUÍ: Comparamos los objetos reales, no el largo del array
+        contadorTexto.style.color = objetosReales >= capacidadMax ? "#ef4444" : "#94a3b8";
     }
 
     contenedor.innerHTML = ""; // Limpiamos
@@ -791,12 +795,13 @@ function renderInv() {
             const coincideFiltro = filtroActual === 'Todos' || item.Tipo === filtroActual;
             
             if (coincideFiltro) {
-                slot.style.borderColor = coloresRareza[item.Rareza] || '#475569';
-                slot.innerHTML = `<img src="img/${item.f}" title="${item.n}" draggable="true" ondragstart="arrastrarObjeto(event, ${i})" onclick="gestionarItem(${i})">`;
-            } else {
-                slot.style.opacity = "0.2"; // Los que no coinciden se ven apagados
+            slot.style.borderColor = coloresRareza[item.Rareza] || '#475569';
+            slot.innerHTML = `<img src="img/${item.f}" title="${item.n}" draggable="true" ondragstart="arrastrarObjeto(event, ${i})" onclick="gestionarItem(${i})">`;
+                } else {
+            // En lugar de opacity, simplemente no mostramos el objeto en este slot
+            slot.classList.add('empty'); 
             }
-        } else {
+            } else {
             slot.classList.add('empty');
         }
 
