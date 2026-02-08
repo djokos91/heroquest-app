@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.53</title>
+    <title>HeroQuest Pro - 1.0.54</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -728,7 +728,7 @@ async function hablarConNPC(idx) {
             actualizarMonederoUI();
         }
 
-        function abandonarMision(questId) {
+        async function abandonarMision(questId) {
     if (await mostrarMensaje("¿Seguro que quieres abandonar esta misión? Perderás todo el progreso acumulado en ella.")) {
         misionesActivas = misionesActivas.filter(q => q.id !== questId);
         localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
