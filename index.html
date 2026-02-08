@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.13</title>
+    <title>HeroQuest Pro - 1.0.14</title>
     <style>
         /* --- ESTILOS GENERALES (TUS ORIGINALES) --- */
         body { 
@@ -633,30 +633,40 @@ function renderQuests() {
         }
 // --- Inventario -----------------------------------------------------------------
 
-        function renderInv() {
+function renderInv() {
     const contenedor = document.getElementById('inventario-grid');
+    if (!contenedor) return;
+
+    // 1. Calculamos la capacidad actual basada en las bolsas equipadas
     const capacidadMax = calcularCapacidadMax();
     
-    // Actualizar un contador visual en el HTML (asegurate de tener este ID en tu HTML)
+    // 2. Actualizamos el contador de texto (si existe en tu HTML)
     const contadorTexto = document.getElementById('inv-capacidad-texto');
     if (contadorTexto) {
         contadorTexto.innerText = `${inventario.length} / ${capacidadMax}`;
-        // Cambiar color si está lleno
+        // Ponemos el texto en rojo si el inventario está lleno
         contadorTexto.style.color = inventario.length >= capacidadMax ? "#ef4444" : "#94a3b8";
     }
 
-    // Dibujamos los slots reales
+    // 3. Generamos el HTML de los objetos que posees
     let html = inventario.map((it, idx) => `
-        <div class="item-slot" onclick="gestionarItem(${idx})" style="border-color: ${coloresRareza[it.Rareza]}">
-            <img src="img/${it.f}" title="${it.n}">
+        <div class="item-slot" onclick="gestionarItem(${idx})" 
+             style="border-color: ${coloresRareza[it.Rareza] || '#475569'}; position: relative;">
+            <img src="img/${it.f}" title="${it.n}" style="width:100%; height:100%; object-fit: contain;">
         </div>
     `).join("");
 
-    // Opcional: Dibujar huecos vacíos hasta llegar al máximo para que se vea el tamaño real
-    for (let i = inventario.length; i < capacidadMax; i++) {
-        html += `<div class="item-slot empty"></div>`;
+    // 4. Generamos los huecos vacíos hasta completar la capacidad máxima
+    // Esto permite que el jugador vea visualmente cuánto espacio libre le queda
+    const huecosVacios = capacidadMax - inventario.length;
+    for (let i = 0; i < huecosVacios; i++) {
+        html += `
+            <div class="item-slot empty" 
+                 style="background: rgba(0,0,0,0.2); border: 1px dashed #475569; opacity: 0.5;">
+            </div>`;
     }
 
+    // 5. Inyectamos el HTML en el contenedor
     contenedor.innerHTML = html;
 }
 
