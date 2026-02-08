@@ -231,7 +231,7 @@
             <div class="bottom-slots">
                 <div id="slot-mano1" class="slot" data-label="Mano 1" onclick="gestionarEquipado(this)"></div>
                 <div id="slot-mano2" class="slot" data-label="Mano 2" onclick="gestionarEquipado(this)"></div>
-                <div id="slot-distancia" class="slot" data-label="Rango" onclick="gestionarEquipado(this)"></div>
+                <div id="slot-distancia" class="slot" data-label="Distancia" onclick="gestionarEquipado(this)"></div>
                 <div id="slot-municion" class="slot" data-label="Munición" onclick="gestionarEquipado(this)"></div>
             </div>
         </div>
@@ -251,7 +251,7 @@
     <section id="vista-mochila" class="tab-content">
         <h2 style="color: #eab308;">INVENTARIO</h2>
         <div id="lista-inv"></div>
-        <button class="btn-reset" onclick="borrarTodo()">⚠️ ELIMINAR TODO</button>
+        <button class="btn-reset" onclick="borrarTodo()">⚠️ Vaciar Inventario</button>
     </section>
 
     <nav>
@@ -264,9 +264,11 @@
         // --- TODAS TUS CONSTANTES ORIGINALES ---
         const coloresRareza = { "Poor": "#9d9d9d", "Common": "#ffffff", "Uncommon": "#1eff00", "Rare": "#0070dd", "Epic": "#a335ee", "Legendary": "#ff8000" };
         const jerarquiaRareza = { "Poor": 0, "Common": 1, "Uncommon": 2, "Rare": 3, "Epic": 4, "Legendary": 5 };
+        const SCRIPT_VERSION = "1.0.4"; // <--- Cambia esto manualmente cada vez que hagas "Commit"
+        const SCRIPT_DATE = "08/02 13:49"; // <--- Cambia esto a mano cuando hagas el commit
 
         const dbMisiones = [
-            { id: "m1", n: "Cacería Primaria", desc: "Derrota a 3 monstruos.", tipo: "kill", meta: 3, recompensa: "espada_corta", bronce: 50 },
+            { id: "m1", n: "Cacería Primaria", desc: "Derrota a 3 monstruos.", tipo: "kill", meta: 3, recompensa: "arco_caza", bronce: 50 },
             { id: "m2", n: "Explorador", desc: "Alcanza la coordenada (2,2).", tipo: "go", meta: 1, coord: {x:2, y:2}, recompensa: "pocion_vida", bronce: 25 },
             { id: "m3", n: "Coleccionista", desc: "Consigue un item Rare.", tipo: "item", meta: 1, itemReq: "Rare", recompensa: "anillo_fuerza", bronce: 100 }
         ];
@@ -305,27 +307,31 @@
         }
 
         // --- SISTEMA DE POBLACIÓN (GENERADOR) ---
-        function refundarPoblacion() {
-            if(!confirm("¿Deseas generar una nueva población? Se perderá el pueblo actual.")) return;
-            
-            const nombres = ["Rocanegra", "Valle de Hierro", "Puerto Gélido", "Bastión Solar", "Cala Esmeralda"];
-            const tipos = ["Aldea", "Ciudadela", "Campamento", "Pueblo"];
-            const nombresNPC = ["Thorin", "Elena", "Kael", "Grom", "Sylvan", "Uther"];
-            const trabajos = ["Herrero", "Guía", "Alquimista", "Tabernero", "Explorador"];
+function refundarPoblacion() {
+    if(!confirm("¿Deseas generar una nueva población? Se perderá el pueblo actual.")) return;
+    
+    const nombres = ["Rocanegra", "Valle de Hierro", "Puerto Gélido", "Bastión Solar", "Cala Esmeralda"];
+    const tipos = ["Aldea", "Ciudadela", "Campamento", "Pueblo"];
+    const nombresNPC = ["Thorin", "Elena", "Kael", "Grom", "Sylvan", "Uther"];
+    const trabajos = ["Herrero", "Guía", "Alquimista", "Tabernero", "Explorador"];
+    
+    // 1. Definimos el objeto puebloActual correctamente (con comas)
+    puebloActual = {
+        nombre: nombres[Math.floor(Math.random()*nombres.length)],
+        tipo: tipos[Math.floor(Math.random()*tipos.length)],
+        edificios: [
+            {n: "Taberna", icono: "🍺"}, 
+            {n: "Forja", icono: "⚒️"},
+            {n: "Almacén", icono: "📦"}
+        ],
+        npcs: [] // Aquí va una COMA, no un punto y coma
+    }; // Aquí CERRAMOS el objeto con punto y coma
 
-            puebloActual = {
-                nombre: nombres[Math.floor(Math.random()*nombres.length)],
-                tipo: tipos[Math.floor(Math.random()*tipos.length)],
-                edificios: [
-                    {n: "Taberna", icono: "🍺"}, 
-                    {n: "Forja", icono: "⚒️"},
-                    {n: "Almacén", icono: "📦"}
-                ],
-                npcs: []
-            };
+    // 2. Ahora reiniciamos las variables de misiones (fuera del objeto)
+    misionesActivas = [];
+    misionesCompletadas = [];
 
-            // Generar 3 NPCs aleatorios
-            for(let i=0; i<3; i++){
+    for(let i=0; i<3; i++){
                 puebloActual.npcs.push({
                     n: nombresNPC[Math.floor(Math.random()*nombresNPC.length)] + " " + i,
                     job: trabajos[Math.floor(Math.random()*trabajos.length)],
@@ -333,9 +339,15 @@
                 });
             }
 
-            localStorage.setItem('hq_pueblo', JSON.stringify(puebloActual));
-            renderPueblo();
-        }
+    // 3. Guardamos en el almacenamiento local
+    localStorage.setItem('hq_pueblo', JSON.stringify(puebloActual)); // Guardamos el nuevo pueblo
+    localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
+    localStorage.setItem('hq_quests_done', JSON.stringify(misionesCompletadas));
+
+    // 4. Actualizamos la interfaz
+    renderQuests();
+    renderPueblo();
+    }
 
         // --- SISTEMA DE MISIONES (TU ORIGINAL) ---
         function checkQuestProgress(tipo, valor) {
@@ -442,16 +454,64 @@
             actualizarMonederoUI();
         }
 
+        function abandonarMision(questId) {
+    if (confirm("¿Seguro que quieres abandonar esta misión? Perderás todo el progreso acumulado en ella.")) {
+        misionesActivas = misionesActivas.filter(q => q.id !== questId);
+        localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
+        renderQuests(); // Actualiza la lista del diario
+        renderPueblo(); // Actualiza los iconos de los NPCs en el pueblo
+    }
+}
+
         function renderQuests() {
-            const c = document.getElementById('quest-log-container');
-            c.innerHTML = misionesActivas.length ? misionesActivas.map(q => `
-                <div class="quest-entry">
-                    <div class="quest-title">${q.n} ${q.completada ? '✅' : ''}</div>
-                    <div style="font-size:11px; color:#94a3b8">${q.desc}</div>
-                    <div class="quest-progress">Progreso: ${q.actual}/${q.meta}</div>
-                </div>`).join("") : '<p style="font-size:12px; color:#64748b">No hay misiones activas.</p>';
+    const c = document.getElementById('quest-log-container');
+    c.innerHTML = misionesActivas.length ? misionesActivas.map(q => {
+        const itemData = itemsDB[q.recompensa];
+        const nombreItem = itemData ? itemData.n : `${q.recompensa}`;
+
+        // Lógica de iconos de moneda dinámica
+        let monedaIcono = "🟤";
+        let cantidadMostrada = q.bronce;
+        
+        if (q.bronce >= 10000) {
+            monedaIcono = "🟡";
+            cantidadMostrada = Math.floor(q.bronce / 10000);
+        } else if (q.bronce >= 100) {
+            monedaIcono = "⚪";
+            cantidadMostrada = Math.floor(q.bronce / 100);
         }
 
+        return `
+        <div class="quest-entry" style="border-left: 3px solid #3b82f6; padding-left: 10px; margin-bottom: 15px; position: relative;">
+            <div class="quest-title">${q.n} ${q.completada ? '✅' : ''}</div>
+            <div style="font-size:10px; color:#3b82f6; margin-bottom: 4px;">👤 Otorgada por: ${q.owner}</div>
+            <div style="font-size:11px; color:#94a3b8; font-style: italic; margin-bottom: 6px;">"${q.desc}"</div>
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 8px; background: rgba(0,0,0,0.3); padding: 6px; border-radius: 4px; border: 1px solid #334155;">
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="font-size: 12px;">${monedaIcono}</span>
+                    <span style="font-size: 11px; color: #e2e8f0; font-family: monospace;">${cantidadMostrada}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="font-size: 12px;">🎁</span>
+                    <span style="font-size: 11px; color: #fbbf24;">${nombreItem}</span>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="quest-progress" style="font-weight: bold; color: ${q.completada ? '#22c55e' : '#e2e8f0'}">
+                    Progreso: ${q.actual}/${q.meta}
+                </div>
+                
+                <button onclick="abandonarMision('${q.id}')" 
+                        style="background: none; border: 1px solid #ef4444; color: #ef4444; font-size: 9px; padding: 2px 5px; border-radius: 4px; cursor: pointer; opacity: 0.6;">
+                    🗑️ ABANDONAR
+                </button>
+            </div>
+        </div>`;
+    }).join("") : '<p style="font-size:12px; color:#64748b">No hay misiones activas.</p>';
+}
+             
         // --- LÓGICA DE AVENTURA (TU ORIGINAL) ---
         function derrotarEnemigo() {
     if (inventario.length >= calcularCapacidadMax()) { alert("¡Mochila llena!"); return; }
@@ -520,7 +580,43 @@
             }
             renderMapa();
         }
+// 2. FUNCIÓN MOSTRAR VERSIÓN
+function mostrarVersion() {
+    let el = document.getElementById('map-version');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'map-version';
+        document.body.appendChild(el);
+    }
+    
+    // Estilo ultra-resistente
+    el.style.cssText = `
+        position: fixed !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        width: auto !important;
+        height: auto !important;
+        background: rgba(0, 0, 0, 0.8) !important;
+        color: #4ade80 !important;
+        padding: 5px 10px !important;
+        border: 1px solid #22c55e !important;
+        border-radius: 5px !important;
+        font-family: monospace !important;
+        font-size: 12px !important;
+        z-index: 2147483647 !important; /* El valor máximo posible de z-index */
+        pointer-events: none !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    `;
 
+    const ahora = new Date();
+    const h = ahora.getHours().toString().padStart(2, '0');
+    const m = ahora.getMinutes().toString().padStart(2, '0');
+    const s = ahora.getSeconds().toString().padStart(2, '0');
+
+    el.innerText = `V.${SCRIPT_VERSION} | BUILD: ${SCRIPT_DATE}`;
+}
         function renderMapa() {
             const g = document.getElementById('mapa-grid'); g.innerHTML = "";
             for(let y=0;y<3;y++) for(let x=0;x<3;x++) {
@@ -591,16 +687,6 @@
             }
         }
 
- function borrarTodo() {
-    if(confirm("¿Deseas vaciar la mochila y el equipo? (El oro y el progreso se mantendrán)")) {
-        inventario = [];
-        equipado = { "slot-bolsa-1": { f: "mochila.jpg", subfolder: "equipacion" } }; // Mantiene la mochila base
-        localStorage.setItem('hq_inv', JSON.stringify(inventario));
-        renderInv();
-        renderEquipado();
-    }
-}
-
         function borrarTodo() {
     if(confirm("¿Deseas vaciar el inventario?")) {
         // 1. Vaciamos solo el array de la mochila
@@ -613,23 +699,40 @@
         renderInv();
     }
 }
-                async function cargarDatos() {
-            try {
-                const v = Date.now();
-                const [rEn, rEq, rCo, rBa] = await Promise.all([
-                    fetch(`enemigos.json?v=${v}`).then(r => r.json()).catch(()=>({})),
-                    fetch(`equipacion.json?v=${v}`).then(r => r.json()).catch(()=>({})),
-                    fetch(`consumibles.json?v=${v}`).then(r => r.json()).catch(()=>({})),
-                    fetch(`basura.json?v=${v}`).then(r => r.json()).catch(()=>({}))
-                ]);
-                Object.values(rEq).forEach(i=>i.subfolder="equipacion");
-                Object.values(rCo).forEach(i=>i.subfolder="consumibles");
-                Object.values(rBa).forEach(i=>i.subfolder="basura");
-                enemigos = Object.values(rEn); enemigos.forEach(e=>e.subfolder="enemigos");
-                itemsDB = {...rEq, ...rCo, ...rBa};
-                renderPueblo(); renderEquipado();
-            } catch(e) { console.error(e); }
-        }
+async function cargarDatos() {
+    try {
+        const v = Date.now();
+        // Cargamos todos los JSON de forma paralela
+        const [rEn, rEq, rCo, rBa] = await Promise.all([
+            fetch(`enemigos.json?v=${v}`).then(r => r.json()).catch(()=>({})),
+            fetch(`equipacion.json?v=${v}`).then(r => r.json()).catch(()=>({})),
+            fetch(`consumibles.json?v=${v}`).then(r => r.json()).catch(()=>({})),
+            fetch(`basura.json?v=${v}`).then(r => r.json()).catch(()=>({}))
+        ]);
+
+        // Asignamos carpetas para las imágenes de cada tipo
+        Object.values(rEq).forEach(i => i.subfolder = "equipacion");
+        Object.values(rCo).forEach(i => i.subfolder = "consumibles");
+        Object.values(rBa).forEach(i => i.subfolder = "basura");
+
+        // Procesamos enemigos
+        enemigos = Object.values(rEn); 
+        enemigos.forEach(e => e.subfolder = "enemigos");
+
+        // Fusionamos todos los objetos en la base de datos global
+        itemsDB = {...rEq, ...rCo, ...rBa};
+
+        // RENDERIZADO: Es vital el orden para que todo aparezca bien
+        renderPueblo(); 
+        renderEquipado();
+        renderQuests(); // <--- FUNDAMENTAL para que el diario use itemsDB cargado
+        mostrarVersion();
+        
+    } catch(e) { 
+        console.error("Error en la carga de archivos JSON:", e); 
+    }
+}
+        cargarDatos();
     </script>
 </body>
 </html>
