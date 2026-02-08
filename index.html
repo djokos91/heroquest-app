@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.42</title>
+    <title>HeroQuest Pro - 1.0.43</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -644,7 +644,7 @@ function hablarConNPC(idx) {
                 const it = equipado[slotId];
                 const target = document.getElementById(slotId);
                 if (target && it) {
-                    target.innerHTML = `<img src="${getPath(it)}">`;
+                    target.innerHTML = `<img src="${getPath(it)}" title="${item.n}"`;
                     target.style.borderColor = coloresRareza[it.Rareza] || "#475569";
                 }
             }
