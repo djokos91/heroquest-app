@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.0</title>
+    <title>HeroQuest Pro - 1.0.34</title>
     <style>
+        .item-slot img:active { cursor: grabbing; opacity: 0.5; }
+        .filter-btn { background: #334155; border: 1px solid #475569; color: white; border-radius: 4px; transition: all 0.2s; cursor: pointer; display: block; }
+        .filter-btn:hover { background: #3b82f6; }
+        /* Estilo cuando el botón está ACTIVO */
+        .filter-btn.active { background: #3b82f6; color: white; border-color: #60a5fa; box-shadow: 0 0 8px rgba(59, 130, 246, 0.5); font-weight: bold; }
+        .item-slot.empty { background: rgba(0,0,0,0.1); border: 1px dashed #334155; }
         /* --- ESTILOS GENERALES (TUS ORIGINALES) --- */
         body { 
             background: #0f172a; 
@@ -147,10 +153,12 @@
         .btn-win { background: #22c55e; box-shadow: 0 4px 0 #166534; }
 
         /* --- INVENTARIO --- */
-        #lista-inv { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 15px; padding: 15px; max-width: 550px; margin: auto; }
-        .item-slot { width: 85px; height: 110px; background: #1e293b; border: 2px solid #475569; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 8px; cursor: pointer; box-sizing: border-box; }
+        #lista-inv { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 8px; padding: 10px; max-width: 550px; margin: auto; }
+        .item-slot { width: 65px; height: 65px; background: #1e293b; border: 2px solid #475569; border-radius: 6px; display: flex; align-items: center; justify-content: center; padding: 4px; cursor: pointer; box-sizing: border-box; transition: background 0.2s; }
+        .item-slot:hover { background: #334155; border-color: #94a3b8; }
         .item-slot img { width: 50px; height: 50px; object-fit: contain; }
-        .item-name { font-size: 10px; text-align: center; font-weight: bold; width: 100%; }
+        .item-name { display: none; }
+        .item-slot.empty { border-style: dashed; opacity: 0.5; }
 
         /* --- RAREZAS --- */
         .poor { border-color: #9d9d9d !important; } .common { border-color: #ffffff !important; }
@@ -248,11 +256,28 @@
         <div id="quest-log-container" class="quest-log"></div>
     </section>
 
-    <section id="vista-mochila" class="tab-content">
-        <h2 style="color: #eab308;">INVENTARIO</h2>
-        <div id="lista-inv"></div>
-        <button class="btn-reset" onclick="borrarTodo()">⚠️ Vaciar Inventario</button>
-    </section>
+<section id="vista-mochila" class="tab-content">
+    <h2 style="color: #eab308;">INVENTARIO</h2>
+    
+    <div id="mochila-header" style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:rgba(30, 41, 59, 0.5); border-radius:10px; margin: 0 15px 15px 15px;">
+        <div id="filtros" style="display:flex; gap:5px;">
+            <button class="filter-btn active" onclick="filtrarInv('Todos')" style="font-size:10px; padding:5px; cursor:pointer;">Todos</button>
+            <button class="filter-btn" onclick="filtrarInv('Equipable')" style="font-size:10px; padding:5px; cursor:pointer;">Equipo</button>
+            <button class="filter-btn" onclick="filtrarInv('Consumible')" style="font-size:10px; padding:5px; cursor:pointer;">Consumibles</button>
+            <button class="filter-btn" onclick="filtrarInv('Basura')" style="font-size:10px; padding:5px; cursor:pointer;">Basura</button>
+        </div>
+        <div style="color:#94a3b8; font-size:12px; font-weight:bold;">
+            📦 <span id="inv-capacidad-texto">...</span>
+        </div>
+    </div>
+
+    <div id="lista-inv"></div>
+    
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:15px; padding: 0 15px;">
+        <button class="filter-btn" onclick="AutoOrdenarInventario()" style="background:#064e3b; border-color:#22c55e; flex:1; padding:10px;">📦 Ordenar</button>
+        <button class="btn-reset" onclick="VaciarInventario()" style="margin:0; flex:1; padding:10px;">⚠️ Vaciar</button>
+    </div>
+</section>
 
     <nav>
         <button class="nav-btn active" id="btn-nav-mundo" onclick="cambiarVista('mundo')"><span>🌍</span>MUNDO</button>
@@ -278,13 +303,93 @@
         let misionesActivas = safeParse('hq_quests', []);
         let misionesCompletadas = safeParse('hq_quests_done', []);
         let puebloActual = safeParse('hq_pueblo', null);
-        let totalBronce = safeParse('hq_bronce_total', 0); // Almacenamos todo en bronce
         let modoAventura = false, enCombate = false;
         let mundo = { dimension: 3, sectores: [], pos: { x: 1, y: 1 } };
         let actual = null; 
+        let filtroActual = 'Todos';
+        let totalBronce = safeParse('hq_bronce_total', 0); // Almacenamos todo en bronce
 
         function safeParse(key, def) { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } }
+        
+// --- Mover objetos en el inventario -----------------------------------------------------------------------
+function arrastrarObjeto(e, indexOriginal) {
+    e.dataTransfer.setData("indexOriginal", indexOriginal);
+}
 
+function soltarObjeto(e, indexDestino) {
+    e.preventDefault();
+    const indexOriginal = e.dataTransfer.getData("indexOriginal");
+    
+    if (indexOriginal === "" || indexOriginal === indexDestino) return;
+
+    // Intercambiamos las posiciones en el array
+    const temp = inventario[indexOriginal];
+    inventario[indexOriginal] = inventario[indexDestino];
+    inventario[indexDestino] = temp;
+
+    // Guardamos el nuevo orden
+    localStorage.setItem('hq_inv', JSON.stringify(inventario));
+    renderInv();
+}
+
+function filtrarInv(tipo) {
+    filtroActual = tipo; // Actualizamos tu variable global de filtro
+
+    // 1. Buscamos todos los botones de filtro
+    const botones = document.querySelectorAll('.filter-btn');
+
+    // 2. Recorremos los botones para marcar el correcto
+    botones.forEach(btn => {
+        // Si el texto del botón coincide con el filtro, añadimos 'active'
+        if (btn.innerText === tipo || (tipo === 'Equipable' && btn.innerText === 'Equipo')) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // 3. Volvemos a dibujar el inventario con el nuevo filtro
+    renderInv();
+}
+        function AutoOrdenarInventario() {
+    // 1. Extraemos solo los objetos que no son null
+    let objetosReales = inventario.filter(it => it !== null);
+
+    // Definimos el peso de las rarezas para el orden
+    const pesoRareza = { 
+        'Legendary': 6, 'Epic': 5, 'Rare': 4, 
+        'Uncommon': 3, 'Common': 2, 'Poor': 1 
+    };
+
+    // 2. Ordenamos: Primero por Rareza, luego por Tipo, luego por Nombre
+    objetosReales.sort((a, b) => {
+        if (pesoRareza[b.Rareza] !== pesoRareza[a.Rareza]) {
+            return pesoRareza[b.Rareza] - pesoRareza[a.Rareza];
+        }
+        if (a.Tipo !== b.Tipo) {
+            return a.Tipo.localeCompare(b.Tipo);
+        }
+        return a.n.localeCompare(b.n);
+    });
+
+    // 3. Reconstruimos el inventario manteniendo la capacidad máxima
+    const capacidadMax = calcularCapacidadMax();
+    const nuevoInventario = new Array(capacidadMax).fill(null);
+
+    objetosReales.forEach((it, idx) => {
+        nuevoInventario[idx] = it;
+    });
+
+    // 4. Guardamos y refrescamos
+    inventario = nuevoInventario;
+    localStorage.setItem('hq_inv', JSON.stringify(inventario));
+    renderInv();
+    
+    // Feedback visual opcional
+    console.log("Inventario ordenado por rareza y tipo.");
+}
+        
+// ---  -------------------------------------------------------------
         function getPath(item) {
             if (!item || !item.f) return "img/error.jpg";
             return item.f.includes('/') ? `img/${item.f}` : `img/${item.subfolder}/${item.f}`;
@@ -369,50 +474,52 @@ function hablarConNPC(idx) {
     const npc = puebloActual.npcs[idx];
     const qAceptada = misionesActivas.find(q => q.owner === npc.n);
     
-    // 1. ENTREGA DE MISIÓN (Si ya está terminada)
     if (qAceptada && qAceptada.actual >= qAceptada.meta) {
-        // Comprobar espacio
-        if (inventario.length >= 20) {
-            alert(`${npc.n}: "¡Tu mochila está llena! No puedo darte la recompensa así."`);
-            return;
+        // Validación de espacio... (mantenemos la anterior)
+        const objetosReales = inventario.filter(slot => slot !== null).length;
+        if (objetosReales >= calcularCapacidadMax()) {
+            alert(`${npc.n}: "¡Mochila llena!"`); return;
         }
 
         const itemData = itemsDB[qAceptada.recompensa];
-        if (!itemData) {
-            alert("Error: Objeto no encontrado en la base de datos.");
-            return;
-        }
-
-        // Entregar premio
-        alert(`${npc.n}: "¡Increíble! Aquí tienes tu ${itemData.n}."`);
         
-        inventario.push({ ...itemData, idInstance: Date.now() });
-        monedas.bronce += (qAceptada.bronce || 0);
+        // --- LÓGICA DE DESGLOSE DE MONEDAS ---
+        let v = qAceptada.bronce || 0;
+        let textoMonedas = "";
+        if (v >= 10000) textoMonedas = `${Math.floor(v/10000)} monedas de Oro 🟡`;
+        else if (v >= 100) textoMonedas = `${Math.floor(v/100)} monedas de Plata ⚪`;
+        else textoMonedas = `${v} monedas de Bronce 🟤`;
 
-        // Limpiar y guardar
+        // Entregar recompensa
+        const primerHueco = inventario.indexOf(null);
+        inventario[primerHueco] = { ...itemData, idInstance: Date.now() };
+        totalBronce += v;
+
+        alert(`${npc.n}: "¡Excelente! Toma tu recompensa: ${itemData.n} y ${textoMonedas}."`);
+
+        // Guardar y limpiar
         misionesCompletadas.push(qAceptada.id);
         misionesActivas = misionesActivas.filter(q => q.id !== qAceptada.id);
 
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
         localStorage.setItem('hq_quests_done', JSON.stringify(misionesCompletadas));
-        localStorage.setItem('hq_monedas', JSON.stringify(monedas));
+        localStorage.setItem('hq_bronce_total', totalBronce);
 
-        renderPueblo();
-        renderQuests();
-        renderInv();
+        renderPueblo(); renderQuests(); renderInv(); actualizarMonederoUI();
         return;
     }
-
-    // 2. DAR MISIÓN NUEVA
+    // 2. DAR MISIÓN NUEVA (Se mantiene igual, está bien)
     const questDisponible = npc.misionId && !misionesCompletadas.includes(npc.misionId) && !qAceptada;
     if (questDisponible) {
         const mData = dbMisiones.find(m => m.id === npc.misionId);
-        if (confirm(`${npc.n}: ${mData.desc}\n\n¿Aceptas el encargo?`)) {
-            misionesActivas.push({ ...mData, actual: 0, completada: false, owner: npc.n });
-            localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
-            renderPueblo();
-            renderQuests();
+        if (mData) {
+            if (confirm(`${npc.n}: ${mData.desc}\n\n¿Aceptas el encargo?`)) {
+                misionesActivas.push({ ...mData, actual: 0, completada: false, owner: npc.n });
+                localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
+                renderPueblo();
+                renderQuests();
+            }
         }
         return;
     }
@@ -487,26 +594,25 @@ function renderQuests() {
     const c = document.getElementById('quest-log-container');
     if (!c) return;
 
-    // Diccionario de colores (asegúrate de que coincidan con tus strings de Rareza)
-    const coloresRareza = {
-        "Common": "#f1f5f9",    // Blanco/Gris
-        "Uncommon": "#4ade80",  // Verde
-        "Rare": "#3b82f6",      // Azul
-        "Epic": "#a855f7",      // Morado
-        "Legendary": "#fbbf24"  // Dorado
-    };
-
     c.innerHTML = misionesActivas.length ? misionesActivas.map(q => {
         const itemData = itemsDB[q.recompensa];
-        const nombreItem = itemData ? itemData.n : q.recompensa;
-        
-        // Obtenemos el color según la rareza del objeto
+        const nombreItem = itemData ? itemData.n : "Recompensa desconocida";
         const colorRareza = (itemData && coloresRareza[itemData.Rareza]) ? coloresRareza[itemData.Rareza] : "#fbbf24";
 
-        let monedaIcono = "🟤";
-        let cantidadMostrada = q.bronce;
-        if (q.bronce >= 10000) { monedaIcono = "🟡"; cantidadMostrada = Math.floor(q.bronce / 10000); }
-        else if (q.bronce >= 100) { monedaIcono = "⚪"; cantidadMostrada = Math.floor(q.bronce / 100); }
+        // Lógica de conversión de monedas para el Diario
+        let icono = "🟤";
+        let cantidad = q.bronce || 0;
+        let tipo = "Bronce";
+
+        if (q.bronce >= 10000) {
+            icono = "🟡";
+            cantidad = Math.floor(q.bronce / 10000);
+            tipo = "Oro";
+        } else if (q.bronce >= 100) {
+            icono = "⚪";
+            cantidad = Math.floor(q.bronce / 100);
+            tipo = "Plata";
+        }
 
         return `
         <div class="quest-entry" style="border-left: 3px solid #3b82f6; padding: 10px; margin-bottom: 15px; background: rgba(30, 41, 59, 0.5); border-radius: 0 8px 8px 0;">
@@ -518,65 +624,83 @@ function renderQuests() {
                     <span>🎁</span>
                     <span style="font-size: 11px; color: ${colorRareza}; font-weight: bold;">${nombreItem}</span>
                 </div>
-                  <div style="display: flex; align-items: center; gap: 4px;">
-                    <span style="font-size: 11px; color: #e2e8f0;">${cantidadMostrada}</span>
-                    <span>${monedaIcono}</span>                    
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="font-size: 11px; color: #e2e8f0;">${cantidad} ${icono} (${tipo})</span>                    
                 </div>
             </div>
-
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="font-size: 12px; font-weight: bold; color: ${q.completada ? '#22c55e' : '#e2e8f0'}">
                     Progreso: ${q.actual}/${q.meta}
                 </div>
-                <button onclick="abandonarMision('${q.id}')" 
-                        style="background: none; border: 1px solid #ef4444; color: #ef4444; font-size: 9px; padding: 2px 6px; border-radius: 4px; cursor: pointer;">
-                    🗑️ ABANDONAR
-                </button>
+                <button onclick="abandonarMision('${q.id}')" style="background: none; border: 1px solid #ef4444; color: #ef4444; font-size: 9px; padding: 2px 6px; border-radius: 4px; cursor: pointer;"> 🗑️ ABANDONAR </button>
             </div>
         </div>`;
-    }).join("") : '<p style="font-size:12px; color:#64748b; text-align:center;">No tienes misiones en curso.</p>';
+    }).join("") : '<p style="text-align:center;">No tienes misiones en curso.</p>';
 }
              
         // --- LÓGICA DE AVENTURA (TU ORIGINAL) ---
-        function derrotarEnemigo() {
-    if (inventario.length >= calcularCapacidadMax()) { alert("¡Mochila llena!"); return; }
-    const it = { ...Object.values(itemsDB)[Math.floor(Math.random()*Object.values(itemsDB).length)] };
+    function derrotarEnemigo() {
+    // 1. Contar cuántos objetos reales hay (los que no son null)
+    const objetosActuales = inventario.filter(slot => slot !== null).length;
+    const capacidadMax = calcularCapacidadMax();
+
+    if (objetosActuales >= capacidadMax) { 
+        alert("¡Tu mochila está totalmente llena! No puedes recoger más botín."); 
+        return; 
+    }
+
+    // 2. Generar el objeto y asignar ID único (importante para el Drag & Drop)
+    const it = { 
+        ...Object.values(itemsDB)[Math.floor(Math.random() * Object.values(itemsDB).length)],
+        idInstance: Date.now() 
+    };
+
+    // 3. BUSCAR EL PRIMER HUECO VACÍO (null)
+    const primerHuecoVacio = inventario.indexOf(null);
+    if (primerHuecoVacio !== -1) {
+        inventario[primerHuecoVacio] = it;
+    } else {
+        // Por seguridad, si indexOf falla pero había espacio:
+        inventario.push(it);
+    }
+
+    // 4. Lógica de monedas
     const bronceGanado = Math.floor(Math.random() * 15) + 5;
-    
-    // Determinar icono de moneda según la cantidad
     let monedaIcono = "🟤";
     if (bronceGanado >= 100) monedaIcono = "🟡";
     else if (bronceGanado >= 50) monedaIcono = "⚪";
 
-    inventario.push(it);
+    // Usamos el objeto global 'monedas' y no totalBronce para ser coherentes con tu monedero
     totalBronce += bronceGanado;
     
     checkQuestProgress("kill", 1); 
     checkQuestProgress("item", it.Rareza);
 
-    // Render visual del botín con iconos
+    // 5. Render visual del botín
     document.getElementById('botin-texto').innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
             <div style="color: #fbbf24; font-weight: bold; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">✨ BOTÍN ✨</div>
             <div style="display:flex; align-items:center; gap:8px;">
-                    <img src="${getPath(it)}" style="width:40px; height:40px; border:2px solid ${coloresRareza[it.Rareza]}; border-radius: 4px;">
-                    <span style="color: ${coloresRareza[it.Rareza]}; font-size: 18px;">${it.n}</span></div>
-                <div style="display:flex; align-items:center; justify-content:center; gap:20px;">
-                <span style="font-size: 14px;">${bronceGanado} ${monedaIcono}</span></div>
+                <img src="img/${it.f}" style="width:40px; height:40px; border:2px solid ${coloresRareza[it.Rareza]}; border-radius: 4px;">
+                <span style="color: ${coloresRareza[it.Rareza]}; font-size: 18px;">${it.n}</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:center; gap:20px;">
+                <span style="font-size: 14px;">${bronceGanado} ${monedaIcono}</span>
+            </div>
         </div>`;
 
     document.getElementById('btn-derrota').style.display = 'none';
+    
+    // 6. Guardar estado del mapa y datos
     mundo.sectores[mundo.pos.x][mundo.pos.y].completado = true;
-    localStorage.setItem('hq_inv', JSON.stringify(inventario));
+    
+    localStorage.setItem('hq_inv', JSON.stringify(inventario));    
+    localStorage.setItem('hq_bronce_total', totalBronce);
+    
     actualizarMonederoUI();
-    }     
+    renderInv(); // Refrescamos el inventario en segundo plano
+}   
         
-        function calcularCapacidadMax() {
-            let t = 16;
-            [2,3,4,5].forEach(i => { const b = equipado[`slot-bolsa-${i}`]; if(b) t += (b.espacios || 0); });
-            return t;
-        }
-
         // --- NAVEGACIÓN Y AUXILIARES ---
         function cambiarVista(d) {
             document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active-view'));
@@ -637,56 +761,228 @@ function renderQuests() {
             document.getElementById('btn-derrota').style.display = 'inline-block';
             document.getElementById('botin-texto').innerHTML = "";
         }
+// --- Inventario -----------------------------------------------------------------
 
-        function renderInv() {
-            const g = document.getElementById('lista-inv'); 
-            g.innerHTML = `<p style="grid-column:1/-1; font-size:12px; color:#94a3b8">Espacio: ${inventario.length}/${calcularCapacidadMax()}</p>`;
-            inventario.forEach((it, i) => {
-                g.innerHTML += `
-                <div class="item-slot" onclick="gestionarItem(${i})">
-                    <img src="${getPath(it)}">
-                    <span class="item-name" style="color:${coloresRareza[it.Rareza]}">${it.n}</span>
-                </div>`;
-            });
-        }
+function renderInv() {
+    const contenedor = document.getElementById('lista-inv');
+    if (!contenedor) return;
 
-        function gestionarItem(i) {
-            const it = inventario[i];
-            if(it.Tipo === "Equipable" && confirm(`¿Equipar ${it.n}?`)) {
-                let sId = (it.Slot==="anillo") ? (!equipado["slot-anillo-1"]?"slot-anillo-1":"slot-anillo-2") : "slot-"+it.Slot;
-                if(it.Slot==="bolsa") { for(let b=2;b<=5;b++) if(!equipado["slot-bolsa-"+b]) { sId="slot-bolsa-"+b; break; } }
-                const ex = equipado[sId];
-                if(ex) inventario[i] = {...ex}; else inventario.splice(i,1);
-                equipado[sId] = {...it};
-                localStorage.setItem('hq_inv', JSON.stringify(inventario)); localStorage.setItem('hq_equipo', JSON.stringify(equipado));
-                renderInv();
-            } else if(confirm("¿Eliminar objeto?")) { 
-                inventario.splice(i,1); 
-                localStorage.setItem('hq_inv', JSON.stringify(inventario)); 
-                renderInv(); 
+    const capacidadMax = calcularCapacidadMax();
+// --- PASO CLAVE: Sincronizar el array con la nueva capacidad ---
+    while (inventario.length < capacidadMax) {
+        inventario.push(null); // Añade huecos si la capacidad aumentó
+    }
+    if (inventario.length > capacidadMax) {
+        inventario = inventario.slice(0, capacidadMax); // Recorta si disminuyó
+    }
+    // ---------------------------------------------------------------
+
+    const contadorTexto = document.getElementById('inv-capacidad-texto');
+    // ... (tu lógica del contador que ya tienes está perfecta) ...
+
+    if (contadorTexto) {
+        // Contamos cuántos objetos NO son null
+        const objetosReales = inventario.filter(slot => slot !== null).length;
+        
+        // USAMOS capacidadMax en lugar de 16
+        contadorTexto.innerText = `${objetosReales} / ${capacidadMax}`;
+        
+        // Cambiar color si está lleno
+        contadorTexto.style.color = objetosReales >= capacidadMax ? "#ef4444" : "#94a3b8";
+    }
+
+    contenedor.innerHTML = ""; 
+
+    for (let i = 0; i < capacidadMax; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'item-slot' + (inventario[i] ? '' : ' empty');
+        slot.dataset.index = i; // Guardamos la posición del slot
+
+        // Lógica de Soltar (Drop)
+        slot.ondragover = (e) => e.preventDefault();
+        slot.ondrop = (e) => soltarObjeto(e, i);
+
+        const item = inventario[i]; // Buscamos si hay un objeto en esta posición
+
+        if (item) {
+            // Aplicar filtro visual (si no coincide con el filtro, lo ocultamos o bajamos opacidad)
+            const coincideFiltro = filtroActual === 'Todos' || item.Tipo === filtroActual;
+            
+            if (coincideFiltro) {
+            slot.style.borderColor = coloresRareza[item.Rareza] || '#475569';
+            slot.innerHTML = `<img src="img/${item.f}" title="${item.n}" draggable="true" ondragstart="arrastrarObjeto(event, ${i})" onclick="gestionarItem(${i})">`;
+                } else {
+            // En lugar de opacity, simplemente no mostramos el objeto en este slot
+            slot.classList.add('empty'); 
             }
+            } else {
+            slot.classList.add('empty');
         }
 
-        function gestionarEquipado(el) {
-            const it = equipado[el.id]; if(el.id === "slot-bolsa-1" || !it) return;
-            if(confirm("¿Desequipar?") && inventario.length < calcularCapacidadMax()) {
-                inventario.push({...it}); delete equipado[el.id];
-                localStorage.setItem('hq_inv', JSON.stringify(inventario)); localStorage.setItem('hq_equipo', JSON.stringify(equipado));
-                renderEquipado(); renderInv();
-            }
-        }
-
-        function borrarTodo() {
-    if(confirm("¿Deseas vaciar el inventario?")) {        
-        inventario = []; // 1. Vaciamos solo el array de la mochila             
-        localStorage.setItem('hq_inv', JSON.stringify(inventario)); // 2. Guardamos solo el cambio del inventario               
-        renderInv(); // 3. Actualizamos solo la vista de la mochila
+        contenedor.appendChild(slot);
     }
 }
+
+function gestionarItem(i) {
+    const it = inventario[i];
+    if (!it) return;
+
+    if (it.Tipo === "Equipable") {
+        let sId = "";
+
+        // --- LÓGICA DE SLOTS MÚLTIPLES (Bolsas, Anillos, Abalorios) ---
+        if (it.Slot === "bolsa" || it.Slot === "anillo" || it.Slot === "abalorio") {
+            const config = {
+                "bolsa": { min: 2, max: 5 },
+                "anillo": { min: 1, max: 2 },
+                "abalorio": { min: 1, max: 2 }
+            };
+
+            const range = config[it.Slot];
+            let slotLibre = null;
+
+            // 1. Buscamos el primer hueco vacío
+            for (let n = range.min; n <= range.max; n++) {
+                let tempId = `slot-${it.Slot}-${n}`;
+                if (!equipado[tempId]) {
+                    slotLibre = tempId;
+                    break;
+                }
+            }
+
+            if (slotLibre) {
+                sId = slotLibre; // Encontrado hueco, se asigna directamente
+            } else {
+                // 2. Si todo está lleno, preguntamos por cuál reemplazar
+                let msg = `Todas las ranuras de ${it.Slot} están llenas. ¿Cuál quieres reemplazar por ${it.n}?\n`;
+                for (let n = range.min; n <= range.max; n++) {
+                    msg += `${n}. ${equipado[`slot-${it.Slot}-${n}`].n}\n`;
+                }
+                
+                const el = prompt(msg, range.min.toString());
+                if (el === null) return;
+                
+                const numSel = parseInt(el);
+                if (numSel >= range.min && numSel <= range.max) {
+                    sId = `slot-${it.Slot}-${numSel}`;
+                } else {
+                    alert("Selección no válida.");
+                    return;
+                }
+            }
+        } else {
+            // --- LÓGICA DE SLOTS ÚNICOS (Casco, Pechera, Arma, etc.) ---
+            sId = "slot-" + it.Slot;
+        }
+
+        // --- PROCESO DE EQUIPO / REEMPLAZO FINAL ---
+        const ex = equipado[sId]; 
+
+        if (ex) {
+            // Si el slot está ocupado (sea automático o elegido), confirmamos cambio
+            if (!confirm(`¿Quieres reemplazar ${ex.n} por ${it.n}?`)) return;
+            inventario[i] = { ...ex }; 
+        } else {
+            // Si estaba vacío, equipo directo
+            inventario[i] = null
+        }
+
+        equipado[sId] = { ...it };
+
+        // --- ACTUALIZAR TAMAÑO DEL ARRAY ---
+        const nuevaCapacidad = calcularCapacidadMax();
+        while (inventario.length < nuevaCapacidad) {
+            inventario.push(null);
+        }
+
+        // Guardar y refrescar
+        localStorage.setItem('hq_inv', JSON.stringify(inventario));
+        localStorage.setItem('hq_equipo', JSON.stringify(equipado));
+        
+        renderInv();
+        renderEquipado();
+
+    } else if (confirm(`¿Eliminar ${it.n}?`)) {
+        // En lugar de splice, simplemente vaciamos el hueco
+        inventario[i] = null; 
+        localStorage.setItem('hq_inv', JSON.stringify(inventario));
+        renderInv();
+    }
+}
+
+function gestionarEquipado(el) {
+    const it = equipado[el.id]; 
+    if (el.id === "slot-bolsa-1" || !it) return;
+
+    // 1. Calculamos capacidad resultante
+    const capacidadActual = calcularCapacidadMax();
+    const espacioQueAportaEstaBolsa = it.Espacios || 0;
+    const capacidadSiQuitoBolsa = capacidadActual - espacioQueAportaEstaBolsa;
+
+    // 2. Contamos OBJETOS REALES (no nulls)
+    const objetosReales = inventario.filter(slot => slot !== null).length;
+
+    // 3. SEGURIDAD: ¿Caben los objetos + el que voy a desequipar?
+    // Sumamos 1 porque la bolsa que desequipas pasará a ocupar un hueco en el inventario
+    if ((objetosReales + 1) > capacidadSiQuitoBolsa) {
+        alert("¡No puedes desequipar esta bolsa! No hay espacio suficiente para guardar la bolsa y tus objetos.");
+        return;
+    }
+
+    if (confirm(`¿Desequipar ${it.n}?`)) {
+        // --- PROCESO DE REDUCCIÓN DE ARRAY ---
+        
+        // A. Extraemos solo los objetos que ya tenías
+        let objetosParaMudar = inventario.filter(slot => slot !== null);
+        
+        // B. Añadimos la bolsa que acabamos de quitar a esa lista
+        objetosParaMudar.push({ ...it });
+
+        // C. Creamos el nuevo inventario más pequeño
+        let nuevoInventario = new Array(capacidadSiQuitoBolsa).fill(null);
+
+        // D. Colocamos todo en el nuevo array
+        objetosParaMudar.forEach((obj, idx) => {
+            nuevoInventario[idx] = obj;
+        });
+
+        // E. Guardamos cambios
+        inventario = nuevoInventario;
+        delete equipado[el.id];
+        
+        localStorage.setItem('hq_inv', JSON.stringify(inventario)); 
+        localStorage.setItem('hq_equipo', JSON.stringify(equipado));
+        
+        renderEquipado(); 
+        renderInv();
+    }
+}
+
+        function calcularCapacidadMax() {
+    let capacidad = 16; // Mochila base
+
+    // Recorremos los slots de bolsa (del 2 al 5, el 1 es la fija)
+    for (let i = 2; i <= 5; i++) {
+        const bolsa = equipado[`slot-bolsa-${i}`];
+        if (bolsa && bolsa.Espacios) {
+            capacidad += bolsa.Espacios;
+        }
+    }
+    return capacidad;
+}
+        
+function VaciarInventario() {
+    if (confirm("¿Estás seguro de que quieres destruir TODOS los objetos de tu mochila?")) {
+        const capacidad = calcularCapacidadMax();
+        inventario = new Array(capacidad).fill(null);
+        localStorage.setItem('hq_inv', JSON.stringify(inventario));
+        renderInv();
+    }
+}
+// --- Cargar Datos ---------------------------------------     
 async function cargarDatos() {
     try {
         const v = Date.now();
-        // Cargamos todos los JSON de forma paralela
         const [rEn, rEq, rCo, rBa] = await Promise.all([
             fetch(`enemigos.json?v=${v}`).then(r => r.json()).catch(()=>({})),
             fetch(`equipacion.json?v=${v}`).then(r => r.json()).catch(()=>({})),
@@ -694,23 +990,40 @@ async function cargarDatos() {
             fetch(`basura.json?v=${v}`).then(r => r.json()).catch(()=>({}))
         ]);
 
-        // Asignamos carpetas para las imágenes de cada tipo
         Object.values(rEq).forEach(i => i.subfolder = "equipacion");
         Object.values(rCo).forEach(i => i.subfolder = "consumibles");
         Object.values(rBa).forEach(i => i.subfolder = "basura");
 
-        // Procesamos enemigos
         enemigos = Object.values(rEn); 
         enemigos.forEach(e => e.subfolder = "enemigos");
 
-        // Fusionamos todos los objetos en la base de datos global
         itemsDB = {...rEq, ...rCo, ...rBa};
 
-        // RENDERIZADO: Es vital el orden para que todo aparezca bien
+        // --- INICIALIZACIÓN CRÍTICA DEL INVENTARIO ---
+        let invGuardado = JSON.parse(localStorage.getItem('hq_inv'));
+        let capacidad = calcularCapacidadMax();
+
+        if (!invGuardado) {
+            // Si es la primera vez, creamos array vacío con la capacidad actual
+            inventario = new Array(capacidad).fill(null);
+        } else {
+            inventario = invGuardado;
+            // Si compramos bolsas nuevas, extendemos el array para no perder huecos
+            while (inventario.length < capacidad) {
+                inventario.push(null);
+            }
+        }
+        // --- CARGAR MISIONES Y PROGRESO ---
+        misionesActivas = JSON.parse(localStorage.getItem('hq_quests')) || [];
+        misionesCompletadas = JSON.parse(localStorage.getItem('hq_quests_done')) || [];
+
+        // --- CARGAR MONEDAS ---
+        // Intentamos cargar totalBronce, si no existe, empezamos en 0
+        totalBronce = parseInt(localStorage.getItem('hq_bronce_total')) || 0;
+
         renderPueblo(); 
         renderEquipado();
-        renderQuests(); // <--- FUNDAMENTAL para que el diario use itemsDB cargado
-        mostrarVersion();
+        renderQuests(); 
         
     } catch(e) { 
         console.error("Error en la carga de archivos JSON:", e); 
