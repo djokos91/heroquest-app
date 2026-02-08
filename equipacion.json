@@ -8,5 +8,5 @@
   "faltriquera_negra_pequeña": { "n": "Faltriquera negra pequeña", "f": "equipacion/faltriquera_negra_pequeña.jpg", "Slot": "bolsa", "Rareza": "Uncommon", "Tipo": "Equipable", "Espacios": 6},
   "anillo_oxidado": { "n": "Anillo oxidado", "f": "equipacion/anillo_oxidado.jpg", "Slot": "anillo", "Rareza": "Poor", "Tipo": "Equipable"},
   "escudo_grande_doblado": { "n": "Escudo grande doblado", "f": "equipacion/escudo_grande_doblado.jpg", "Slot": "mano2", "Rareza": "Poor", "Tipo": "Equipable"},
-  "palo_para_golpear": { "n": "Palo para golpear", "f": "equipacion/palo_para_golpear.jpg", "Slot": "mano1", "Rareza": "Poor", "Tipo": "Equipable"}
+  "palo_para_golpear": { "n": "Palo para golpear", "f": "equipacion/palo_para_golpear.jpg", "Slot": "mano1", "manos": 2, "Rareza": "Poor", "Tipo": "Equipable"}
 }
