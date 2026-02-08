@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.39</title>
+    <title>HeroQuest Pro - 1.0.40</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -829,26 +829,18 @@ function renderInv() {
     if (!contenedor) return;
 
     const capacidadMax = calcularCapacidadMax();
-// --- PASO CLAVE: Sincronizar el array con la nueva capacidad ---
+
     while (inventario.length < capacidadMax) {
-        inventario.push(null); // Añade huecos si la capacidad aumentó
+        inventario.push(null);
     }
     if (inventario.length > capacidadMax) {
-        inventario = inventario.slice(0, capacidadMax); // Recorta si disminuyó
+        inventario = inventario.slice(0, capacidadMax);
     }
-    // ---------------------------------------------------------------
 
     const contadorTexto = document.getElementById('inv-capacidad-texto');
-    // ... (tu lógica del contador que ya tienes está perfecta) ...
-
     if (contadorTexto) {
-        // Contamos cuántos objetos NO son null
         const objetosReales = inventario.filter(slot => slot !== null).length;
-        
-        // USAMOS capacidadMax en lugar de 16
         contadorTexto.innerText = `${objetosReales} / ${capacidadMax}`;
-        
-        // Cambiar color si está lleno
         contadorTexto.style.color = objetosReales >= capacidadMax ? "#ef4444" : "#94a3b8";
     }
 
@@ -857,35 +849,34 @@ function renderInv() {
     for (let i = 0; i < capacidadMax; i++) {
         const slot = document.createElement('div');
         slot.className = 'item-slot' + (inventario[i] ? '' : ' empty');
-        slot.dataset.index = i; // Guardamos la posición del slot
-        // Selección multiple
-        if (seleccionados.includes(i)) {
-         slot.classList.add('selected');
+        slot.dataset.index = i;
 
-        // Lógica de Soltar (Drop)
+        // Selección múltiple (CORREGIDO)
+        if (seleccionados.includes(i)) {
+            slot.classList.add('selected');
+        } // <--- CIERRE AQUÍ. Antes estaba al final de la función.
+
+        // Lógica de Soltar (Drop) - Ahora se ejecuta SIEMPRE
         slot.ondragover = (e) => e.preventDefault();
         slot.ondrop = (e) => soltarObjeto(e, i);
 
-        const item = inventario[i]; // Buscamos si hay un objeto en esta posición
+        const item = inventario[i];
 
         if (item) {
-            // Aplicar filtro visual (si no coincide con el filtro, lo ocultamos o bajamos opacidad)
             const coincideFiltro = filtroActual === 'Todos' || item.Tipo === filtroActual;
-            console.log(`Item: ${item.n}, Tipo: ${item.Tipo}, Filtro: ${filtroActual}, Coincide: ${coincideFiltro}`);
             
             if (coincideFiltro) {
-            slot.style.borderColor = coloresRareza[item.Rareza] || '#475569';
-            slot.innerHTML = `<img src="img/${item.f}" title="${item.n}" draggable="true" ondragstart="arrastrarObjeto(event, ${i})" onclick="gestionarItem(${i})">`;
-                } else {
-            // En lugar de opacity, simplemente no mostramos el objeto en este slot
-            slot.classList.add('empty'); 
-            }
+                slot.style.borderColor = coloresRareza[item.Rareza] || '#475569';
+                // Si usas subcarpetas, recuerda: `img/${item.subfolder}/${item.f}`
+                slot.innerHTML = `<img src="img/${item.f}" title="${item.n}" draggable="true" ondragstart="arrastrarObjeto(event, ${i})" onclick="gestionarItem(${i})">`;
             } else {
+                slot.classList.add('empty'); 
+            }
+        } else {
             slot.classList.add('empty');
         }
 
-        contenedor.appendChild(slot);
-        }
+        contenedor.appendChild(slot); // Ahora sí se añadirá al contenedor
     }
 }
 
