@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.16</title>
+    <title>HeroQuest Pro - 1.0.17</title>
     <style>
         .filter-btn {
     background: #334155;
@@ -593,38 +593,67 @@ function renderQuests() {
 }
              
         // --- LÓGICA DE AVENTURA (TU ORIGINAL) ---
-        function derrotarEnemigo() {
-    if (inventario.length >= calcularCapacidadMax()) { alert("¡Mochila llena!"); return; }
-    const it = { ...Object.values(itemsDB)[Math.floor(Math.random()*Object.values(itemsDB).length)] };
+    function derrotarEnemigo() {
+    // 1. Contar cuántos objetos reales hay (los que no son null)
+    const objetosActuales = inventario.filter(slot => slot !== null).length;
+    const capacidadMax = calcularCapacidadMax();
+
+    if (objetosActuales >= capacidadMax) { 
+        alert("¡Tu mochila está totalmente llena! No puedes recoger más botín."); 
+        return; 
+    }
+
+    // 2. Generar el objeto y asignar ID único (importante para el Drag & Drop)
+    const it = { 
+        ...Object.values(itemsDB)[Math.floor(Math.random() * Object.values(itemsDB).length)],
+        idInstance: Date.now() 
+    };
+
+    // 3. BUSCAR EL PRIMER HUECO VACÍO (null)
+    const primerHuecoVacio = inventario.indexOf(null);
+    if (primerHuecoVacio !== -1) {
+        inventario[primerHuecoVacio] = it;
+    } else {
+        // Por seguridad, si indexOf falla pero había espacio:
+        inventario.push(it);
+    }
+
+    // 4. Lógica de monedas
     const bronceGanado = Math.floor(Math.random() * 15) + 5;
-    
-    // Determinar icono de moneda según la cantidad
     let monedaIcono = "🟤";
     if (bronceGanado >= 100) monedaIcono = "🟡";
     else if (bronceGanado >= 50) monedaIcono = "⚪";
 
-    inventario.push(it);
-    totalBronce += bronceGanado;
+    // Usamos el objeto global 'monedas' y no totalBronce para ser coherentes con tu monedero
+    monedas.bronce += bronceGanado;
     
     checkQuestProgress("kill", 1); 
     checkQuestProgress("item", it.Rareza);
 
-    // Render visual del botín con iconos
+    // 5. Render visual del botín
     document.getElementById('botin-texto').innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
             <div style="color: #fbbf24; font-weight: bold; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">✨ BOTÍN ✨</div>
             <div style="display:flex; align-items:center; gap:8px;">
-                    <img src="${getPath(it)}" style="width:40px; height:40px; border:2px solid ${coloresRareza[it.Rareza]}; border-radius: 4px;">
-                    <span style="color: ${coloresRareza[it.Rareza]}; font-size: 18px;">${it.n}</span></div>
-                <div style="display:flex; align-items:center; justify-content:center; gap:20px;">
-                <span style="font-size: 14px;">${bronceGanado} ${monedaIcono}</span></div>
+                <img src="img/${it.f}" style="width:40px; height:40px; border:2px solid ${coloresRareza[it.Rareza]}; border-radius: 4px;">
+                <span style="color: ${coloresRareza[it.Rareza]}; font-size: 18px;">${it.n}</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:center; gap:20px;">
+                <span style="font-size: 14px;">${bronceGanado} ${monedaIcono}</span>
+            </div>
         </div>`;
 
     document.getElementById('btn-derrota').style.display = 'none';
+    
+    // 6. Guardar estado del mapa y datos
     mundo.sectores[mundo.pos.x][mundo.pos.y].completado = true;
+    
     localStorage.setItem('hq_inv', JSON.stringify(inventario));
+    localStorage.setItem('hq_monedas', JSON.stringify(monedas));
+    
     actualizarMonederoUI();
-    }     
+    renderInv(); // Refrescamos el inventario en segundo plano
+}   
         
         // --- NAVEGACIÓN Y AUXILIARES ---
         function cambiarVista(d) {
