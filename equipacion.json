@@ -4,5 +4,5 @@
   "zapatos_deshilachados": { "n": "Zapatos Deshilachados", "f": "equipacion/zapatos_deshilachados.jpg", "Slot": "pies", "Rareza": "Poor", "Tipo": "Equipable"},
   "botas_cuero_harapiento": { "n": "Botas de cuero harapiento", "f": "equipacion/botas_cuero_harapiento.jpg", "Slot": "pies", "Rareza": "Poor", "Tipo": "Equipable"},
   "arco_caza": { "n": "Arco de caza", "f": "equipacion/arco_caza.jpg", "Slot": "distancia", "Rareza": "Uncommon", "Tipo": "Equipable"},
-  "faltriquera_marron_pequeña": { "n": "Faltriquera marrón pequeña", "f": "equipacion/faltriquera_marron_pequeña.jpg", "Slot": "distancia", "Rareza": "Uncommon", "Tipo": "Equipable"}
+  "faltriquera_marron_pequeña": { "n": "Faltriquera marrón pequeña", "f": "equipacion/faltriquera_marron_pequeña.jpg", "Slot": "bolsa", "Rareza": "Uncommon", "Tipo": "Equipable"}
 }
