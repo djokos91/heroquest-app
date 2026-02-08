@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.46</title>
+    <title>HeroQuest Pro - 1.0.47</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -960,7 +960,7 @@ function renderInv() {
     }
 }
 
-async gestionarItem(i) {
+async function gestionarItem(i) {
     const it = inventario[i];
     
     if (modoSeleccion) {
