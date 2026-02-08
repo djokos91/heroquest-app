@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.23</title>
+    <title>HeroQuest Pro - 1.0.24</title>
     <style>
         .item-slot img:active {
     cursor: grabbing;
@@ -781,7 +781,7 @@ function renderInv() {
     // Creamos exactamente tantos slots como capacidad máxima
     for (let i = 0; i < capacidadMax; i++) {
         const slot = document.createElement('div');
-        slot.className = 'item-slot';
+        slot.className = 'item-slot' + (inventario[i] ? '' : ' empty');
         slot.dataset.index = i; // Guardamos la posición del slot
 
         // Lógica de Soltar (Drop)
