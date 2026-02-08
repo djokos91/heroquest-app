@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.10</title>
+    <title>HeroQuest Pro - 1.0.11</title>
     <style>
         /* --- ESTILOS GENERALES (TUS ORIGINALES) --- */
         body { 
@@ -372,7 +372,7 @@ function hablarConNPC(idx) {
     // 1. ENTREGA DE MISIÓN (Si ya está terminada)
     if (qAceptada && qAceptada.actual >= qAceptada.meta) {
         // Comprobar espacio
-        if (inventario.length >= 20) {
+        if (inventario.length >= calcularCapacidadMax()) {
             alert(`${npc.n}: "¡Tu mochila está llena! No puedo darte la recompensa así."`);
             return;
         }
