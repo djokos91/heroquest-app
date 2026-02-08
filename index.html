@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.1.0</title>
+    <title>HeroQuest Pro - 1.1.1</title>
     <style>
     /* Estilo Edificios -------------------------------------------------------*/
         .grid-edificios {
@@ -712,39 +712,59 @@ async function hablarConNPC(idx) {
 }
 
         // --- RENDERIZADO (TUS ORIGINALES) ---
-        function renderPueblo() {
-            if (!puebloActual) refundarPoblacion();
-            document.getElementById('pueblo-nombre').innerText = puebloActual.nombre;
-            document.getElementById('pueblo-tipo').innerText = puebloActual.tipo;
-            
-            const gE = document.getElementById('lista-edificios');
-            gE.innerHTML = puebloActual.edificios.map(ed => `
-                <div class="edificio-card" onclick="alert('Entrando en ${ed.n}')">
-                    <span class="edificio-icon">${ed.icono}</span>
-                    <span class="edificio-name">${ed.n}</span>
-                </div>`).join("");
+function renderPueblo() {
+    const contenedor = document.getElementById('pueblo-container');
+    if (!contenedor || !puebloActual) return;
 
-            const gN = document.getElementById('lista-npcs');
-            gN.innerHTML = puebloActual.npcs.map((npc, idx) => {
-            const questAceptada = misionesActivas.find(q => q.owner === npc.n);
-            const questDisponible = npc.misionId && !misionesCompletadas.includes(npc.misionId) && !questAceptada;
-            const questLista = questAceptada && questAceptada.completada;
+    contenedor.innerHTML = ""; 
 
-            let iconHTML = '';
-            if (questLista) {
-              iconHTML = '<span class="quest-mark quest-ready">✅</span>';
-            } else if (questAceptada) {
-            // ESTE ES EL NUEVO ICONO: Muestra que el NPC está esperando
-              iconHTML = '<span class="quest-mark" style="color: #f59e0b; opacity:0.7;">❓</span>'; 
-            } else if (questDisponible) {
-              iconHTML = '<span class="quest-mark quest-available">❗</span>';
-            }
-                return `<div class="npc-item" onclick="hablarConNPC(${idx})">
-                    <div><b>${npc.n}</b><br><span class="npc-role">${npc.job}</span></div>
-                    ${iconHTML}
-                </div>`;
-            }).join("");
+    if (edificioAbierto === null) {
+        // ... (Tu código de vista general de la ciudad está bien)
+        renderVistaCiudad(contenedor);
+    } else {
+        // BUSQUEDA SEGURA DEL EDIFICIO
+        const ed = puebloActual.edificios.find(e => e.id === edificioAbierto);
+
+        // Si por alguna razón no se encuentra el edificio, volvemos fuera
+        if (!ed) {
+            edificioAbierto = null;
+            renderPueblo();
+            return;
         }
+
+        // RENDERIZADO CON SEGURIDAD (Aquí es donde daba el error)
+        contenedor.innerHTML = `
+            <div class="interior-header">
+                <button onclick="edificioAbierto = null; renderPueblo();" class="btn-volver">⬅ Salir a la calle</button>
+                <h2>${ed.icono || '🏠'} ${ed.n}</h2>
+            </div>
+
+            <div class="seccion-interior">
+                <h3>Acciones</h3>
+                <div class="lista-acciones">
+                    ${(ed.acciones || []).map(acc => `
+                        <button class="btn-accion" onclick="ejecutarAccion('${acc}')">${acc}</button>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="seccion-interior">
+                <h3>Habitantes</h3>
+                <div class="lista-npcs">
+                    ${(ed.npcs || []).map((npc, idx) => `
+                        <div class="npc-card" onclick="hablarConNPC(${ed.id}, ${idx})">
+                            <div class="npc-avatar">👤</div>
+                            <div class="npc-datos">
+                                <strong>${npc.n}</strong>
+                                <span>${npc.job}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+}
 
         function renderEquipado() {
             // 1. Limpiamos todos los slots primero
