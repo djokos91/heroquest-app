@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.42</title>
+    <title>HeroQuest Pro - 1.0.60</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -188,9 +188,40 @@
         .quest-entry { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #334155; }
         .quest-title { color: #fbbf24; font-weight: bold; font-size: 14px; }
         .btn-reset { margin: 40px auto; color: #ef4444; background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 12px 25px; border-radius: 8px; cursor: pointer; display: block; }
+
+        .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85); z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+}
+.modal-content {
+    background: #1e293b; border: 2px solid #eab308; padding: 25px;
+    border-radius: 8px; text-align: center; max-width: 400px; width: 90%;
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.3);
+}
+.modal-content h3 { color: #eab308; margin-top: 0; text-transform: uppercase; }
+.modal-content p { color: #f8fafc; font-size: 1.1em; line-height: 1.4; }
+.modal-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+.modal-btn {
+    padding: 10px 25px; border: none; border-radius: 4px; cursor: pointer;
+    font-weight: bold; font-family: inherit; transition: 0.2s;
+}
+.btn-confirm { background: #16a34a; color: white; }
+.btn-cancel { background: #ef4444; color: white; }
+.modal-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
     </style>
 </head>
 <body>
+    <div id="custom-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <h3 id="modal-title">MENSAJE</h3>
+        <p id="modal-text"></p>
+        <div class="modal-buttons">
+            <button id="modal-confirm" class="modal-btn btn-confirm">Aceptar</button>
+            <button id="modal-cancel" class="modal-btn btn-cancel">Cancelar</button>
+        </div>
+    </div>
+</div>
 
     <section id="vista-mundo" class="tab-content active-view">
         <div id="contenedor-pueblo">
@@ -335,6 +366,29 @@
         let seleccionados = []; // Guardará los índices [i] de los objetos marcados
 
         function safeParse(key, def) { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } }
+  // Mostrar Pantalla Emergente-----------------------------------------------------------------------
+        function mostrarMensaje(texto, esConfirm = true) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('custom-modal');
+        const txt = document.getElementById('modal-text');
+        const btnConfirm = document.getElementById('modal-confirm');
+        const btnCancel = document.getElementById('modal-cancel');
+
+        txt.innerText = texto;
+        btnCancel.style.display = esConfirm ? 'block' : 'none'; // Si es solo aviso, oculta cancelar
+        modal.style.display = 'flex';
+
+        btnConfirm.onclick = () => {
+            modal.style.display = 'none';
+            resolve(true);
+        };
+
+        btnCancel.onclick = () => {
+            modal.style.display = 'none';
+            resolve(false);
+        };
+    });
+}
 // --- Selección multiple en el inventario y eliminar -----------------------------------------------------------------------
         function toggleModoSeleccion() {
     modoSeleccion = !modoSeleccion;
@@ -355,10 +409,10 @@
     renderInv();
 }
 
-        function eliminarLote() {
+        async function eliminarLote() {
     if (seleccionados.length === 0) return;
-
-    if (confirm(`¿Estás seguro de que quieres tirar ${seleccionados.length} objetos?`)) {
+    const confirmacion = await mostrarMensaje(`¿Eliminar los ${seleccionados.length} objetos seleccionados?`);
+    if (!confirmacion) return;
         // Marcamos como null cada índice seleccionado
         seleccionados.forEach(i => {
             inventario[i] = null;
@@ -370,35 +424,31 @@
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         renderInv();
     }
-}
         
 // --- Mover objetos en el inventario -----------------------------------------------------------------------
 function arrastrarObjeto(e, indexOriginal) {
     e.dataTransfer.setData("indexOriginal", indexOriginal);
 }
 
-function soltarObjeto(e, indexDestino) {
+async function soltarObjeto(e, indexDestino) {
     e.preventDefault();
     const indexOriginal = e.dataTransfer.getData("indexOriginal");
     
-    if (indexOriginal === "" || indexOriginal === indexDestino) return;
+    // 1. Verificación básica
+    if (indexOriginal === "" || parseInt(indexOriginal) === indexDestino) return;
 
-    // Intercambiamos las posiciones en el array
-    const temp = inventario[indexOriginal];
-    inventario[indexOriginal] = inventario[indexDestino];
-    inventario[indexDestino] = temp;
+    // 2. Intercambiamos las posiciones en el array (convertimos a número para evitar fallos)
+    const origen = parseInt(indexOriginal);
+    const destino = indexDestino;
 
-    // Bloqueo de Mano 2 si Mano 1 es 2-manos
-    if (slotDestino === "slot-mano2") {
-        const armaPrincipal = equipado["slot-mano1"];
-        if (armaPrincipal && armaPrincipal.manos === 2) {
-            alert("Tienes un arma a dos manos. No puedes usar la mano izquierda.");
-            return;
-        }
-    }
+    const temp = inventario[origen];
+    inventario[origen] = inventario[destino];
+    inventario[destino] = temp;
 
-    // Guardamos el nuevo orden
+    // 3. Guardamos el nuevo orden
     localStorage.setItem('hq_inv', JSON.stringify(inventario));
+    
+    // 4. Dibujamos de nuevo inmediatamente
     renderInv();
 }
 
@@ -480,8 +530,8 @@ function filtrarInv(tipo) {
         }
 
         // --- SISTEMA DE POBLACIÓN (GENERADOR) ---
-function refundarPoblacion() {
-    if(!confirm("¿Deseas generar una nueva población? Se perderá el pueblo actual.")) return;
+async function refundarPoblacion() {
+    if(!await mostrarMensaje("¿Deseas generar una nueva población? Se perderá el pueblo actual.")) return;
     
     const nombres = ["Rocanegra", "Valle de Hierro", "Puerto Gélido", "Bastión Solar", "Cala Esmeralda"];
     const tipos = ["Aldea", "Ciudadela", "Campamento", "Pueblo"];
@@ -523,24 +573,30 @@ function refundarPoblacion() {
     }
 
         // --- SISTEMA DE MISIONES (TU ORIGINAL) ---
-        function checkQuestProgress(tipo, valor) {
-            let actualizo = false;
-            misionesActivas.forEach(q => {
-                if (q.tipo === tipo && !q.completada) {
-                    if (tipo === "kill") { q.actual++; actualizo = true; }
-                    if (tipo === "go" && valor.x === q.coord.x && valor.y === q.coord.y) { q.actual = 1; actualizo = true; }
-                    if (tipo === "item" && jerarquiaRareza[valor] >= jerarquiaRareza[q.itemReq]) { q.actual = 1; actualizo = true; }
-                    
-                    if (q.actual >= q.meta) {
-                        q.completada = true;
-                        alert(`¡Misión "${q.n}" Lista! Vuelve con el NPC.`);
-                    }
-                }
-            });
-            if (actualizo) localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
-        }
+async function checkQuestProgress(tipo, valor) {
+    let actualizo = false;
 
-function hablarConNPC(idx) {
+    // Cambiamos el forEach por un for...of
+    for (const q of misionesActivas) {
+        if (q.tipo === tipo && !q.completada) {
+            if (tipo === "kill") { q.actual++; actualizo = true; }
+            if (tipo === "go" && valor.x === q.coord.x && valor.y === q.coord.y) { q.actual = 1; actualizo = true; }
+            if (tipo === "item" && jerarquiaRareza[valor] >= jerarquiaRareza[q.itemReq]) { q.actual = 1; actualizo = true; }
+            
+            if (q.actual >= q.meta) {
+                q.completada = true;
+                // Ahora este await sí funcionará perfectamente
+                await mostrarMensaje(`¡Misión "${q.n}" Lista! Vuelve con el NPC.`, false);
+            }
+        }
+    }
+
+    if (actualizo) {
+        localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
+    }
+}
+
+async function hablarConNPC(idx) {
     const npc = puebloActual.npcs[idx];
     const qAceptada = misionesActivas.find(q => q.owner === npc.n);
     
@@ -548,8 +604,9 @@ function hablarConNPC(idx) {
         // Validación de espacio... (mantenemos la anterior)
         const objetosReales = inventario.filter(slot => slot !== null).length;
         if (objetosReales >= calcularCapacidadMax()) {
-            alert(`${npc.n}: "¡Mochila llena!"`); return;
-        }
+        await mostrarMensaje(`${npc.n}: "¡Mochila llena!"`, false); 
+        return;
+}
 
         const itemData = itemsDB[qAceptada.recompensa];
         
@@ -565,7 +622,7 @@ function hablarConNPC(idx) {
         inventario[primerHueco] = { ...itemData, idInstance: Date.now() };
         totalBronce += v;
 
-        alert(`${npc.n}: "¡Excelente! Toma tu recompensa: ${itemData.n} y ${textoMonedas}."`);
+        await mostrarMensaje(`${npc.n}: "¡Excelente! Toma tu recompensa: ${itemData.n} y ${textoMonedas}."`, false);
 
         // Guardar y limpiar
         misionesCompletadas.push(qAceptada.id);
@@ -584,7 +641,7 @@ function hablarConNPC(idx) {
     if (questDisponible) {
         const mData = dbMisiones.find(m => m.id === npc.misionId);
         if (mData) {
-            if (confirm(`${npc.n}: ${mData.desc}\n\n¿Aceptas el encargo?`)) {
+            if (await mostrarMensaje(`${npc.n}: ${mData.desc}\n\n¿Aceptas el encargo?`)) {
                 misionesActivas.push({ ...mData, actual: 0, completada: false, owner: npc.n });
                 localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
                 renderPueblo();
@@ -595,7 +652,7 @@ function hablarConNPC(idx) {
     }
 
     // 3. DIÁLOGO POR DEFECTO
-    alert(`${npc.n}: "Que las estrellas guíen tu camino."`);
+    await mostrarMensaje(`${npc.n}: "Que las estrellas guíen tu camino."`, false);
 }
 
         // --- RENDERIZADO (TUS ORIGINALES) ---
@@ -634,22 +691,26 @@ function hablarConNPC(idx) {
         }
 
         function renderEquipado() {
+            // 1. Limpiamos todos los slots primero
             document.querySelectorAll('.slot').forEach(s => { 
                 if(s.id !== 'slot-bolsa-1') s.innerHTML = ""; 
                 s.style.borderColor = "#475569"; 
+                s.title = ""; // Limpiamos el tooltip anterior
             });
+            // 2. Dibujamos la mochila fija
             const b1 = document.getElementById('slot-bolsa-1');
             if(b1) b1.innerHTML = `<img src="img/equipacion/mochila.jpg">`;
+            // 3. Dibujamos los objetos equipados
             for (const slotId in equipado) {
                 const it = equipado[slotId];
                 const target = document.getElementById(slotId);
                 if (target && it) {
-                    target.innerHTML = `<img src="${getPath(it)}">`;
+                    target.innerHTML = `<img src="${getPath(it)}" title="${it.n}">`;
                     target.style.borderColor = coloresRareza[it.Rareza] || "#475569";
                 }
             }
 
-            // En renderEquipado, al dibujar el slot de mano 2:
+            // 4. Lógica visual para armas a dos manos
             const slotMano2 = document.getElementById('slot-mano2');
             const armaMano1 = equipado["slot-mano1"];
 
@@ -664,8 +725,8 @@ function hablarConNPC(idx) {
             actualizarMonederoUI();
         }
 
-        function abandonarMision(questId) {
-    if (confirm("¿Seguro que quieres abandonar esta misión? Perderás todo el progreso acumulado en ella.")) {
+        async function abandonarMision(questId) {
+    if (await mostrarMensaje("¿Seguro que quieres abandonar esta misión? Perderás todo el progreso acumulado en ella.")) {
         misionesActivas = misionesActivas.filter(q => q.id !== questId);
         localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
         renderQuests(); // Actualiza la lista del diario
@@ -722,13 +783,13 @@ function renderQuests() {
 }
              
         // --- LÓGICA DE AVENTURA (TU ORIGINAL) ---
-    function derrotarEnemigo() {
+    async function derrotarEnemigo() {
     // 1. Contar cuántos objetos reales hay (los que no son null)
     const objetosActuales = inventario.filter(slot => slot !== null).length;
     const capacidadMax = calcularCapacidadMax();
 
     if (objetosActuales >= capacidadMax) { 
-        alert("¡Tu mochila está totalmente llena! No puedes recoger más botín."); 
+        await mostrarMensaje(`"¡Tu mochila está totalmente llena! No puedes recoger más botín."`, false); 
         return; 
     }
 
@@ -902,10 +963,9 @@ function renderInv() {
     }
 }
 
-function gestionarItem(i) {
+async function gestionarItem(i) {
     const it = inventario[i];
     
-    // --- Selección Múltiple ---
     if (modoSeleccion) {
         if (!inventario[i]) return;
         const index = seleccionados.indexOf(i);
@@ -923,14 +983,13 @@ function gestionarItem(i) {
     if (it.Tipo === "Equipable") {
         let sId = "";
 
-        // --- LÓGICA DE SLOTS MÚLTIPLES (Bolsas, Anillos, Abalorios) ---
+        // --- 1. LÓGICA DE SLOTS MÚLTIPLES ---
         if (it.Slot === "bolsa" || it.Slot === "anillo" || it.Slot === "abalorio") {
             const config = {
                 "bolsa": { min: 2, max: 5 },
                 "anillo": { min: 1, max: 2 },
                 "abalorio": { min: 1, max: 2 }
             };
-
             const range = config[it.Slot];
             let slotLibre = null;
 
@@ -955,48 +1014,72 @@ function gestionarItem(i) {
                 if (numSel >= range.min && numSel <= range.max) {
                     sId = `slot-${it.Slot}-${numSel}`;
                 } else {
-                    alert("Selección no válida.");
+                    await mostrarMensaje(`"Selección no válida."`, false);
                     return;
                 }
             }
-        } else {
-            // --- LÓGICA DE SLOTS ÚNICOS Y 2 MANOS ---
+        } 
+        // --- 2. LÓGICA UNIFICADA PARA ARMAS A DOS MANOS ---
+        else if (it.Slot === "mano1" && it.manos === 2) {
+            const m1 = equipado["slot-mano1"];
+            const m2 = equipado["slot-mano2"];
+
+            // Construimos el mensaje dinámico según lo que tenga puesto
+            let itemsAQuitar = [];
+            if (m1) itemsAQuitar.push(m1.n);
+            if (m2) itemsAQuitar.push(m2.n);
+
+            if (itemsAQuitar.length > 0) {
+                const mensaje = `${it.n} es a dos manos. ¿Quieres reemplazar ${itemsAQuitar.join(" y ")} por este arma?`;
+                const respuesta = await mostrarMensaje(mensaje);
+                if (!respuesta) return;
+            }
+
+            // Verificamos si hay espacio suficiente para devolver AMBOS al inventario
+            // (Uno ocupará el hueco de la propia arma nueva, pero el otro necesita un null extra)
+            const huecosLibres = inventario.filter(slot => slot === null).length;
+            const itemsADevolver = (m1 ? 1 : 0) + (m2 ? 1 : 0);
             
-            // 1. Bloqueo de mano izquierda si ya hay un arma de 2 manos
+            // Necesitamos 'itemsADevolver - 1' huecos extras porque el arma nueva libera su propio slot (i)
+            if (itemsADevolver > 1 && huecosLibres < 1) { 
+                await mostrarMensaje(`"No tienes espacio suficiente en el inventario para desequipar ambos objetos."`, false);
+                return;
+            }
+
+            // Ejecutamos el intercambio
+            if (m2) {
+                const hVacio = inventario.indexOf(null); 
+                // Nota: indexOf(null) siempre encontrará un hueco porque ya validamos arriba
+                inventario[hVacio] = { ...m2 };
+                equipado["slot-mano2"] = null;
+            }
+            
+            // El de la mano 1 se intercambia por el slot actual (i) en el bloque final
+            sId = "slot-mano1";
+        } 
+        // --- 3. LÓGICA DE SLOTS ÚNICOS ESTÁNDAR ---
+        else {
             if (it.Slot === "mano2") {
                 const principal = equipado["slot-mano1"];
                 if (principal && principal.manos === 2) {
-                    alert(`No puedes equipar esto: ${principal.n} requiere ambas manos.`);
+                    await mostrarMensaje(`No puedes equipar esto: ${principal.n} requiere ambas manos.`, false);
                     return;
                 }
             }
-
             sId = "slot-" + it.Slot;
-
-            // 2. Si equipas algo de 2 manos, hay que limpiar la mano izquierda
-            if (it.Slot === "mano1" && it.manos === 2) {
-                const mano2 = equipado["slot-mano2"];
-                if (mano2) {
-                    if (!confirm(`${it.n} es a dos manos. Se desequipará ${mano2.n}. ¿Continuar?`)) return;
-                    
-                    // Buscamos hueco para devolver el escudo/arma de la mano2 al inventario
-                    const huecoVacio = inventario.indexOf(null);
-                    if (huecoVacio !== -1) {
-                        inventario[huecoVacio] = { ...mano2 };
-                        equipado["slot-mano2"] = null;
-                    } else {
-                        alert("No hay espacio en el inventario para desequipar el objeto de la otra mano.");
-                        return;
-                    }
-                }
-            }
         }
 
-        // --- PROCESO DE EQUIPO / REEMPLAZO FINAL ---
+        // --- 4. PROCESO DE REEMPLAZO FINAL (Común para todos) ---
+        // Si sId está vacío es porque la lógica de 2 manos ya manejó el confirm, 
+        // pero para el resto de items (cascos, petos, etc) seguimos pidiendo confirmación.
         const ex = equipado[sId]; 
 
         if (ex) {
-            if (!confirm(`¿Quieres reemplazar ${ex.n} por ${it.n}?`)) return;
+            // Solo pedimos confirmación aquí si NO es un arma de 2 manos (porque ya preguntamos arriba)
+            if (!(it.Slot === "mano1" && it.manos === 2)) {
+                const confirmCambio = await mostrarMensaje(`¿Reemplazar ${ex.n} por ${it.n}?`);
+                if (!confirmCambio) return;
+            }
             inventario[i] = { ...ex }; 
         } else {
             inventario[i] = null;
@@ -1016,14 +1099,15 @@ function gestionarItem(i) {
         renderInv();
         renderEquipado();
 
-    } else if (confirm(`¿Eliminar ${it.n}?`)) {
+    } const eliminar = await mostrarMensaje(`¿Seguro que quieres eliminar ${it.n}?`);
+        if (eliminar) {
         inventario[i] = null; 
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         renderInv();
     }
 }
 
-function gestionarEquipado(el) {
+async function gestionarEquipado(el) {
     const it = equipado[el.id]; 
     if (el.id === "slot-bolsa-1" || !it) return;
 
@@ -1038,11 +1122,11 @@ function gestionarEquipado(el) {
     // 3. SEGURIDAD: ¿Caben los objetos + el que voy a desequipar?
     // Sumamos 1 porque la bolsa que desequipas pasará a ocupar un hueco en el inventario
     if ((objetosReales + 1) > capacidadSiQuitoBolsa) {
-        alert("¡No puedes desequipar esta bolsa! No hay espacio suficiente para guardar la bolsa y tus objetos.");
+        await mostrarMensaje(`"¡No puedes desequipar esta bolsa! No hay espacio suficiente para guardar la bolsa y tus objetos."`, false);
         return;
     }
 
-    if (confirm(`¿Desequipar ${it.n}?`)) {
+    if (await mostrarMensaje(`¿Desequipar ${it.n}?`)) {
         // --- PROCESO DE REDUCCIÓN DE ARRAY ---
         
         // A. Extraemos solo los objetos que ya tenías
@@ -1084,8 +1168,8 @@ function gestionarEquipado(el) {
     return capacidad;
 }
         
-function VaciarInventario() {
-    if (confirm("¿Estás seguro de que quieres destruir TODOS los objetos de tu mochila?")) {
+async function VaciarInventario() {
+    if (await mostrarMensaje("¿Estás seguro de que quieres destruir TODOS los objetos de tu mochila?")) {
         const capacidad = calcularCapacidadMax();
         inventario = new Array(capacidad).fill(null);
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
