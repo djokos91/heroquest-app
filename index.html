@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.21</title>
+    <title>HeroQuest Pro - 1.0.22</title>
     <style>
         .item-slot img:active {
     cursor: grabbing;
@@ -692,8 +692,8 @@ function renderQuests() {
     // 6. Guardar estado del mapa y datos
     mundo.sectores[mundo.pos.x][mundo.pos.y].completado = true;
     
-    localStorage.setItem('hq_inv', JSON.stringify(inventario));
-    localStorage.setItem('hq_monedas', JSON.stringify(monedas));
+    localStorage.setItem('hq_inv', JSON.stringify(inventario));    
+    localStorage.setItem('hq_bronce_total', totalBronce);
     
     actualizarMonederoUI();
     renderInv(); // Refrescamos el inventario en segundo plano
