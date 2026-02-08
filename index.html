@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.33</title>
+    <title>HeroQuest Pro - 1.0.34</title>
     <style>
         .item-slot img:active { cursor: grabbing; opacity: 0.5; }
-        .filter-btn { background: #334155; border: 1px solid #475569; color: white; border-radius: 4px; transition: 0.2s; cursor: pointer; display: block; }
+        .filter-btn { background: #334155; border: 1px solid #475569; color: white; border-radius: 4px; transition: all 0.2s; cursor: pointer; display: block; }
         .filter-btn:hover { background: #3b82f6; }
+        /* Estilo cuando el botón está ACTIVO */
+        .filter-btn.active { background: #3b82f6; color: white; border-color: #60a5fa; box-shadow: 0 0 8px rgba(59, 130, 246, 0.5); font-weight: bold; }
         .item-slot.empty { background: rgba(0,0,0,0.1); border: 1px dashed #334155; }
         /* --- ESTILOS GENERALES (TUS ORIGINALES) --- */
         body { 
@@ -259,7 +261,7 @@
     
     <div id="mochila-header" style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:rgba(30, 41, 59, 0.5); border-radius:10px; margin: 0 15px 15px 15px;">
         <div id="filtros" style="display:flex; gap:5px;">
-            <button class="filter-btn" onclick="filtrarInv('Todos')" style="font-size:10px; padding:5px; cursor:pointer;">Todos</button>
+            <button class="filter-btn active" onclick="filtrarInv('Todos')" style="font-size:10px; padding:5px; cursor:pointer;">Todos</button>
             <button class="filter-btn" onclick="filtrarInv('Equipable')" style="font-size:10px; padding:5px; cursor:pointer;">Equipo</button>
             <button class="filter-btn" onclick="filtrarInv('Consumible')" style="font-size:10px; padding:5px; cursor:pointer;">Consumibles</button>
             <button class="filter-btn" onclick="filtrarInv('Basura')" style="font-size:10px; padding:5px; cursor:pointer;">Basura</button>
@@ -331,7 +333,22 @@ function soltarObjeto(e, indexDestino) {
 }
 
 function filtrarInv(tipo) {
-    filtroActual = tipo;
+    filtroActual = tipo; // Actualizamos tu variable global de filtro
+
+    // 1. Buscamos todos los botones de filtro
+    const botones = document.querySelectorAll('.filter-btn');
+
+    // 2. Recorremos los botones para marcar el correcto
+    botones.forEach(btn => {
+        // Si el texto del botón coincide con el filtro, añadimos 'active'
+        if (btn.innerText === tipo || (tipo === 'Equipable' && btn.innerText === 'Equipo')) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // 3. Volvemos a dibujar el inventario con el nuevo filtro
     renderInv();
 }
         function AutoOrdenarInventario() {
@@ -615,7 +632,7 @@ function renderQuests() {
                 <div style="font-size: 12px; font-weight: bold; color: ${q.completada ? '#22c55e' : '#e2e8f0'}">
                     Progreso: ${q.actual}/${q.meta}
                 </div>
-                <button onclick="abandonarMision('${q.id}')" style="...">🗑️ ABANDONAR</button>
+                <button onclick="abandonarMision('${q.id}')" style="background: none; border: 1px solid #ef4444; color: #ef4444; font-size: 9px; padding: 2px 6px; border-radius: 4px; cursor: pointer;"> 🗑️ ABANDONAR </button>
             </div>
         </div>`;
     }).join("") : '<p style="text-align:center;">No tienes misiones en curso.</p>';
