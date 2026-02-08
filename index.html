@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.44</title>
+    <title>HeroQuest Pro - 1.0.45</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -909,7 +909,6 @@ function renderInv() {
 function gestionarItem(i) {
     const it = inventario[i];
     
-    // --- Selección Múltiple ---
     if (modoSeleccion) {
         if (!inventario[i]) return;
         const index = seleccionados.indexOf(i);
@@ -927,14 +926,13 @@ function gestionarItem(i) {
     if (it.Tipo === "Equipable") {
         let sId = "";
 
-        // --- LÓGICA DE SLOTS MÚLTIPLES (Bolsas, Anillos, Abalorios) ---
+        // --- 1. LÓGICA DE SLOTS MÚLTIPLES ---
         if (it.Slot === "bolsa" || it.Slot === "anillo" || it.Slot === "abalorio") {
             const config = {
                 "bolsa": { min: 2, max: 5 },
                 "anillo": { min: 1, max: 2 },
                 "abalorio": { min: 1, max: 2 }
             };
-
             const range = config[it.Slot];
             let slotLibre = null;
 
@@ -963,10 +961,46 @@ function gestionarItem(i) {
                     return;
                 }
             }
-        } else {
-            // --- LÓGICA DE SLOTS ÚNICOS Y 2 MANOS ---
+        } 
+        // --- 2. LÓGICA UNIFICADA PARA ARMAS A DOS MANOS ---
+        else if (it.Slot === "mano1" && it.manos === 2) {
+            const m1 = equipado["slot-mano1"];
+            const m2 = equipado["slot-mano2"];
+
+            // Construimos el mensaje dinámico según lo que tenga puesto
+            let itemsAQuitar = [];
+            if (m1) itemsAQuitar.push(m1.n);
+            if (m2) itemsAQuitar.push(m2.n);
+
+            if (itemsAQuitar.length > 0) {
+                const mensaje = `${it.n} es a dos manos. ¿Quieres reemplazar ${itemsAQuitar.join(" y ")} por este arma?`;
+                if (!confirm(mensaje)) return;
+            }
+
+            // Verificamos si hay espacio suficiente para devolver AMBOS al inventario
+            // (Uno ocupará el hueco de la propia arma nueva, pero el otro necesita un null extra)
+            const huecosLibres = inventario.filter(slot => slot === null).length;
+            const itemsADevolver = (m1 ? 1 : 0) + (m2 ? 1 : 0);
             
-            // 1. Bloqueo de mano izquierda si ya hay un arma de 2 manos
+            // Necesitamos 'itemsADevolver - 1' huecos extras porque el arma nueva libera su propio slot (i)
+            if (itemsADevolver > 1 && huecosLibres < 1) { 
+                alert("No tienes espacio suficiente en el inventario para desequipar ambos objetos.");
+                return;
+            }
+
+            // Ejecutamos el intercambio
+            if (m2) {
+                const hVacio = inventario.indexOf(null); 
+                // Nota: indexOf(null) siempre encontrará un hueco porque ya validamos arriba
+                inventario[hVacio] = { ...m2 };
+                equipado["slot-mano2"] = null;
+            }
+            
+            // El de la mano 1 se intercambia por el slot actual (i) en el bloque final
+            sId = "slot-mano1";
+        } 
+        // --- 3. LÓGICA DE SLOTS ÚNICOS ESTÁNDAR ---
+        else {
             if (it.Slot === "mano2") {
                 const principal = equipado["slot-mano1"];
                 if (principal && principal.manos === 2) {
@@ -974,33 +1008,19 @@ function gestionarItem(i) {
                     return;
                 }
             }
-
             sId = "slot-" + it.Slot;
-
-            // 2. Si equipas algo de 2 manos, hay que limpiar la mano izquierda
-            if (it.Slot === "mano1" && it.manos === 2) {
-                const mano2 = equipado["slot-mano2"];
-                if (mano2) {
-                    if (!confirm(`${it.n} es a dos manos. Se desequipará ${mano2.n}. ¿Continuar?`)) return;
-                    
-                    // Buscamos hueco para devolver el escudo/arma de la mano2 al inventario
-                    const huecoVacio = inventario.indexOf(null);
-                    if (huecoVacio !== -1) {
-                        inventario[huecoVacio] = { ...mano2 };
-                        equipado["slot-mano2"] = null;
-                    } else {
-                        alert("No hay espacio en el inventario para desequipar el objeto de la otra mano.");
-                        return;
-                    }
-                }
-            }
         }
 
-        // --- PROCESO DE EQUIPO / REEMPLAZO FINAL ---
+        // --- 4. PROCESO DE REEMPLAZO FINAL (Común para todos) ---
+        // Si sId está vacío es porque la lógica de 2 manos ya manejó el confirm, 
+        // pero para el resto de items (cascos, petos, etc) seguimos pidiendo confirmación.
         const ex = equipado[sId]; 
 
         if (ex) {
-            if (!confirm(`¿Quieres reemplazar ${ex.n} por ${it.n}?`)) return;
+            // Solo pedimos confirmación aquí si NO es un arma de 2 manos (porque ya preguntamos arriba)
+            if (!(it.Slot === "mano1" && it.manos === 2)) {
+                if (!confirm(`¿Quieres reemplazar ${ex.n} por ${it.n}?`)) return;
+            }
             inventario[i] = { ...ex }; 
         } else {
             inventario[i] = null;
