@@ -6,6 +6,10 @@
     <link rel="icon" href="data:,">
     <title>HeroQuest Pro - 1.0.17</title>
     <style>
+        .item-slot img:active {
+    cursor: grabbing;
+    opacity: 0.5;
+}
         .filter-btn {
     background: #334155;
     border: 1px solid #475569;
@@ -280,6 +284,10 @@
     <div id="lista-inv"></div>
     
     <button class="btn-reset" onclick="VaciarInventario()">⚠️ Vaciar Inventario</button>
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
+    <button class="filter-btn" onclick="AutoOrdenarInventario()" style="background:#064e3b; border-color:#22c55e;">📦 Auto-Ordenar</button>
+    <button class="btn-reset" onclick="VaciarInventario()" style="margin:0;">⚠️ Vaciar</button>
+</div>
 </section>
 
     <nav>
@@ -313,7 +321,7 @@
         let filtroActual = 'Todos';
 
         function safeParse(key, def) { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } }
-/ --- Mover objetos en el inventario ---
+// --- Mover objetos en el inventario ---
 function arrastrarObjeto(e, indexOriginal) {
     e.dataTransfer.setData("indexOriginal", indexOriginal);
 }
@@ -338,8 +346,45 @@ function filtrarInv(tipo) {
     filtroActual = tipo;
     renderInv();
 }
+        function AutoOrdenarInventario() {
+    // 1. Extraemos solo los objetos que no son null
+    let objetosReales = inventario.filter(it => it !== null);
+
+    // Definimos el peso de las rarezas para el orden
+    const pesoRareza = { 
+        'Legendary': 6, 'Epic': 5, 'Rare': 4, 
+        'Uncommon': 3, 'Common': 2, 'Poor': 1 
+    };
+
+    // 2. Ordenamos: Primero por Rareza, luego por Tipo, luego por Nombre
+    objetosReales.sort((a, b) => {
+        if (pesoRareza[b.Rareza] !== pesoRareza[a.Rareza]) {
+            return pesoRareza[b.Rareza] - pesoRareza[a.Rareza];
+        }
+        if (a.Tipo !== b.Tipo) {
+            return a.Tipo.localeCompare(b.Tipo);
+        }
+        return a.n.localeCompare(b.n);
+    });
+
+    // 3. Reconstruimos el inventario manteniendo la capacidad máxima
+    const capacidadMax = calcularCapacidadMax();
+    const nuevoInventario = new Array(capacidadMax).fill(null);
+
+    objetosReales.forEach((it, idx) => {
+        nuevoInventario[idx] = it;
+    });
+
+    // 4. Guardamos y refrescamos
+    inventario = nuevoInventario;
+    localStorage.setItem('hq_inv', JSON.stringify(inventario));
+    renderInv();
+    
+    // Feedback visual opcional
+    console.log("Inventario ordenado por rareza y tipo.");
+}
         
-/ ---  -------------------------------------------------------------
+// ---  -------------------------------------------------------------
         function getPath(item) {
             if (!item || !item.f) return "img/error.jpg";
             return item.f.includes('/') ? `img/${item.f}` : `img/${item.subfolder}/${item.f}`;
@@ -878,11 +923,12 @@ function gestionarEquipado(el) {
     return capacidad;
 }
         
-        function VaciarInventario() {
-    if(confirm("¿Deseas vaciar el inventario?")) {        
-        inventario = []; // 1. Vaciamos solo el array de la mochila             
-        localStorage.setItem('hq_inv', JSON.stringify(inventario)); // 2. Guardamos solo el cambio del inventario               
-        renderInv(); // 3. Actualizamos solo la vista de la mochila
+function VaciarInventario() {
+    if (confirm("¿Estás seguro de que quieres destruir TODOS los objetos de tu mochila?")) {
+        const capacidad = calcularCapacidadMax();
+        inventario = new Array(capacidad).fill(null);
+        localStorage.setItem('hq_inv', JSON.stringify(inventario));
+        renderInv();
     }
 }
 // --- Cargar Datos ---------------------------------------     
