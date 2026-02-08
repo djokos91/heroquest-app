@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.27</title>
+    <title>HeroQuest Pro - 1.0.28</title>
     <style>
         .item-slot img:active {
     cursor: grabbing;
@@ -777,6 +777,17 @@ function renderInv() {
 
     const contadorTexto = document.getElementById('inv-capacidad-texto');
     // ... (tu lógica del contador que ya tienes está perfecta) ...
+
+    if (contadorTexto) {
+        // Contamos cuántos objetos NO son null
+        const objetosReales = inventario.filter(slot => slot !== null).length;
+        
+        // USAMOS capacidadMax en lugar de 16
+        contadorTexto.innerText = `${objetosReales} / ${capacidadMax}`;
+        
+        // Cambiar color si está lleno
+        contadorTexto.style.color = objetosReales >= capacidadMax ? "#ef4444" : "#94a3b8";
+    }
 
     contenedor.innerHTML = ""; 
 
