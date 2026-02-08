@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.43</title>
+    <title>HeroQuest Pro - 1.0.44</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -634,22 +634,26 @@ function hablarConNPC(idx) {
         }
 
         function renderEquipado() {
+            // 1. Limpiamos todos los slots primero
             document.querySelectorAll('.slot').forEach(s => { 
                 if(s.id !== 'slot-bolsa-1') s.innerHTML = ""; 
                 s.style.borderColor = "#475569"; 
+                s.title = ""; // Limpiamos el tooltip anterior
             });
+            // 2. Dibujamos la mochila fija
             const b1 = document.getElementById('slot-bolsa-1');
             if(b1) b1.innerHTML = `<img src="img/equipacion/mochila.jpg">`;
+            // 3. Dibujamos los objetos equipados
             for (const slotId in equipado) {
                 const it = equipado[slotId];
                 const target = document.getElementById(slotId);
                 if (target && it) {
-                    target.innerHTML = `<img src="${getPath(it)}" title="${item.n}"`;
+                    target.innerHTML = `<img src="${getPath(it)}" title="${it.n}">`;
                     target.style.borderColor = coloresRareza[it.Rareza] || "#475569";
                 }
             }
 
-            // En renderEquipado, al dibujar el slot de mano 2:
+            // 4. Lógica visual para armas a dos manos
             const slotMano2 = document.getElementById('slot-mano2');
             const armaMano1 = equipado["slot-mano1"];
 
