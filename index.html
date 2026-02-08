@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.0.48</title>
+    <title>HeroQuest Pro - 1.0.49</title>
     <style>
         /* Clase para resaltar el slot seleccionado */
 .item-slot.selected { border-color: #ef4444 !important; /* Rojo */
@@ -409,7 +409,7 @@
     renderInv();
 }
 
-        function eliminarLote() {
+        async function eliminarLote() {
     if (seleccionados.length === 0) return;
     const confirmacion = await mostrarMensaje(`¿Eliminar los ${seleccionados.length} objetos seleccionados?`);
     if (!confirmacion) return;
@@ -431,7 +431,7 @@ function arrastrarObjeto(e, indexOriginal) {
     e.dataTransfer.setData("indexOriginal", indexOriginal);
 }
 
-function soltarObjeto(e, indexDestino) {
+async function soltarObjeto(e, indexDestino) {
     e.preventDefault();
     const indexOriginal = e.dataTransfer.getData("indexOriginal");
     
@@ -577,7 +577,7 @@ function refundarPoblacion() {
     }
 
         // --- SISTEMA DE MISIONES (TU ORIGINAL) ---
-        function checkQuestProgress(tipo, valor) {
+       async function checkQuestProgress(tipo, valor) {
             let actualizo = false;
             misionesActivas.forEach(q => {
                 if (q.tipo === tipo && !q.completada) {
@@ -594,7 +594,7 @@ function refundarPoblacion() {
             if (actualizo) localStorage.setItem('hq_quests', JSON.stringify(misionesActivas));
         }
 
-function hablarConNPC(idx) {
+async function hablarConNPC(idx) {
     const npc = puebloActual.npcs[idx];
     const qAceptada = misionesActivas.find(q => q.owner === npc.n);
     
@@ -781,7 +781,7 @@ function renderQuests() {
 }
              
         // --- LÓGICA DE AVENTURA (TU ORIGINAL) ---
-    function derrotarEnemigo() {
+    async function derrotarEnemigo() {
     // 1. Contar cuántos objetos reales hay (los que no son null)
     const objetosActuales = inventario.filter(slot => slot !== null).length;
     const capacidadMax = calcularCapacidadMax();
@@ -1105,7 +1105,7 @@ async function gestionarItem(i) {
     }
 }
 
-function gestionarEquipado(el) {
+async function gestionarEquipado(el) {
     const it = equipado[el.id]; 
     if (el.id === "slot-bolsa-1" || !it) return;
 
