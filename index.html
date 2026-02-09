@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.1.5</title>
+    <title>HeroQuest Pro - 1.1.6</title>
     <style>
     /* Estilo Edificios -------------------------------------------------------*/
 .edificios-grid {
@@ -1104,140 +1104,123 @@ function renderInv() {
         contenedor.appendChild(slot); // Ahora sí se añadirá al contenedor
     }
 }
+async function elegirRanura(it, slotsOcupados) {
+    return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.className = 'modal-seleccion'; // Añade CSS para centrarlo y darle estilo HeroQuest
+        
+        let opcionesHTML = slotsOcupados.map(s => `
+            <button class="btn-seleccion-slot" onclick="this.parentElement.dataset.choice='${s.id}'; this.parentElement.dispatchEvent(new Event('chosen'))">
+                Ranura ${s.num}: ${s.nombreItem}
+            </button>
+        `).join('');
 
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>¿Qué ranura de ${it.Slot} quieres reemplazar?</h3>
+                <div class="opciones-grid">${opcionesHTML}</div>
+                <button class="btn-cancelar" onclick="this.parentElement.dataset.choice='cancel'; this.parentElement.dispatchEvent(new Event('chosen'))">CANCELAR</button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        modal.addEventListener('chosen', () => {
+            const choice = modal.dataset.choice;
+            document.body.removeChild(modal);
+            resolve(choice === 'cancel' ? null : choice);
+        });
+    });
+}
+        
 async function gestionarItem(i) {
     const it = inventario[i];
-    
-    if (modoSeleccion) {
-        if (!inventario[i]) return;
-        const index = seleccionados.indexOf(i);
-        if (index > -1) {
-            seleccionados.splice(index, 1);
-        } else {
-            seleccionados.push(i);
-        }
-        renderInv();
-        return;
-    }
+    if (modoSeleccion || !it) return;
 
-    if (!it) return;
-
-    // --- LÓGICA PARA OBJETOS EQUIPABLES ---
     if (it.Tipo === "Equipable") {
         let sId = "";
 
-        // 1. Slots múltiples (bolsas, anillos, abalorios)
-        if (it.Slot === "bolsa" || it.Slot === "anillo" || it.Slot === "abalorio") {
-            const config = {
-                "bolsa": { min: 2, max: 5 },
-                "anillo": { min: 1, max: 2 },
-                "abalorio": { min: 1, max: 2 }
-            };
-            const range = config[it.Slot];
+        // --- 1. LÓGICA DE SLOTS MÚLTIPLES (Elección Directa) ---
+        if (["bolsa", "anillo", "abalorio"].includes(it.Slot)) {
+            const config = { "bolsa": [2,5], "anillo": [1,2], "abalorio": [1,2] };
+            const [min, max] = config[it.Slot];
             let slotLibre = null;
 
-            for (let n = range.min; n <= range.max; n++) {
-                let tempId = `slot-${it.Slot}-${n}`;
-                if (!equipado[tempId]) {
-                    slotLibre = tempId;
-                    break;
-                }
+            for (let n = min; n <= max; n++) {
+                if (!equipado[`slot-${it.Slot}-${n}`]) { slotLibre = `slot-${it.Slot}-${n}`; break; }
             }
 
             if (slotLibre) {
                 sId = slotLibre;
             } else {
-                let msg = `Todas las ranuras de ${it.Slot} están llenas. ¿Cuál quieres reemplazar por ${it.n}?\n`;
-                for (let n = range.min; n <= range.max; n++) {
-                    msg += `${n}. ${equipado[`slot-${it.Slot}-${n}`].n}\n`;
+                // Preparamos las opciones para el selector
+                const ocupados = [];
+                for (let n = min; n <= max; n++) {
+                    const id = `slot-${it.Slot}-${n}`;
+                    ocupados.push({ id: id, num: n, nombreItem: equipado[id].n });
                 }
-                const el = prompt(msg, range.min.toString());
-                if (el === null) return;
-                const numSel = parseInt(el);
-                if (numSel >= range.min && numSel <= range.max) {
-                    sId = `slot-${it.Slot}-${numSel}`;
-                } else {
-                    await mostrarMensaje(`"Selección no válida."`, false);
-                    return;
-                }
+                
+                // ESPERAMOS a que el usuario elija directamente
+                sId = await elegirRanura(it, ocupados);
+                if (!sId) return; // Canceló
             }
         } 
-        // 2. Armas a dos manos
+        // --- 2. ARMAS A DOS MANOS ---
         else if (it.Slot === "mano1" && it.manos === 2) {
             const m1 = equipado["slot-mano1"];
             const m2 = equipado["slot-mano2"];
-
-            let itemsAQuitar = [];
-            if (m1) itemsAQuitar.push(m1.n);
-            if (m2) itemsAQuitar.push(m2.n);
-
-            if (itemsAQuitar.length > 0) {
-                const mensaje = `${it.n} es a dos manos. ¿Quieres reemplazar ${itemsAQuitar.join(" y ")} por este arma?`;
-                const respuesta = await mostrarMensaje(mensaje);
-                if (!respuesta) return;
+            if (m1 || m2) {
+                const nombres = [m1, m2].filter(x => x).map(x => x.n).join(" y ");
+                if (!await mostrarMensaje(`¿Reemplazar ${nombres} por ${it.n}?`)) return;
             }
-
-            const huecosLibres = inventario.filter(slot => slot === null).length;
-            const itemsADevolver = (m1 ? 1 : 0) + (m2 ? 1 : 0);
-            
-            if (itemsADevolver > 1 && huecosLibres < 1) { 
-                await mostrarMensaje(`"No tienes espacio suficiente para desequipar ambos objetos."`, false);
+            // Validar espacio para devolver ambos
+            if (m1 && m2 && inventario.filter(s => s === null).length < 1) {
+                await mostrarMensaje("No hay espacio para desequipar ambos.", false);
                 return;
             }
-
             if (m2) {
-                const hVacio = inventario.indexOf(null); 
-                inventario[hVacio] = { ...m2 };
+                inventario[inventario.indexOf(null)] = { ...m2 };
                 equipado["slot-mano2"] = null;
             }
             sId = "slot-mano1";
         } 
-        // 3. Slots únicos estándar
+        // --- 3. SLOTS ESTÁNDAR ---
         else {
             if (it.Slot === "mano2") {
-                const principal = equipado["slot-mano1"];
-                if (principal && principal.manos === 2) {
-                    await mostrarMensaje(`No puedes equipar esto: ${principal.n} requiere ambas manos.`, false);
-                    return;
-                }
+                const p = equipado["slot-mano1"];
+                if (p && p.manos === 2) { await mostrarMensaje(`Mano ocupada por ${p.n}`, false); return; }
             }
             sId = "slot-" + it.Slot;
         }
 
-        // 4. Proceso de reemplazo final
-        const ex = equipado[sId]; 
+        // --- 4. INTERCAMBIO FINAL ---
+        const ex = equipado[sId];
         if (ex) {
-            if (!(it.Slot === "mano1" && it.manos === 2)) {
-                const confirmCambio = await mostrarMensaje(`¿Reemplazar ${ex.n} por ${it.n}?`);
-                if (!confirmCambio) return;
+            // No repetimos confirmación si ya eligió en el selector de slots
+            if (!["bolsa", "anillo", "abalorio"].includes(it.Slot) && !(it.Slot === "mano1" && it.manos === 2)) {
+                if (!await mostrarMensaje(`¿Reemplazar ${ex.n} por ${it.n}?`)) return;
             }
-            inventario[i] = { ...ex }; 
+            inventario[i] = { ...ex };
         } else {
             inventario[i] = null;
         }
 
         equipado[sId] = { ...it };
-
-        // Actualizar capacidad y guardar
-        const nuevaCapacidad = calcularCapacidadMax();
-        while (inventario.length < nuevaCapacidad) {
-            inventario.push(null);
-        }
+        
+        // Actualizar capacidad por si cambió una bolsa
+        const cap = calcularCapacidadMax();
+        while (inventario.length < cap) inventario.push(null);
 
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         localStorage.setItem('hq_equipo', JSON.stringify(equipado));
-        
         renderInv();
         renderEquipado();
-        return; // <--- IMPORTANTE: Salimos de la función aquí si era equipable
+        return;
+    }
 
-    } 
-    
-    // --- LÓGICA PARA OTROS OBJETOS (Basura, Consumibles, etc.) ---
-    // Si llegamos aquí, es que NO era un objeto "Equipable"
-    const eliminar = await mostrarMensaje(`¿Seguro que quieres eliminar ${it.n}?`);
-    if (eliminar) {
-        inventario[i] = null; 
+    // --- ELIMINACIÓN ---
+    if (await mostrarMensaje(`¿Eliminar ${it.n}?`)) {
+        inventario[i] = null;
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         renderInv();
     }
