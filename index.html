@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:,">
-    <title>HeroQuest Pro - 1.1.4</title>
+    <title>HeroQuest Pro - 1.1.5</title>
     <style>
     /* Estilo Edificios -------------------------------------------------------*/
 .edificios-grid {
@@ -1122,10 +1122,11 @@ async function gestionarItem(i) {
 
     if (!it) return;
 
+    // --- LÓGICA PARA OBJETOS EQUIPABLES ---
     if (it.Tipo === "Equipable") {
         let sId = "";
 
-        // --- 1. LÓGICA DE SLOTS MÚLTIPLES ---
+        // 1. Slots múltiples (bolsas, anillos, abalorios)
         if (it.Slot === "bolsa" || it.Slot === "anillo" || it.Slot === "abalorio") {
             const config = {
                 "bolsa": { min: 2, max: 5 },
@@ -1161,12 +1162,11 @@ async function gestionarItem(i) {
                 }
             }
         } 
-        // --- 2. LÓGICA UNIFICADA PARA ARMAS A DOS MANOS ---
+        // 2. Armas a dos manos
         else if (it.Slot === "mano1" && it.manos === 2) {
             const m1 = equipado["slot-mano1"];
             const m2 = equipado["slot-mano2"];
 
-            // Construimos el mensaje dinámico según lo que tenga puesto
             let itemsAQuitar = [];
             if (m1) itemsAQuitar.push(m1.n);
             if (m2) itemsAQuitar.push(m2.n);
@@ -1177,29 +1177,22 @@ async function gestionarItem(i) {
                 if (!respuesta) return;
             }
 
-            // Verificamos si hay espacio suficiente para devolver AMBOS al inventario
-            // (Uno ocupará el hueco de la propia arma nueva, pero el otro necesita un null extra)
             const huecosLibres = inventario.filter(slot => slot === null).length;
             const itemsADevolver = (m1 ? 1 : 0) + (m2 ? 1 : 0);
             
-            // Necesitamos 'itemsADevolver - 1' huecos extras porque el arma nueva libera su propio slot (i)
             if (itemsADevolver > 1 && huecosLibres < 1) { 
-                await mostrarMensaje(`"No tienes espacio suficiente en el inventario para desequipar ambos objetos."`, false);
+                await mostrarMensaje(`"No tienes espacio suficiente para desequipar ambos objetos."`, false);
                 return;
             }
 
-            // Ejecutamos el intercambio
             if (m2) {
                 const hVacio = inventario.indexOf(null); 
-                // Nota: indexOf(null) siempre encontrará un hueco porque ya validamos arriba
                 inventario[hVacio] = { ...m2 };
                 equipado["slot-mano2"] = null;
             }
-            
-            // El de la mano 1 se intercambia por el slot actual (i) en el bloque final
             sId = "slot-mano1";
         } 
-        // --- 3. LÓGICA DE SLOTS ÚNICOS ESTÁNDAR ---
+        // 3. Slots únicos estándar
         else {
             if (it.Slot === "mano2") {
                 const principal = equipado["slot-mano1"];
@@ -1211,13 +1204,9 @@ async function gestionarItem(i) {
             sId = "slot-" + it.Slot;
         }
 
-        // --- 4. PROCESO DE REEMPLAZO FINAL (Común para todos) ---
-        // Si sId está vacío es porque la lógica de 2 manos ya manejó el confirm, 
-        // pero para el resto de items (cascos, petos, etc) seguimos pidiendo confirmación.
+        // 4. Proceso de reemplazo final
         const ex = equipado[sId]; 
-
         if (ex) {
-            // Solo pedimos confirmación aquí si NO es un arma de 2 manos (porque ya preguntamos arriba)
             if (!(it.Slot === "mano1" && it.manos === 2)) {
                 const confirmCambio = await mostrarMensaje(`¿Reemplazar ${ex.n} por ${it.n}?`);
                 if (!confirmCambio) return;
@@ -1240,9 +1229,14 @@ async function gestionarItem(i) {
         
         renderInv();
         renderEquipado();
+        return; // <--- IMPORTANTE: Salimos de la función aquí si era equipable
 
-    } const eliminar = await mostrarMensaje(`¿Seguro que quieres eliminar ${it.n}?`);
-        if (eliminar) {
+    } 
+    
+    // --- LÓGICA PARA OTROS OBJETOS (Basura, Consumibles, etc.) ---
+    // Si llegamos aquí, es que NO era un objeto "Equipable"
+    const eliminar = await mostrarMensaje(`¿Seguro que quieres eliminar ${it.n}?`);
+    if (eliminar) {
         inventario[i] = null; 
         localStorage.setItem('hq_inv', JSON.stringify(inventario));
         renderInv();
